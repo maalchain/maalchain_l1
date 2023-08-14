@@ -563,7 +563,8 @@ func NewEthermintApp(
 		// Ethermint app modules
 		feemarket.NewAppModule(app.FeeMarketKeeper, feeMarketSs),
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, evmSs),
-	).WithConsensusParamsGetter(app)
+	)
+	app.BaseApp.SetMigrationModuleManager(app.mm)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
