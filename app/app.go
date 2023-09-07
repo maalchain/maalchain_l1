@@ -265,16 +265,11 @@ type EthermintApp struct {
 	// the module manager
 	mm *module.Manager
 
-	// the configurator
-	configurator module.Configurator
-
 	// simulation manager
 	sm *module.SimulationManager
-}
 
-// SimulationManager implements runtime.AppI
-func (*EthermintApp) SimulationManager() *module.SimulationManager {
-	panic("unimplemented")
+	// the configurator
+	configurator module.Configurator
 }
 
 // NewEthermintApp returns a reference to a new initialized Ethermint application.
@@ -871,6 +866,11 @@ func (app *EthermintApp) GetMemKey(storeKey string) *storetypes.MemoryStoreKey {
 func (app *EthermintApp) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace
+}
+
+// SimulationManager implements the SimulationApp interface
+func (app *EthermintApp) SimulationManager() *module.SimulationManager {
+	return app.sm
 }
 
 // RegisterAPIRoutes registers all application module routes with the provided
