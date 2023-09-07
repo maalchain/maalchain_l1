@@ -91,8 +91,6 @@ func (app *EthermintApp) RegisterUpgradeHandlers(cdc codec.BinaryCodec, clientKe
 		clientKeeper.SetParams(ctx, params)
 		// Migrate Tendermint consensus parameters from x/params module to a dedicated x/consensus module.
 		baseapp.MigrateParams(ctx, baseAppLegacySS, &app.ConsensusParamsKeeper)
-		c := app.GetConsensusParams(ctx)
-		ctx = ctx.WithConsensusParams(c)
 		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
 	})
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
