@@ -68,6 +68,9 @@ type StateDB struct {
 
 	// Per-transaction access list
 	accessList *accessList
+
+	// events emitted by native action
+	nativeEvents sdk.Events
 }
 
 // New creates a new state from a given trie.
@@ -81,8 +84,13 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 		journal:      newJournal(),
 		accessList:   newAccessList(),
 
-		txConfig: txConfig,
+		txConfig:     txConfig,
+		nativeEvents: sdk.Events{},
 	}
+}
+
+func (s *StateDB) NativeEvents() sdk.Events {
+	return s.nativeEvents
 }
 
 // CacheMultiStore cast the multistore to *cachemulti.Store.
@@ -313,7 +321,6 @@ func (s *StateDB) setStateObject(object *stateObject) {
 func (s *StateDB) restoreNativeState(ms sdk.MultiStore) {
 	manager := sdk.NewEventManager()
 	s.cacheCtx = s.cacheCtx.WithMultiStore(ms).WithEventManager(manager)
-
 }
 
 // ExecuteNativeAction executes native action in isolate,
@@ -321,12 +328,16 @@ func (s *StateDB) restoreNativeState(ms sdk.MultiStore) {
 // or the wrapping message call reverted.
 func (s *StateDB) ExecuteNativeAction(action func(ctx sdk.Context) error) error {
 	snapshot := s.CacheMultiStore().Clone()
-	err := action(s.cacheCtx)
-	if err != nil {
+	eventManager := sdk.NewEventManager()
+
+	if err := action(s.cacheCtx.WithEventManager(eventManager)); err != nil {
 		s.restoreNativeState(snapshot)
 		return err
 	}
-	s.journal.append(nativeChange{snapshot: snapshot})
+
+	events := eventManager.Events()
+	s.nativeEvents = s.nativeEvents.AppendEvents(events)
+	s.journal.append(nativeChange{snapshot: snapshot, events: len(events)})
 	return nil
 }
 
@@ -486,7 +497,9 @@ func (s *StateDB) Commit() error {
 	// commit the native cache store first,
 	// the states managed by precompiles and the other part of StateDB must not overlap.
 	s.CacheMultiStore().Write()
-        s.ctx.EventManager().EmitEvents(s.cacheCtx.EventManager().Events())
+	if len(s.nativeEvents) > 0 {
+		s.ctx.EventManager().EmitEvents(s.nativeEvents)
+	}
 
 	for _, addr := range s.journal.sortedDirties() {
 		obj := s.stateObjects[addr]
