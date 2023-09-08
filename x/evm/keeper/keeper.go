@@ -32,9 +32,9 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 
 	ethermint "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/evm/keeper/precompiles"
 	"github.com/evmos/ethermint/x/evm/statedb"
 	"github.com/evmos/ethermint/x/evm/types"
-	evm "github.com/evmos/ethermint/x/evm/vm"
 )
 
 // Keeper grants access to the EVM module state and implements the go-ethereum StateDB interface.
@@ -44,8 +44,7 @@ type Keeper struct {
 	// Store key required for the EVM Prefix KVStore. It is required by:
 	// - storing account's Storage State
 	// - storing account's Code
-	// - storing transaction Logs
-	// - storing Bloom filters by block height. Needed for the Web3 API.
+	// - storing module parameters
 	storeKey storetypes.StoreKey
 
 	// key to access the transient store, which is reset on every block during Commit
@@ -71,13 +70,9 @@ type Keeper struct {
 	// EVM Hooks for tx post-processing
 	hooks types.EvmHooks
 
-	// custom stateless precompiled smart contracts
-	customPrecompiles evm.PrecompiledContracts
-
-	// evm constructor function
-	evmConstructor evm.Constructor
 	// Legacy subspace
-	ss paramstypes.Subspace
+	ss                paramstypes.Subspace
+	customContractsFn func(ctx sdk.Context, stateDB vm.StateDB) []precompiles.StatefulPrecompiledContract
 
 	// a set of store keys that should cover all the precompile use cases,
 	// or ideally just pass the application's all stores.
@@ -93,10 +88,9 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	sk types.StakingKeeper,
 	fmk types.FeeMarketKeeper,
-	customPrecompiles evm.PrecompiledContracts,
-	evmConstructor evm.Constructor,
 	tracer string,
 	ss paramstypes.Subspace,
+	customContractsFn func(ctx sdk.Context, stateDB vm.StateDB) []precompiles.StatefulPrecompiledContract,
 	keys map[string]*storetypes.KVStoreKey,
 ) *Keeper {
 	// ensure evm module account is set
@@ -119,10 +113,9 @@ func NewKeeper(
 		feeMarketKeeper:   fmk,
 		storeKey:          storeKey,
 		transientKey:      transientKey,
-		customPrecompiles: customPrecompiles,
-		evmConstructor:    evmConstructor,
 		tracer:            tracer,
 		ss:                ss,
+		customContractsFn: customContractsFn,
 		keys:              keys,
 	}
 }

@@ -311,7 +311,9 @@ func (s *StateDB) setStateObject(object *stateObject) {
 }
 
 func (s *StateDB) restoreNativeState(ms sdk.MultiStore) {
-	s.cacheCtx = s.cacheCtx.WithMultiStore(ms)
+	manager := sdk.NewEventManager()
+	s.cacheCtx = s.cacheCtx.WithMultiStore(ms).WithEventManager(manager)
+
 }
 
 // ExecuteNativeAction executes native action in isolate,
@@ -484,6 +486,7 @@ func (s *StateDB) Commit() error {
 	// commit the native cache store first,
 	// the states managed by precompiles and the other part of StateDB must not overlap.
 	s.CacheMultiStore().Write()
+        s.ctx.EventManager().EmitEvents(s.cacheCtx.EventManager().Events())
 
 	for _, addr := range s.journal.sortedDirties() {
 		obj := s.stateObjects[addr]
