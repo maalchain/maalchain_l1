@@ -1,9 +1,15 @@
 package statedb_test
 
 import (
+	"errors"
 	"math/big"
 	"testing"
 
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/store/rootmulti"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -563,6 +569,88 @@ func (suite *StateDBTestSuite) TestIterateStorage() {
 		return false
 	})
 	suite.Require().Equal(1, len(storage))
+}
+
+func (suite *StateDBTestSuite) TestNativeAction() {
+	db := dbm.NewMemDB()
+	ms := rootmulti.NewStore(db, log.NewNopLogger())
+	keys := map[string]*storetypes.KVStoreKey{
+		"storekey": storetypes.NewKVStoreKey("storekey"),
+	}
+	ms.MountStoreWithDB(keys["storekey"], storetypes.StoreTypeIAVL, nil)
+	suite.Require().NoError(ms.LoadLatestVersion())
+	ctx := sdk.NewContext(ms, tmproto.Header{}, false, log.NewNopLogger())
+
+	keeper := NewMockKeeperWithKeys(keys)
+	stateDB := statedb.New(ctx, keeper, emptyTxConfig)
+
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		store.Set([]byte("success1"), []byte("value"))
+		return nil
+	})
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		store.Set([]byte("failure1"), []byte("value"))
+		return errors.New("failure")
+	})
+
+	// test query
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		suite.Require().Equal([]byte("value"), store.Get([]byte("success1")))
+		suite.Require().Nil(store.Get([]byte("failure1")))
+		return nil
+	})
+
+	rev1 := stateDB.Snapshot()
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		store.Set([]byte("success2"), []byte("value"))
+		return nil
+	})
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		store.Set([]byte("failure2"), []byte("value"))
+		return errors.New("failure")
+	})
+
+	// test query
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		suite.Require().Equal([]byte("value"), store.Get([]byte("success1")))
+		suite.Require().Equal([]byte("value"), store.Get([]byte("success2")))
+		suite.Require().Nil(store.Get([]byte("failure2")))
+		return nil
+	})
+
+	stateDB.RevertToSnapshot(rev1)
+
+	_ = stateDB.Snapshot()
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		store.Set([]byte("success3"), []byte("value"))
+		return nil
+	})
+
+	// test query
+	stateDB.ExecuteNativeAction(func(ctx sdk.Context) error {
+		store := ctx.KVStore(keys["storekey"])
+		suite.Require().Equal([]byte("value"), store.Get([]byte("success1")))
+		suite.Require().Nil(store.Get([]byte("success2")))
+		suite.Require().Equal([]byte("value"), store.Get([]byte("success3")))
+		return nil
+	})
+
+	suite.Require().NoError(stateDB.Commit())
+
+	// query committed state
+	store := ctx.KVStore(keys["storekey"])
+	suite.Require().Equal([]byte("value"), store.Get([]byte("success1")))
+	suite.Require().Nil(store.Get([]byte("success2")))
+	suite.Require().Equal([]byte("value"), store.Get([]byte("success3")))
+	suite.Require().Nil(store.Get([]byte("failure1")))
+	suite.Require().Nil(store.Get([]byte("failure2")))
 }
 
 func CollectContractStorage(db vm.StateDB) statedb.Storage {
