@@ -71,8 +71,8 @@ type Keeper struct {
 	hooks types.EvmHooks
 
 	// Legacy subspace
-	ss                paramstypes.Subspace
-	customContractsFn func(ctx sdk.Context, stateDB vm.StateDB) []precompiles.StatefulPrecompiledContract
+	ss              paramstypes.Subspace
+	customContracts []precompiles.StatefulPrecompiledContract
 
 	// a set of store keys that should cover all the precompile use cases,
 	// or ideally just pass the application's all stores.
@@ -90,7 +90,7 @@ func NewKeeper(
 	fmk types.FeeMarketKeeper,
 	tracer string,
 	ss paramstypes.Subspace,
-	customContractsFn func(ctx sdk.Context, stateDB vm.StateDB) []precompiles.StatefulPrecompiledContract,
+	customContracts []precompiles.StatefulPrecompiledContract,
 	keys map[string]*storetypes.KVStoreKey,
 ) *Keeper {
 	// ensure evm module account is set
@@ -105,18 +105,18 @@ func NewKeeper(
 
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
 	return &Keeper{
-		cdc:               cdc,
-		authority:         authority,
-		accountKeeper:     ak,
-		bankKeeper:        bankKeeper,
-		stakingKeeper:     sk,
-		feeMarketKeeper:   fmk,
-		storeKey:          storeKey,
-		transientKey:      transientKey,
-		tracer:            tracer,
-		ss:                ss,
-		customContractsFn: customContractsFn,
-		keys:              keys,
+		cdc:             cdc,
+		authority:       authority,
+		accountKeeper:   ak,
+		bankKeeper:      bankKeeper,
+		stakingKeeper:   sk,
+		feeMarketKeeper: fmk,
+		storeKey:        storeKey,
+		transientKey:    transientKey,
+		tracer:          tracer,
+		ss:              ss,
+		customContracts: customContracts,
+		keys:            keys,
 	}
 }
 

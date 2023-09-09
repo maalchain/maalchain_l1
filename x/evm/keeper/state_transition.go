@@ -350,11 +350,7 @@ func (k *Keeper) ApplyMessageWithConfig(ctx sdk.Context,
 	}
 
 	stateDB := statedb.New(ctx, k, txConfig)
-	var customContracts []precompiles.StatefulPrecompiledContract
-	if k.customContractsFn != nil {
-		customContracts = k.customContractsFn(ctx, stateDB)
-	}
-	evm := k.NewEVM(ctx, msg, cfg, tracer, stateDB, customContracts)
+	evm := k.NewEVM(ctx, msg, cfg, tracer, stateDB, k.customContracts)
 	leftoverGas := msg.Gas()
 	// Allow the tracer captures the tx level events, mainly the gas consumption.
 	vmCfg := evm.Config
