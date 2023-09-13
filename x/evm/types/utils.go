@@ -67,17 +67,54 @@ func DecodeTxResponses(in []byte) ([]*MsgEthereumTxResponse, error) {
 	return responses, nil
 }
 
-// DecodeTxLogsFromEvents decodes a protobuf-encoded byte slice into ethereum logs
-func DecodeTxLogsFromEvents(in []byte) ([]*ethtypes.Log, error) {
+func logsFromTxResponse(dst []*ethtypes.Log, rsp *MsgEthereumTxResponse, blockNumber uint64) []*ethtypes.Log {
+	if len(rsp.Logs) == 0 {
+		return nil
+	}
+
+	if dst == nil {
+		dst = make([]*ethtypes.Log, 0, len(rsp.Logs))
+	}
+
+	txHash := common.HexToHash(rsp.Hash)
+	for _, log := range rsp.Logs {
+		// fill in the tx/block informations
+		l := log.ToEthereum()
+		l.TxHash = txHash
+		l.BlockNumber = blockNumber
+		if len(rsp.BlockHash) > 0 {
+			l.BlockHash = common.BytesToHash(rsp.BlockHash)
+		}
+		dst = append(dst, l)
+	}
+	return dst
+}
+
+// DecodeMsgLogsFromEvents decodes a protobuf-encoded byte slice into ethereum logs, for a single message.
+func DecodeMsgLogsFromEvents(in []byte, msgIndex int, blockNumber uint64) ([]*ethtypes.Log, error) {
 	txResponses, err := DecodeTxResponses(in)
 	if err != nil {
 		return nil, err
 	}
-	var txLogs []*Log
-	for _, response := range txResponses {
-		txLogs = append(txLogs, response.Logs...)
+
+	if msgIndex >= len(txResponses) {
+		return nil, fmt.Errorf("invalid message index: %d", msgIndex)
 	}
-	return LogsToEthereum(txLogs), nil
+
+	return logsFromTxResponse(nil, txResponses[msgIndex], blockNumber), nil
+}
+
+// DecodeTxLogsFromEvents decodes a protobuf-encoded byte slice into ethereum logs
+func DecodeTxLogsFromEvents(in []byte, blockNumber uint64) ([]*ethtypes.Log, error) {
+	txResponses, err := DecodeTxResponses(in)
+	if err != nil {
+		return nil, err
+	}
+	var logs []*ethtypes.Log
+	for _, response := range txResponses {
+		logs = logsFromTxResponse(logs, response, blockNumber)
+	}
+	return logs, nil
 }
 
 // EncodeTransactionLogs encodes TransactionLogs slice into a protobuf-encoded byte slice.

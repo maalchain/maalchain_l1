@@ -445,7 +445,13 @@ func (e *PublicAPI) GetTransactionLogs(txHash common.Hash) ([]*ethtypes.Log, err
 	}
 
 	// parse tx logs from events
-	return backend.TxLogsFromEvents(resBlockResult.TxsResults[res.TxIndex].Events, int(res.MsgIndex))
+	logs, err := evmtypes.DecodeMsgLogsFromEvents(resBlockResult.TxsResults[res.TxIndex].Data, int(res.MsgIndex), uint64(resBlockResult.Height))
+	if err != nil {
+		e.logger.Debug("failed to parse tx logs", "error", err.Error())
+		return nil, nil
+	}
+
+	return logs, nil
 }
 
 // SignTypedData signs EIP-712 conformant typed data

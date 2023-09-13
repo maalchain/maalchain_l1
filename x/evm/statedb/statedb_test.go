@@ -36,6 +36,8 @@ func (suite *StateDBTestSuite) TestAccount() {
 	value1 := common.BigToHash(big.NewInt(2))
 	key2 := common.BigToHash(big.NewInt(3))
 	value2 := common.BigToHash(big.NewInt(4))
+	txConfig := emptyTxConfig
+	txConfig.TxHash = common.BigToHash(big.NewInt(100))
 	testCases := []struct {
 		name     string
 		malleate func(*statedb.StateDB)
@@ -58,7 +60,7 @@ func (suite *StateDBTestSuite) TestAccount() {
 			suite.Require().Empty(acct.states)
 			suite.Require().False(acct.account.IsContract())
 
-			db = statedb.New(sdk.Context{}, keeper, emptyTxConfig)
+			db = statedb.New(sdk.Context{}, keeper, txConfig)
 			suite.Require().Equal(true, db.Exist(address))
 			suite.Require().Equal(true, db.Empty(address))
 			suite.Require().Equal(big.NewInt(0), db.GetBalance(address))
@@ -80,7 +82,7 @@ func (suite *StateDBTestSuite) TestAccount() {
 			suite.Require().NoError(db.Commit())
 
 			// suicide
-			db = statedb.New(sdk.Context{}, db.Keeper(), emptyTxConfig)
+			db = statedb.New(sdk.Context{}, db.Keeper(), txConfig)
 			suite.Require().False(db.HasSuicided(address))
 			suite.Require().True(db.Suicide(address))
 
@@ -95,7 +97,7 @@ func (suite *StateDBTestSuite) TestAccount() {
 			suite.Require().NoError(db.Commit())
 
 			// not accessible from StateDB anymore
-			db = statedb.New(sdk.Context{}, db.Keeper(), emptyTxConfig)
+			db = statedb.New(sdk.Context{}, db.Keeper(), txConfig)
 			suite.Require().False(db.Exist(address))
 
 			// and cleared in keeper too
@@ -107,7 +109,7 @@ func (suite *StateDBTestSuite) TestAccount() {
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			keeper := NewMockKeeper()
-			db := statedb.New(sdk.Context{}, keeper, emptyTxConfig)
+			db := statedb.New(sdk.Context{}, keeper, txConfig)
 			tc.malleate(db)
 		})
 	}
@@ -492,8 +494,6 @@ func (suite *StateDBTestSuite) TestLog() {
 		Topics:      []common.Hash{},
 		Data:        data,
 		BlockNumber: 1,
-		BlockHash:   blockHash,
-		TxHash:      txHash,
 		TxIndex:     1,
 		Index:       1,
 	}
@@ -627,10 +627,8 @@ func (suite *StateDBTestSuite) TestNativeAction() {
 	// check events
 	suite.Require().Equal(sdk.Events{{Type: "success1"}}, stateDB.NativeEvents())
 	suite.Require().Equal([]*ethtypes.Log{{
-		Address:   contract,
-		BlockHash: emptyTxConfig.BlockHash,
-		TxHash:    emptyTxConfig.TxHash,
-		Data:      []byte("success1"),
+		Address: contract,
+		Data:    []byte("success1"),
 	}}, stateDB.Logs())
 
 	// test query
@@ -658,16 +656,12 @@ func (suite *StateDBTestSuite) TestNativeAction() {
 	// check events
 	suite.Require().Equal(sdk.Events{{Type: "success1"}, {Type: "success2"}}, stateDB.NativeEvents())
 	suite.Require().Equal([]*ethtypes.Log{{
-		Address:   contract,
-		BlockHash: emptyTxConfig.BlockHash,
-		TxHash:    emptyTxConfig.TxHash,
-		Data:      []byte("success1"),
+		Address: contract,
+		Data:    []byte("success1"),
 	}, {
-		Index:     1,
-		Address:   contract,
-		BlockHash: emptyTxConfig.BlockHash,
-		TxHash:    emptyTxConfig.TxHash,
-		Data:      []byte("success2"),
+		Index:   1,
+		Address: contract,
+		Data:    []byte("success2"),
 	}}, stateDB.Logs())
 	// test query
 	stateDB.ExecuteNativeAction(contract, func(ctx sdk.Context) error {
@@ -683,10 +677,8 @@ func (suite *StateDBTestSuite) TestNativeAction() {
 	// check events
 	suite.Require().Equal(sdk.Events{{Type: "success1"}}, stateDB.NativeEvents())
 	suite.Require().Equal([]*ethtypes.Log{{
-		Address:   contract,
-		BlockHash: emptyTxConfig.BlockHash,
-		TxHash:    emptyTxConfig.TxHash,
-		Data:      []byte("success1"),
+		Address: contract,
+		Data:    []byte("success1"),
 	}}, stateDB.Logs())
 
 	_ = stateDB.Snapshot()
