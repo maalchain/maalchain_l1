@@ -106,10 +106,10 @@ func (s *StateDB) NativeEvents() sdk.Events {
 	return s.nativeEvents
 }
 
-// CacheMultiStore cast the multistore to *cachemulti.Store.
+// cacheMultiStore cast the multistore to *cachemulti.Store.
 // invariant: the multistore must be a `cachemulti.Store`,
 // prove: it's set in constructor and only modified in `restoreNativeState` which keeps the invariant.
-func (s *StateDB) CacheMultiStore() cachemulti.Store {
+func (s *StateDB) cacheMultiStore() cachemulti.Store {
 	return s.cacheCtx.MultiStore().(cachemulti.Store)
 }
 
@@ -323,7 +323,7 @@ func (s *StateDB) setStateObject(object *stateObject) {
 }
 
 func (s *StateDB) cloneNativeState() sdk.MultiStore {
-	return s.CacheMultiStore().Clone()
+	return s.cacheMultiStore().Clone()
 }
 
 func (s *StateDB) restoreNativeState(ms sdk.MultiStore) {
@@ -348,6 +348,11 @@ func (s *StateDB) ExecuteNativeAction(contract common.Address, converter EventCo
 	s.nativeEvents = s.nativeEvents.AppendEvents(events)
 	s.journal.append(nativeChange{snapshot: snapshot, events: len(events)})
 	return nil
+}
+
+// CacheContext returns a branched state context for executing read-only native actions.
+func (s *StateDB) CacheContext() sdk.Context {
+	return s.cacheCtx.WithMultiStore(s.cloneNativeState())
 }
 
 /*
@@ -524,7 +529,7 @@ func (s *StateDB) Commit() error {
 
 	// commit the native cache store first,
 	// the states managed by precompiles and the other part of StateDB must not overlap.
-	s.CacheMultiStore().Write()
+	s.cacheMultiStore().Write()
 	if len(s.nativeEvents) > 0 {
 		s.ctx.EventManager().EmitEvents(s.nativeEvents)
 	}
