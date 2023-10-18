@@ -15,6 +15,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -608,6 +609,7 @@ func (suite *StateDBTestSuite) TestNativeAction() {
 	_, ctx, keeper := setupTestEnv(suite.T())
 	storeKey := testStoreKeys["testnative"]
 	transientKey := testTransientKeys[evmtypes.TransientKey]
+	memKey := testMemKeys[capabilitytypes.MemStoreKey]
 
 	eventConverter := func(event sdk.Event) (*ethtypes.Log, error) {
 		converters := map[string]statedb.EventConverter{
@@ -633,7 +635,10 @@ func (suite *StateDBTestSuite) TestNativeAction() {
 		store.Set([]byte("success1"), []byte("value"))
 		ctx.EventManager().EmitEvent(sdk.NewEvent("success1"))
 
-		mem := ctx.KVStore(transientKey)
+		transient := ctx.KVStore(transientKey)
+		transient.Set([]byte("transient"), []byte("value"))
+
+		mem := ctx.KVStore(memKey)
 		mem.Set([]byte("mem"), []byte("value"))
 
 		return nil
@@ -643,7 +648,10 @@ func (suite *StateDBTestSuite) TestNativeAction() {
 		store.Set([]byte("failure1"), []byte("value"))
 		ctx.EventManager().EmitEvent(sdk.NewEvent("failure1"))
 
-		mem := ctx.KVStore(transientKey)
+		transient := ctx.KVStore(transientKey)
+		suite.Require().Equal([]byte("value"), transient.Get([]byte("transient")))
+
+		mem := ctx.KVStore(memKey)
 		suite.Require().Equal([]byte("value"), mem.Get([]byte("mem")))
 		return errors.New("failure")
 	})
@@ -751,6 +759,7 @@ func CollectContractStorage(db vm.StateDB, address common.Address) statedb.Stora
 var (
 	testStoreKeys     = sdk.NewKVStoreKeys(authtypes.StoreKey, banktypes.StoreKey, evmtypes.StoreKey, "testnative")
 	testTransientKeys = sdk.NewTransientStoreKeys(evmtypes.TransientKey)
+	testMemKeys       = sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
 )
 
 func cloneRawState(t *testing.T, cms sdk.MultiStore) map[string]map[string][]byte {
@@ -791,11 +800,14 @@ func newTestKeeper(t *testing.T, cms sdk.MultiStore) (sdk.Context, *evmkeeper.Ke
 		map[string]bool{},
 		authAddr,
 	)
-	allKeys := make(map[string]storetypes.StoreKey, len(testStoreKeys)+len(testTransientKeys))
+	allKeys := make(map[string]storetypes.StoreKey, len(testStoreKeys)+len(testTransientKeys)+len(testMemKeys))
 	for k, v := range testStoreKeys {
 		allKeys[k] = v
 	}
 	for k, v := range testTransientKeys {
+		allKeys[k] = v
+	}
+	for k, v := range testMemKeys {
 		allKeys[k] = v
 	}
 	evmKeeper := evmkeeper.NewKeeper(
@@ -818,6 +830,9 @@ func setupTestEnv(t *testing.T) (sdk.MultiStore, sdk.Context, *evmkeeper.Keeper)
 	}
 	for _, key := range testTransientKeys {
 		cms.MountStoreWithDB(key, storetypes.StoreTypeTransient, nil)
+	}
+	for _, key := range testMemKeys {
+		cms.MountStoreWithDB(key, storetypes.StoreTypeMemory, nil)
 	}
 	require.NoError(t, cms.LoadLatestVersion())
 
