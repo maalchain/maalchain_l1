@@ -1,3 +1,5 @@
+import hashlib
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -5,7 +7,13 @@ import pytest
 from web3 import Web3
 
 from .network import setup_custom_ethermint
-from .utils import ADDRS, send_transaction, w3_wait_for_new_blocks
+from .utils import (
+    ADDRS,
+    approve_proposal,
+    eth_to_bech32,
+    send_transaction,
+    w3_wait_for_new_blocks,
+)
 
 
 @pytest.fixture(scope="module")
@@ -160,3 +168,61 @@ def test_percentiles(cluster):
         ]
         result = [future.result() for future in as_completed(tasks)]
         assert all(msg in res["error"]["message"] for res in result)
+
+
+def test_concurrent(custom_ethermint, tmp_path):
+    w3: Web3 = custom_ethermint.w3
+    tx = {"to": ADDRS["community"], "value": 10, "gasPrice": w3.eth.gas_price}
+    # send multi txs, overlap happens with query with 2nd tx's block number
+    send_transaction(w3, tx)
+    receipt1 = send_transaction(w3, tx)
+    b1 = receipt1.blockNumber
+    send_transaction(w3, tx)
+
+    call = w3.provider.make_request
+    field = "baseFeePerGas"
+
+    cli = custom_ethermint.cosmos_cli()
+    p = cli.get_params("feemarket")["params"]
+    new_multiplier = 2
+    new_denominator = 200000000
+    p["elasticity_multiplier"] = new_multiplier
+    p["base_fee_change_denominator"] = new_denominator
+
+    proposal = tmp_path / "proposal.json"
+    # governance module account as signer
+    data = hashlib.sha256("gov".encode()).digest()[:20]
+    signer = eth_to_bech32(data)
+    print("mm-signer", signer)
+    proposal_src = {
+        "messages": [
+            {
+                "@type": "/ethermint.feemarket.v1.MsgUpdateParams",
+                "authority": signer,
+                "params": p,
+            }
+        ],
+        "deposit": "2aphoton",
+        "title": "title",
+        "summary": "summary",
+    }
+    proposal.write_text(json.dumps(proposal_src))
+    rsp = cli.submit_gov_proposal(proposal, from_="community")
+    assert rsp["code"] == 0, rsp["raw_log"]
+    approve_proposal(custom_ethermint, rsp)
+    print("check params have been updated now")
+    p = cli.get_params("feemarket")["params"]
+    assert p["elasticity_multiplier"] == new_multiplier
+    assert p["base_fee_change_denominator"] == new_denominator
+
+    percentiles = []
+    method = "eth_feeHistory"
+    # big enough concurrent requests to trigger overwrite bug
+    total = 10
+    size = 2
+    params = [size, hex(b1), percentiles]
+    res = []
+    with ThreadPoolExecutor(total) as exec:
+        t = [exec.submit(call, method, params) for i in range(total)]
+        res = [future.result()["result"][field] for future in as_completed(t)]
+    assert all(sublist == res[0] for sublist in res), res

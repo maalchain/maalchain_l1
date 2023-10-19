@@ -264,3 +264,37 @@ def build_batch_tx(w3, cli, txs, key=KEYS["validator"]):
         },
         "signatures": [],
     }, tx_hashes
+
+
+def find_log_event_attrs(logs, ev_type, cond=None):
+    for ev in logs[0]["events"]:
+        if ev["type"] == ev_type:
+            attrs = {attr["key"]: attr["value"] for attr in ev["attributes"]}
+            if cond is None or cond(attrs):
+                return attrs
+    return None
+
+
+def approve_proposal(n, rsp, event_query_tx=True):
+    cli = n.cosmos_cli()
+    if event_query_tx:
+        rsp = cli.event_query_tx_for(rsp["txhash"])
+    # get proposal_id
+
+    def cb(attrs):
+        return "proposal_id" in attrs
+
+    ev = find_log_event_attrs(rsp["logs"], "submit_proposal", cb)
+    proposal_id = ev["proposal_id"]
+    for i in range(len(n.config["validators"])):
+        rsp = n.cosmos_cli(i).gov_vote("validator", proposal_id, "yes")
+        assert rsp["code"] == 0, rsp["raw_log"]
+    wait_for_new_blocks(cli, 1)
+    assert (
+        int(cli.query_tally(proposal_id)["yes_count"]) == cli.staking_pool()
+    ), "all validators should have voted yes"
+    print("wait for proposal to be activated")
+    proposal = cli.query_proposal(proposal_id)
+    wait_for_block_time(cli, isoparse(proposal["voting_end_time"]))
+    proposal = cli.query_proposal(proposal_id)
+    assert proposal["status"] == "PROPOSAL_STATUS_PASSED", proposal

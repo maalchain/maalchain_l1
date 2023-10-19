@@ -320,13 +320,14 @@ func (suite *BackendTestSuite) TestGlobalMinGasPrice() {
 
 func (suite *BackendTestSuite) TestFeeHistory() {
 	testCases := []struct {
-		name           string
-		registerMock   func(validator sdk.AccAddress)
-		userBlockCount ethrpc.DecimalOrHex
-		latestBlock    ethrpc.BlockNumber
-		expFeeHistory  *rpc.FeeHistoryResult
-		validator      sdk.AccAddress
-		expPass        bool
+		name              string
+		registerMock      func(validator sdk.AccAddress)
+		userBlockCount    ethrpc.DecimalOrHex
+		latestBlock       ethrpc.BlockNumber
+		expFeeHistory     *rpc.FeeHistoryResult
+		validator         sdk.AccAddress
+		expPass           bool
+		targetNewBaseFees []*big.Int
 	}{
 		{
 			"fail - can't get params ",
@@ -341,6 +342,7 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			nil,
 			nil,
 			false,
+			nil,
 		},
 		{
 			"fail - user block count higher than max block count ",
@@ -355,6 +357,7 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			nil,
 			nil,
 			false,
+			nil,
 		},
 		{
 			"fail - Tendermint block fetching error ",
@@ -371,6 +374,7 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			nil,
 			nil,
 			false,
+			nil,
 		},
 		{
 			"fail - Eth block fetching error",
@@ -388,6 +392,7 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			nil,
 			nil,
 			true,
+			nil,
 		},
 		{
 			"fail - Invalid base fee",
@@ -409,6 +414,7 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			nil,
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			false,
+			nil,
 		},
 		{
 			"pass - Valid FeeHistoryResults object",
@@ -438,6 +444,39 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			},
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			true,
+			nil,
+		},
+		{
+			"pass - Concurrent FeeHistoryResults object",
+			func(validator sdk.AccAddress) {
+				var header metadata.MD
+				baseFee := sdk.NewInt(1)
+				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
+				fQueryClient := suite.backend.queryClient.FeeMarket.(*mocks.FeeMarketQueryClient)
+				client := suite.backend.clientCtx.Client.(*mocks.Client)
+				suite.backend.cfg.JSONRPC.FeeHistoryCap = 2
+				RegisterBlock(client, ethrpc.BlockNumber(1).Int64(), nil)
+				RegisterBlockResults(client, 1)
+				RegisterBaseFee(queryClient, baseFee)
+				RegisterValidatorAccount(queryClient, validator)
+				RegisterConsensusParams(client, 1)
+				RegisterParams(queryClient, &header, 1)
+				RegisterParamsWithoutHeader(queryClient, 1)
+				RegisterFeeMarketParams(fQueryClient, 1)
+			},
+			1,
+			1,
+			&rpc.FeeHistoryResult{
+				OldestBlock:  (*hexutil.Big)(big.NewInt(1)),
+				BaseFee:      []*hexutil.Big{(*hexutil.Big)(big.NewInt(1)), (*hexutil.Big)(big.NewInt(0))},
+				GasUsedRatio: []float64{0},
+				Reward:       [][]*hexutil.Big{{(*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0))}},
+			},
+			sdk.AccAddress(tests.GenerateAddress().Bytes()),
+			true,
+			[]*big.Int{
+				big.NewInt(0), // for overwrite overlap
+			},
 		},
 	}
 
@@ -445,6 +484,22 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 		suite.Run(fmt.Sprintf("case %s", tc.name), func() {
 			suite.SetupTest() // reset test and queries
 			tc.registerMock(tc.validator)
+
+			called := 0
+			if len(tc.targetNewBaseFees) > 0 {
+				suite.backend.processBlocker = func(
+					tendermintBlock *tmrpctypes.ResultBlock,
+					ethBlock *map[string]interface{},
+					rewardPercentiles []float64,
+					tendermintBlockResult *tmrpctypes.ResultBlockResults,
+					targetOneFeeHistory *rpc.OneFeeHistory,
+				) error {
+					suite.backend.processBlock(tendermintBlock, ethBlock, rewardPercentiles, tendermintBlockResult, targetOneFeeHistory)
+					targetOneFeeHistory.NextBaseFee = tc.targetNewBaseFees[called]
+					called += 1
+					return nil
+				}
+			}
 
 			feeHistory, err := suite.backend.FeeHistory(tc.userBlockCount, tc.latestBlock, []float64{25, 50, 75, 100})
 			if tc.expPass {
