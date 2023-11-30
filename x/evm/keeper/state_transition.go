@@ -54,7 +54,6 @@ func (k *Keeper) NewEVM(
 	cfg *statedb.EVMConfig,
 	tracer vm.EVMLogger,
 	stateDB vm.StateDB,
-	customContracts []vm.PrecompiledContract,
 ) *vm.EVM {
 	blockCtx := vm.BlockContext{
 		CanTransfer: core.CanTransfer,
@@ -80,7 +79,8 @@ func (k *Keeper) NewEVM(
 		contracts[addr] = c
 		active = append(active, addr)
 	}
-	for _, c := range customContracts {
+	for _, fn := range k.customContractFns {
+		c := fn(rules)
 		addr := c.Address()
 		contracts[addr] = c
 		active = append(active, addr)
@@ -356,7 +356,7 @@ func (k *Keeper) ApplyMessageWithConfig(ctx sdk.Context,
 		}
 	}
 
-	evm := k.NewEVM(ctx, msg, cfg, tracer, stateDB, k.customContracts)
+	evm := k.NewEVM(ctx, msg, cfg, tracer, stateDB)
 	leftoverGas := msg.Gas()
 	// Allow the tracer captures the tx level events, mainly the gas consumption.
 	vmCfg := evm.Config
