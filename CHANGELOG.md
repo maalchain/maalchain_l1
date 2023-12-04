@@ -67,6 +67,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (mempool) [#310](https://github.com/crypto-org-chain/ethermint/pull/310) disable vesting messages in check tx mode.
 * (rpc) [#364](https://github.com/crypto-org-chain/ethermint/pull/364) Only use NextBaseFee as last item to avoid concurrent write in `eth_feeHistory`.
 * (config) [#365](https://github.com/crypto-org-chain/ethermint/pull/365) Avoid redundant parse chainID from gensis when start server.
+* (rpc) [#382](https://github.com/crypto-org-chain/ethermint/pull/382) Align tracer config with go-ethereum.
 
 ### Improvements
 
