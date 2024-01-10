@@ -23,12 +23,27 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/params"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
 	"github.com/evmos/ethermint/x/evm/statedb"
 	"github.com/evmos/ethermint/x/evm/types"
 )
 
+// EVMConfig encapsulates common parameters needed to create an EVM to execute a message
+// It's mainly to reduce the number of method parameters
+type EVMConfig struct {
+	Params      types.Params
+	ChainConfig *params.ChainConfig
+	CoinBase    common.Address
+	BaseFee     *big.Int
+	TxConfig    statedb.TxConfig
+	Tracer      vm.EVMLogger
+	DebugTrace  bool
+	Overrides   *rpctypes.StateOverride
+}
+
 // EVMConfig creates the EVMConfig based on current state
-func (k *Keeper) EVMConfig(ctx sdk.Context, proposerAddress sdk.ConsAddress, chainID *big.Int) (*statedb.EVMConfig, error) {
+func (k *Keeper) EVMConfig(ctx sdk.Context, proposerAddress sdk.ConsAddress, chainID *big.Int, txHash common.Hash) (*EVMConfig, error) {
 	params := k.GetParams(ctx)
 	ethCfg := params.ChainConfig.EthereumConfig(chainID)
 
@@ -38,12 +53,20 @@ func (k *Keeper) EVMConfig(ctx sdk.Context, proposerAddress sdk.ConsAddress, cha
 		return nil, errorsmod.Wrap(err, "failed to obtain coinbase address")
 	}
 
+	var txConfig statedb.TxConfig
+	if txHash == (common.Hash{}) {
+		txConfig = statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash()))
+	} else {
+		txConfig = k.TxConfig(ctx, txHash)
+	}
+
 	baseFee := k.GetBaseFee(ctx, ethCfg)
-	return &statedb.EVMConfig{
+	return &EVMConfig{
 		Params:      params,
 		ChainConfig: ethCfg,
 		CoinBase:    coinbase,
 		BaseFee:     baseFee,
+		TxConfig:    txConfig,
 	}, nil
 }
 
@@ -59,7 +82,7 @@ func (k *Keeper) TxConfig(ctx sdk.Context, txHash common.Hash) statedb.TxConfig 
 
 // VMConfig creates an EVM configuration from the debug setting and the extra EIPs enabled on the
 // module parameters. The config generated uses the default JumpTable from the EVM.
-func (k Keeper) VMConfig(ctx sdk.Context, _ core.Message, cfg *statedb.EVMConfig, tracer vm.EVMLogger) vm.Config {
+func (k Keeper) VMConfig(ctx sdk.Context, _ core.Message, cfg *EVMConfig, tracer vm.EVMLogger) vm.Config {
 	noBaseFee := true
 	if types.IsLondon(cfg.ChainConfig, ctx.BlockHeight()) {
 		noBaseFee = k.feeMarketKeeper.GetParams(ctx).NoBaseFee
