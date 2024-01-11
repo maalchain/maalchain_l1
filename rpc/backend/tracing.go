@@ -245,8 +245,8 @@ func (b *Backend) TraceCall(
 		traceCallRequest.TraceConfig = b.convertConfig(config)
 	}
 
-	// minus one to get the context of block beginning
-	contextHeight := blk.Block.Height - 1
+	// get the context of provided block
+	contextHeight := blk.Block.Height
 	if contextHeight < 1 {
 		// 0 is a special value in `ContextWithHeight`
 		contextHeight = 1

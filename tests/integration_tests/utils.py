@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import secrets
 import socket
 import subprocess
 import sys
@@ -235,6 +236,10 @@ def derive_new_account(n=1):
     account_path = f"m/44'/60'/0'/0/{n}"
     mnemonic = os.getenv("COMMUNITY_MNEMONIC")
     return Account.from_mnemonic(mnemonic, account_path=account_path)
+
+
+def derive_random_account():
+    return derive_new_account(secrets.randbelow(10000) + 1)
 
 
 def send_raw_transactions(w3, raw_transactions):
