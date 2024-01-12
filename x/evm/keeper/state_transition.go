@@ -46,12 +46,10 @@ import (
 // NOTE: the RANDOM opcode is currently not supported since it requires
 // RANDAO implementation. See https://github.com/evmos/ethermint/pull/1520#pullrequestreview-1200504697
 // for more information.
-
 func (k *Keeper) NewEVM(
 	ctx sdk.Context,
 	msg core.Message,
 	cfg *EVMConfig,
-	tracer vm.EVMLogger,
 	stateDB vm.StateDB,
 ) *vm.EVM {
 	blockCtx := vm.BlockContext{
@@ -66,11 +64,14 @@ func (k *Keeper) NewEVM(
 		BaseFee:     cfg.BaseFee,
 		Random:      nil, // not supported
 	}
-	txCtx := core.NewEVMTxContext(&msg)
-	if tracer == nil {
-		tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+	if cfg.BlockOverrides != nil {
+		cfg.BlockOverrides.Apply(&blockCtx)
 	}
-	vmConfig := k.VMConfig(ctx, msg, cfg, tracer)
+	txCtx := core.NewEVMTxContext(&msg)
+	if cfg.Tracer == nil {
+		cfg.Tracer = k.Tracer(ctx, msg, cfg.ChainConfig)
+	}
+	vmConfig := k.VMConfig(ctx, msg, cfg)
 	rules := cfg.ChainConfig.Rules(big.NewInt(ctx.BlockHeight()), cfg.ChainConfig.MergeNetsplitBlock != nil, blockCtx.Time)
 	contracts := make(map[common.Address]vm.PrecompiledContract)
 	active := make([]common.Address, 0)
@@ -355,13 +356,13 @@ func (k *Keeper) ApplyMessageWithConfig(
 	}
 
 	stateDB := statedb.NewWithParams(ctx, k, cfg.TxConfig, cfg.Params)
+	var evm *vm.EVM
 	if cfg.Overrides != nil {
 		if err := cfg.Overrides.Apply(stateDB); err != nil {
 			return nil, errorsmod.Wrap(err, "failed to apply state override")
 		}
 	}
-
-	evm := k.NewEVM(ctx, msg, cfg, cfg.Tracer, stateDB)
+	evm = k.NewEVM(ctx, msg, cfg, stateDB)
 	leftoverGas := msg.GasLimit
 	sender := vm.AccountRef(msg.From)
 	// Allow the tracer captures the tx level events, mainly the gas consumption.

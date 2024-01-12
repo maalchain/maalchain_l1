@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from web3 import Web3
 
 from .expected_constants import (
+    EXPECTED_BLOCK_OVERRIDES_TRACERS,
     EXPECTED_CALLTRACERS,
     EXPECTED_CONTRACT_CREATE_TRACER,
     EXPECTED_DEFAULT_GASCAP,
@@ -18,6 +19,7 @@ from .utils import (
     derive_new_account,
     derive_random_account,
     send_transaction,
+    sign_transaction,
     w3_wait_for_new_blocks,
 )
 
@@ -90,7 +92,7 @@ def test_trace_tx(ethermint, geth):
         tasks = [exec.submit(process, w3) for w3 in providers]
         res = [future.result() for future in as_completed(tasks)]
         assert len(res) == len(providers)
-        assert res[0] == res[1], res
+        assert res[0] == res[-1], res
 
 
 def test_tracecall_insufficient_funds(ethermint, geth):
@@ -140,7 +142,7 @@ def test_tracecall_insufficient_funds(ethermint, geth):
         tasks = [exec.submit(process, w3) for w3 in providers]
         res = [future.result() for future in as_completed(tasks)]
         assert len(res) == len(providers)
-        assert (res[0] == res[1] == [
+        assert (res[0] == res[-1] == [
             json.dumps(EXPECTED_STRUCT_TRACER), expected, expected,
         ]), res
 
@@ -198,7 +200,7 @@ def test_js_tracers(ethermint, geth):
         tasks = [exec.submit(process, w3) for w3 in providers]
         res = [future.result() for future in as_completed(tasks)]
         assert len(res) == len(providers)
-        assert (res[0] == res[1] == EXPECTED_JS_TRACERS), res
+        assert (res[0] == res[-1] == EXPECTED_JS_TRACERS), res
 
 
 def test_tracecall_struct_tracer(ethermint, geth):
@@ -404,3 +406,88 @@ def test_debug_tracecall_return_revert_data_when_call_failed(ethermint, geth):
         res = [future.result() for future in as_completed(tasks)]
         assert len(res) == len(providers)
         assert (res[0] == res[-1] == expected), res
+
+
+def test_debug_tracecall_block_overrides(ethermint, geth):
+    method = "debug_traceCall"
+    gas = hex(65535)
+    price = hex(88500000000)
+    # https://github.com/ethereum/go-ethereum/blob/v1.11.6/core/vm/opcodes.go#L95
+    tx = {"from": ADDRS["validator"], "input": "0x43", "gas": gas, "gasPrice": price}
+    future_blk = "0x1337"
+    tracer = {"blockOverrides": {
+        "number": future_blk,
+        "coinbase": "0x1111111111111111111111111111111111111111",
+        "difficulty": hex(2),
+        "time": hex(3),
+        "baseLimit": hex(4),
+        "baseFee": hex(5),
+    }}
+
+    def process(w3):
+        w3_wait_for_new_blocks(w3, 1)
+        tx_res = w3.provider.make_request(method, [tx, "latest", tracer])
+        return json.dumps(tx_res["result"], sort_keys=True)
+
+    providers = [ethermint.w3, geth.w3]
+    with ThreadPoolExecutor(len(providers)) as exec:
+        tasks = [exec.submit(process, w3) for w3 in providers]
+        res = [future.result() for future in as_completed(tasks)]
+        assert len(res) == len(providers)
+        assert (res[0] == res[-1] == EXPECTED_BLOCK_OVERRIDES_TRACERS), res
+
+
+def test_trace_staticcall(ethermint, geth):
+    method = "debug_traceTransaction"
+    tracer = {"tracer": "callTracer"}
+    acc = derive_new_account(6)
+    sender = acc.address
+    price = 58500000000
+    func = "callCalculator()"
+    selector = f"0x{Web3.keccak(text=func).hex()[2:10]}"
+    x = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    y = "0x0000000000000000000000000000000000000000000000000000000000000001"
+
+    def process(w3):
+        fund_acc(w3, acc)
+        calculator, _ = deploy_contract(w3, CONTRACTS["Calculator"], key=acc.key)
+        caller, _ = deploy_contract(
+            w3, CONTRACTS["Caller"], (calculator.address,), key=acc.key,
+        )
+        w3_wait_for_new_blocks(w3, 1, sleep=0.1)
+        txhashes = []
+        total = 3
+        nonce = w3.eth.get_transaction_count(sender)
+        for n in range(total):
+            tx = {
+                "to": caller.address,
+                "data": selector,
+                "nonce": nonce + n,
+                "gasPrice": price,
+            }
+            if n == 1:
+                tx["accessList"] = [{
+                    "address": calculator.address,
+                    "storageKeys": (x, y),
+                }]
+
+            signed = sign_transaction(w3, tx, acc.key)
+            txhash = w3.eth.send_raw_transaction(signed.rawTransaction)
+            txhashes.append(txhash)
+        for txhash in txhashes:
+            w3.eth.wait_for_transaction_receipt(txhash, timeout=10)
+        res = []
+        call = w3.provider.make_request
+        with ThreadPoolExecutor(len(txhashes)) as exec:
+            params = [[(tx_hash.hex())] + [tracer] for tx_hash in txhashes]
+            exec_map = exec.map(call, itertools.repeat(method), params)
+            for resp in exec_map:
+                res = [json.dumps(resp["result"], sort_keys=True)]
+        return res
+
+    providers = [ethermint.w3, geth.w3]
+    with ThreadPoolExecutor(len(providers)) as exec:
+        tasks = [exec.submit(process, w3) for w3 in providers]
+        res = [future.result() for future in as_completed(tasks)]
+        assert len(res) == len(providers)
+        assert res[0] == res[-1], res

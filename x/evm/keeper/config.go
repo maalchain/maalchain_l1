@@ -32,14 +32,15 @@ import (
 // EVMConfig encapsulates common parameters needed to create an EVM to execute a message
 // It's mainly to reduce the number of method parameters
 type EVMConfig struct {
-	Params      types.Params
-	ChainConfig *params.ChainConfig
-	CoinBase    common.Address
-	BaseFee     *big.Int
-	TxConfig    statedb.TxConfig
-	Tracer      vm.EVMLogger
-	DebugTrace  bool
-	Overrides   *rpctypes.StateOverride
+	Params         types.Params
+	ChainConfig    *params.ChainConfig
+	CoinBase       common.Address
+	BaseFee        *big.Int
+	TxConfig       statedb.TxConfig
+	Tracer         vm.EVMLogger
+	DebugTrace     bool
+	Overrides      *rpctypes.StateOverride
+	BlockOverrides *rpctypes.BlockOverrides
 }
 
 // EVMConfig creates the EVMConfig based on current state
@@ -82,18 +83,18 @@ func (k *Keeper) TxConfig(ctx sdk.Context, txHash common.Hash) statedb.TxConfig 
 
 // VMConfig creates an EVM configuration from the debug setting and the extra EIPs enabled on the
 // module parameters. The config generated uses the default JumpTable from the EVM.
-func (k Keeper) VMConfig(ctx sdk.Context, _ core.Message, cfg *EVMConfig, tracer vm.EVMLogger) vm.Config {
+func (k Keeper) VMConfig(ctx sdk.Context, _ core.Message, cfg *EVMConfig) vm.Config {
 	noBaseFee := true
 	if types.IsLondon(cfg.ChainConfig, ctx.BlockHeight()) {
 		noBaseFee = k.feeMarketKeeper.GetParams(ctx).NoBaseFee
 	}
 
-	if _, ok := tracer.(types.NoOpTracer); ok {
-		tracer = nil
+	if _, ok := cfg.Tracer.(*types.NoOpTracer); ok {
+		cfg.Tracer = nil
 	}
 
 	return vm.Config{
-		Tracer:    tracer,
+		Tracer:    cfg.Tracer,
 		NoBaseFee: noBaseFee,
 		ExtraEips: cfg.Params.EIPs(),
 	}

@@ -22,3 +22,4 @@ swagger-combine ./client/docs/config.json -o ./client/docs/swagger-ui/swagger.ya
 
 # clean swagger files
 rm -rf ./tmp-swagger-gen
+rm -rf github.com

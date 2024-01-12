@@ -38,6 +38,8 @@ TEST_CONTRACTS = {
     "TestExploitContract": "TestExploitContract.sol",
     "TestRevert": "TestRevert.sol",
     "TestMessageCall": "TestMessageCall.sol",
+    "Calculator": "Calculator.sol",
+    "Caller": "Caller.sol",
 }
 
 
@@ -193,6 +195,21 @@ def send_transaction(w3, tx, key=KEYS["validator"], i=0):
         return w3.eth.wait_for_transaction_receipt(txhash, timeout=20)
     except TimeExhausted:
         return send_transaction(w3, tx, key, i + 1)
+
+
+def send_txs(w3, cli, to, keys, params):
+    tx = {"to": to, "value": 10000} | params
+    # use different sender accounts to be able be send concurrently
+    raw_transactions = []
+    for key_from in keys:
+        signed = sign_transaction(w3, tx, key_from)
+        raw_transactions.append(signed.rawTransaction)
+    # wait block update
+    block_num = wait_for_new_blocks(cli, 1, sleep=0.1)
+    print(f"block number start: {block_num}")
+    # send transactions
+    sended_hash_set = send_raw_transactions(w3, raw_transactions)
+    return block_num, sended_hash_set
 
 
 def send_successful_transaction(w3, i=0):
