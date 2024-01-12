@@ -106,19 +106,9 @@ func newMsgEthereumTx(
 	}
 
 	switch {
-	case accesses == nil:
-		txData = &LegacyTx{
-			Nonce:    nonce,
-			To:       toAddr,
-			Amount:   amt,
-			GasLimit: gasLimit,
-			GasPrice: gp,
-			Data:     input,
-		}
-	case accesses != nil && gasFeeCap != nil && gasTipCap != nil:
+	case gasFeeCap != nil:
 		gtc := sdkmath.NewIntFromBigInt(gasTipCap)
 		gfc := sdkmath.NewIntFromBigInt(gasFeeCap)
-
 		txData = &DynamicFeeTx{
 			ChainID:   cid,
 			Nonce:     nonce,
@@ -142,6 +132,14 @@ func newMsgEthereumTx(
 			Accesses: NewAccessList(accesses),
 		}
 	default:
+		txData = &LegacyTx{
+			Nonce:    nonce,
+			To:       toAddr,
+			Amount:   amt,
+			GasLimit: gasLimit,
+			GasPrice: gp,
+			Data:     input,
+		}
 	}
 
 	dataAny, err := PackTxData(txData)
