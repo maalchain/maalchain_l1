@@ -118,13 +118,13 @@ func (b *Backend) getAccountNonce(accAddr common.Address, pending bool, height i
 }
 
 // CalcBaseFee calculates the basefee of the header.
-func CalcBaseFee(config *params.ChainConfig, parent *ethtypes.Header, baseFeeChangeDenominator, elasticityMultiplier uint32) *big.Int {
+func CalcBaseFee(config *params.ChainConfig, parent *ethtypes.Header, p feemarkettypes.Params) *big.Int {
 	// If the current block is the first EIP-1559 block, return the InitialBaseFee.
 	if !config.IsLondon(parent.Number) {
 		return new(big.Int).SetUint64(params.InitialBaseFee)
 	}
 
-	parentGasTarget := parent.GasLimit / uint64(elasticityMultiplier)
+	parentGasTarget := parent.GasLimit / uint64(p.ElasticityMultiplier)
 	// If the parent gasUsed is the same as the target, the baseFee remains unchanged.
 	if parent.GasUsed == parentGasTarget {
 		return new(big.Int).Set(parent.BaseFee)
@@ -141,7 +141,7 @@ func CalcBaseFee(config *params.ChainConfig, parent *ethtypes.Header, baseFeeCha
 		num.SetUint64(parent.GasUsed - parentGasTarget)
 		num.Mul(num, parent.BaseFee)
 		num.Div(num, denom.SetUint64(parentGasTarget))
-		num.Div(num, denom.SetUint64(uint64(baseFeeChangeDenominator)))
+		num.Div(num, denom.SetUint64(uint64(p.BaseFeeChangeDenominator)))
 		baseFeeDelta := math.BigMax(num, common.Big1)
 
 		return num.Add(parent.BaseFee, baseFeeDelta)
@@ -152,10 +152,10 @@ func CalcBaseFee(config *params.ChainConfig, parent *ethtypes.Header, baseFeeCha
 	num.SetUint64(parentGasTarget - parent.GasUsed)
 	num.Mul(num, parent.BaseFee)
 	num.Div(num, denom.SetUint64(parentGasTarget))
-	num.Div(num, denom.SetUint64(uint64(baseFeeChangeDenominator)))
+	num.Div(num, denom.SetUint64(uint64(p.BaseFeeChangeDenominator)))
 	baseFee := num.Sub(parent.BaseFee, num)
-
-	return math.BigMax(baseFee, common.Big0)
+	minGasPrice := p.MinGasPrice.TruncateInt().BigInt()
+	return math.BigMax(baseFee, minGasPrice)
 }
 
 // output: targetOneFeeHistory
@@ -201,7 +201,7 @@ func (b *Backend) processBlock(
 		if err != nil {
 			return err
 		}
-		targetOneFeeHistory.NextBaseFee = CalcBaseFee(cfg, &header, params.Params.BaseFeeChangeDenominator, params.Params.ElasticityMultiplier)
+		targetOneFeeHistory.NextBaseFee = CalcBaseFee(cfg, &header, params.Params)
 	} else {
 		targetOneFeeHistory.NextBaseFee = new(big.Int)
 	}
