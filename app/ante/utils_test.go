@@ -84,7 +84,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.Require().NoError(err)
 	suite.priv = priv
 
-	suite.app = app.Setup(checkTx, func(app *app.EthermintApp, genesis simapp.GenesisState) simapp.GenesisState {
+	suite.app = app.EthSetup(checkTx, func(app *app.EthermintApp, genesis simapp.GenesisState) simapp.GenesisState {
 		if suite.enableFeemarket {
 			// setup feemarketGenesis params
 			feemarketGenesis := feemarkettypes.DefaultGenesisState()
@@ -151,20 +151,6 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.anteHandler = anteHandler
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.app.EvmKeeper.ChainID())
 
-	// fund signer acc to pay for tx fees
-	amt := sdk.NewInt(int64(math.Pow10(18) * 2))
-	err = testutil.FundAccount(
-		suite.app.BankKeeper,
-		suite.ctx,
-		suite.priv.PubKey().Address().Bytes(),
-		sdk.NewCoins(sdk.NewCoin(testutil.BaseDenom, amt)),
-	)
-	suite.Require().NoError(err)
-
-	header := suite.ctx.BlockHeader()
-	suite.ctx = suite.ctx.WithBlockHeight(header.Height - 1)
-	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, time.Second*0, nil)
-	suite.Require().NoError(err)
 }
 
 func (s *AnteTestSuite) BuildTestEthTx(
