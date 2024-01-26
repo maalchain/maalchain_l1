@@ -10,8 +10,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	utiltx "github.com/evmos/ethermint/testutil/tx"
-	"github.com/evmos/ethermint/x/erc20/types"
+	utiltx "github.com/xpladev/ethermint/testutil/tx"
+	"github.com/xpladev/ethermint/x/erc20/types"
 
 	"github.com/ethereum/go-ethereum/common"
 )

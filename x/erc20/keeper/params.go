@@ -18,7 +18,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 var isTrue = []byte("0x01")

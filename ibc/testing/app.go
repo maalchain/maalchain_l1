@@ -35,9 +35,9 @@ import (
 
 	ibcgotesting "github.com/cosmos/ibc-go/v6/testing"
 
-	ethermintapp "github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	ethermintapp "github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/types"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 )
 
 var DefaultTestingAppInit func() (ibcgotesting.TestingApp, map[string]json.RawMessage) = ethermintapp.SetupTestingApp

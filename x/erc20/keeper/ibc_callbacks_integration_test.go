@@ -11,13 +11,13 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/contracts"
-	"github.com/evmos/ethermint/ibc"
-	ibctesting "github.com/evmos/ethermint/ibc/testing"
-	"github.com/evmos/ethermint/testutil"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/contracts"
+	"github.com/xpladev/ethermint/ibc"
+	ibctesting "github.com/xpladev/ethermint/ibc/testing"
+	"github.com/xpladev/ethermint/testutil"
 
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/x/erc20/types"
 	. "github.com/onsi/ginkgo/v2"
 )
 

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package ethermint.erc20.v1;
 
-option go_package = "github.com/evmos/ethermint/x/erc20/types";
+option go_package = "github.com/xpladev/ethermint/x/erc20/types";
 
 // EventRegisterPair is an event emitted when a coin is registered.
 message EventRegisterPair {

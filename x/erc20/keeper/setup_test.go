@@ -14,10 +14,10 @@ import (
 	ibcgotesting "github.com/cosmos/ibc-go/v6/testing"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/ethermint/app"
-	ibctesting "github.com/evmos/ethermint/ibc/testing"
-	"github.com/evmos/ethermint/x/erc20/types"
-	evm "github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/app"
+	ibctesting "github.com/xpladev/ethermint/ibc/testing"
+	"github.com/xpladev/ethermint/x/erc20/types"
+	evm "github.com/xpladev/ethermint/x/evm/types"
 	"github.com/stretchr/testify/suite"
 )
 

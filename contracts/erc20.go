@@ -21,9 +21,9 @@ import (
 	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/common"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 var (

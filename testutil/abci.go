@@ -11,9 +11,9 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/testutil/tx"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/encoding"
+	"github.com/xpladev/ethermint/testutil/tx"
 )
 
 // Commit commits a block at a given time. Reminder: At the end of each

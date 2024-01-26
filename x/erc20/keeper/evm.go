@@ -29,11 +29,11 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/evmos/ethermint/server/config"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/server/config"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 
-	"github.com/evmos/ethermint/contracts"
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/contracts"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 // DeployERC20Contract creates and deploys an ERC20 contract on the EVM with the

@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
 package main
 
 import (
@@ -47,16 +47,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	"github.com/evmos/ethermint/app"
-	ethermintclient "github.com/evmos/ethermint/client"
-	"github.com/evmos/ethermint/client/debug"
-	"github.com/evmos/ethermint/crypto/hd"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/ethereum/eip712"
-	"github.com/evmos/ethermint/server"
-	servercfg "github.com/evmos/ethermint/server/config"
-	srvflags "github.com/evmos/ethermint/server/flags"
-	ethermint "github.com/evmos/ethermint/types"
+	"github.com/xpladev/ethermint/app"
+	ethermintclient "github.com/xpladev/ethermint/client"
+	"github.com/xpladev/ethermint/client/debug"
+	"github.com/xpladev/ethermint/crypto/hd"
+	"github.com/xpladev/ethermint/encoding"
+	"github.com/xpladev/ethermint/ethereum/eip712"
+	"github.com/xpladev/ethermint/server"
+	servercfg "github.com/xpladev/ethermint/server/config"
+	srvflags "github.com/xpladev/ethermint/server/flags"
+	ethermint "github.com/xpladev/ethermint/types"
 )
 
 const EnvPrefix = "ETHERMINT"

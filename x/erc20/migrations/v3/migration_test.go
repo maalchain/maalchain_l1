@@ -5,13 +5,13 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/encoding"
-	v3 "github.com/evmos/ethermint/x/erc20/migrations/v3"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/encoding"
+	v3 "github.com/xpladev/ethermint/x/erc20/migrations/v3"
 
-	v3types "github.com/evmos/ethermint/x/erc20/migrations/v3/types"
+	v3types "github.com/xpladev/ethermint/x/erc20/migrations/v3/types"
 
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/testutil"

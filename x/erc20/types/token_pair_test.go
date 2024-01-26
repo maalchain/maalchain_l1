@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	utiltx "github.com/evmos/ethermint/testutil/tx"
-	"github.com/evmos/ethermint/x/erc20/types"
+	utiltx "github.com/xpladev/ethermint/testutil/tx"
+	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )

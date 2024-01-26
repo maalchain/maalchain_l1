@@ -13,11 +13,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	utiltx "github.com/evmos/ethermint/testutil/tx"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	utiltx "github.com/xpladev/ethermint/testutil/tx"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 
-	"github.com/evmos/ethermint/x/erc20/keeper"
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/x/erc20/keeper"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 const (

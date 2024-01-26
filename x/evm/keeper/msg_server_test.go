@@ -8,8 +8,8 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/evmos/ethermint/x/evm/statedb"
-	"github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/x/evm/statedb"
+	"github.com/xpladev/ethermint/x/evm/types"
 )
 
 func (suite *KeeperTestSuite) TestEthereumTx() {

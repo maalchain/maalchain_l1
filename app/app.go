@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
 package app
 
 import (
@@ -122,28 +122,28 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v6/modules/apps/27-interchain-accounts/types"
 
 	// unnamed import of statik for swagger UI support
-	_ "github.com/evmos/ethermint/client/docs/statik"
-	"github.com/evmos/ethermint/encoding"
+	_ "github.com/xpladev/ethermint/client/docs/statik"
+	"github.com/xpladev/ethermint/encoding"
 
-	"github.com/evmos/ethermint/app/ante"
-	"github.com/evmos/ethermint/ethereum/eip712"
-	srvflags "github.com/evmos/ethermint/server/flags"
-	ethermint "github.com/evmos/ethermint/types"
-	"github.com/evmos/ethermint/x/erc20"
-	erc20client "github.com/evmos/ethermint/x/erc20/client"
-	erc20keeper "github.com/evmos/ethermint/x/erc20/keeper"
-	erc20types "github.com/evmos/ethermint/x/erc20/types"
-	"github.com/evmos/ethermint/x/evm"
-	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	"github.com/evmos/ethermint/x/evm/vm/geth"
-	"github.com/evmos/ethermint/x/feemarket"
-	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
-	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+	"github.com/xpladev/ethermint/app/ante"
+	"github.com/xpladev/ethermint/ethereum/eip712"
+	srvflags "github.com/xpladev/ethermint/server/flags"
+	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/xpladev/ethermint/x/erc20"
+	erc20client "github.com/xpladev/ethermint/x/erc20/client"
+	erc20keeper "github.com/xpladev/ethermint/x/erc20/keeper"
+	erc20types "github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/x/evm"
+	evmkeeper "github.com/xpladev/ethermint/x/evm/keeper"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/x/evm/vm/geth"
+	"github.com/xpladev/ethermint/x/feemarket"
+	feemarketkeeper "github.com/xpladev/ethermint/x/feemarket/keeper"
+	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
 
 	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
-	"github.com/evmos/ethermint/x/ibc/transfer"
-	transferkeeper "github.com/evmos/ethermint/x/ibc/transfer/keeper"
+	"github.com/xpladev/ethermint/x/ibc/transfer"
+	transferkeeper "github.com/xpladev/ethermint/x/ibc/transfer/keeper"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"

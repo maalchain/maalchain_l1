@@ -15,12 +15,12 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
 
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/testutil"
-	"github.com/evmos/ethermint/x/erc20/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/testutil"
+	"github.com/xpladev/ethermint/x/erc20/types"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 )
 
 var _ = Describe("Performing EVM transactions", Ordered, func() {

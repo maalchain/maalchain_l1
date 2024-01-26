@@ -13,12 +13,12 @@ import (
 	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
 	"github.com/tendermint/tendermint/version"
 
-	utiltx "github.com/evmos/ethermint/testutil/tx"
-	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+	utiltx "github.com/xpladev/ethermint/testutil/tx"
+	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
 
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/x/erc20"
-	"github.com/evmos/ethermint/x/erc20/types"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/x/erc20"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 type GenesisTestSuite struct {
