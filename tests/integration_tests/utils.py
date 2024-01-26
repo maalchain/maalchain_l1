@@ -197,19 +197,17 @@ def send_transaction(w3, tx, key=KEYS["validator"], i=0):
         return send_transaction(w3, tx, key, i + 1)
 
 
-def send_txs(w3, cli, to, keys, params):
-    tx = {"to": to, "value": 10000} | params
+def send_txs(w3, txs):
     # use different sender accounts to be able be send concurrently
     raw_transactions = []
-    for key_from in keys:
-        signed = sign_transaction(w3, tx, key_from)
+    for key in txs:
+        signed = sign_transaction(w3, txs[key], key)
         raw_transactions.append(signed.rawTransaction)
     # wait block update
-    block_num = wait_for_new_blocks(cli, 1, sleep=0.1)
-    print(f"block number start: {block_num}")
+    w3_wait_for_new_blocks(w3, 1, sleep=0.1)
     # send transactions
     sended_hash_set = send_raw_transactions(w3, raw_transactions)
-    return block_num, sended_hash_set
+    return sended_hash_set
 
 
 def send_successful_transaction(w3, i=0):
