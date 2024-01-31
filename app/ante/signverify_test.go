@@ -13,12 +13,25 @@ import (
 func (suite AnteTestSuite) TestEthSigVerificationDecorator() {
 	addr, privKey := tests.NewAddrKey()
 
-	signedTx := evmtypes.NewTxContract(suite.app.EvmKeeper.ChainID(), 1, big.NewInt(10), 1000, big.NewInt(1), nil, nil, nil, nil)
+	ethContractCreationTxParams := &evmtypes.EvmTxArgs{
+		ChainID:  suite.app.EvmKeeper.ChainID(),
+		Nonce:    1,
+		Amount:   big.NewInt(10),
+		GasLimit: 1000,
+		GasPrice: big.NewInt(1),
+	}
+	signedTx := evmtypes.NewTx(ethContractCreationTxParams)
 	signedTx.From = addr.Hex()
 	err := signedTx.Sign(suite.ethSigner, tests.NewSigner(privKey))
 	suite.Require().NoError(err)
 
-	unprotectedTx := evmtypes.NewTxContract(nil, 1, big.NewInt(10), 1000, big.NewInt(1), nil, nil, nil, nil)
+	uprotectedEthTxParams := &evmtypes.EvmTxArgs{
+		Nonce:    1,
+		Amount:   big.NewInt(10),
+		GasLimit: 1000,
+		GasPrice: big.NewInt(1),
+	}
+	unprotectedTx := evmtypes.NewTx(uprotectedEthTxParams)
 	unprotectedTx.From = addr.Hex()
 	err = unprotectedTx.Sign(ethtypes.HomesteadSigner{}, tests.NewSigner(privKey))
 	suite.Require().NoError(err)
@@ -34,7 +47,13 @@ func (suite AnteTestSuite) TestEthSigVerificationDecorator() {
 		{"invalid transaction type", &invalidTx{}, false, false, false},
 		{
 			"invalid sender",
-			evmtypes.NewTx(suite.app.EvmKeeper.ChainID(), 1, &addr, big.NewInt(10), 1000, big.NewInt(1), nil, nil, nil, nil),
+			evmtypes.NewTx(&evmtypes.EvmTxArgs{
+				To:       &addr,
+				Nonce:    1,
+				Amount:   big.NewInt(10),
+				GasLimit: 1000,
+				GasPrice: big.NewInt(1),
+			}),
 			true,
 			false,
 			false,

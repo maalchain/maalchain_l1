@@ -136,7 +136,6 @@ import (
 	"github.com/xpladev/ethermint/x/evm"
 	evmkeeper "github.com/xpladev/ethermint/x/evm/keeper"
 	evmtypes "github.com/xpladev/ethermint/x/evm/types"
-	"github.com/xpladev/ethermint/x/evm/vm/geth"
 	"github.com/xpladev/ethermint/x/feemarket"
 	feemarketkeeper "github.com/xpladev/ethermint/x/feemarket/keeper"
 	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
@@ -449,7 +448,7 @@ func NewEthermintApp(
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper,
-		nil, geth.NewEVM, tracer, evmSs,
+		tracer, evmSs,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(

@@ -9,10 +9,10 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
+	proto "github.com/gogo/protobuf/proto"
 	"github.com/xpladev/ethermint/app"
 	"github.com/xpladev/ethermint/encoding"
 	evmtypes "github.com/xpladev/ethermint/x/evm/types"
-	proto "github.com/gogo/protobuf/proto"
 
 	"github.com/xpladev/ethermint/tests"
 
@@ -60,7 +60,16 @@ func TestUnwrapEthererumMsg(t *testing.T) {
 	_, err = evmtypes.UnwrapEthereumMsg(&tx, common.Hash{})
 	require.NotNil(t, err)
 
-	msg := evmtypes.NewTx(big.NewInt(1), 0, &common.Address{}, big.NewInt(0), 0, big.NewInt(0), nil, nil, []byte{}, nil)
+	evmTxParams := &evmtypes.EvmTxArgs{
+		ChainID:  big.NewInt(1),
+		Nonce:    0,
+		To:       &common.Address{},
+		Amount:   big.NewInt(0),
+		GasLimit: 0,
+		GasPrice: big.NewInt(0),
+		Input:    []byte{},
+	}
+	msg := evmtypes.NewTx(evmTxParams)
 	err = builder.SetMsgs(msg)
 
 	tx = builder.GetTx().(sdk.Tx)

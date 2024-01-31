@@ -8,17 +8,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmlog "github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 	"github.com/xpladev/ethermint/app"
 	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
 	evmenc "github.com/xpladev/ethermint/encoding"
 	"github.com/xpladev/ethermint/indexer"
 	"github.com/xpladev/ethermint/tests"
 	"github.com/xpladev/ethermint/x/evm/types"
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmlog "github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 )
 
 func TestKVIndexer(t *testing.T) {
@@ -29,9 +29,13 @@ func TestKVIndexer(t *testing.T) {
 	ethSigner := ethtypes.LatestSignerForChainID(nil)
 
 	to := common.BigToAddress(big.NewInt(1))
-	tx := types.NewTx(
-		nil, 0, &to, big.NewInt(1000), 21000, nil, nil, nil, nil, nil,
-	)
+	ethTxParams := types.EvmTxArgs{
+		Nonce:    0,
+		To:       &to,
+		Amount:   big.NewInt(1000),
+		GasLimit: 21000,
+	}
+	tx := types.NewTx(&ethTxParams)
 	tx.From = from.Hex()
 	require.NoError(t, tx.Sign(ethSigner, signer))
 	txHash := tx.AsTransaction().Hash()

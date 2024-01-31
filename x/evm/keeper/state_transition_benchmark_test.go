@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 	"github.com/stretchr/testify/require"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 )
 
 var templateAccessListTx = &ethtypes.AccessListTx{
@@ -46,7 +46,7 @@ func newSignedEthTx(
 	addr sdk.Address,
 	krSigner keyring.Signer,
 	ethSigner ethtypes.Signer,
-) (*evmtypes.MsgEthereumTx, error) {
+) (*ethtypes.Transaction, error) {
 	var ethTx *ethtypes.Transaction
 	switch txData := txData.(type) {
 	case *ethtypes.AccessListTx:
@@ -72,11 +72,7 @@ func newSignedEthTx(
 		return nil, err
 	}
 
-	var msg evmtypes.MsgEthereumTx
-	if err := msg.FromEthereumTx(ethTx); err != nil {
-		return nil, err
-	}
-	return &msg, nil
+	return ethTx, nil
 }
 
 func newEthMsgTx(
