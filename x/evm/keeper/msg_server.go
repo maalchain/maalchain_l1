@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
 package keeper
 
 import (
@@ -31,7 +31,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/x/evm/types"
 )
 
 var _ types.MsgServer = &Keeper{}
@@ -56,7 +56,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 		labels = append(labels, telemetry.NewLabel("execution", "call"))
 	}
 
-	response, err := k.ApplyTransaction(ctx, msg)
+	response, err := k.ApplyTransaction(ctx, tx)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "failed to apply transaction")
 	}

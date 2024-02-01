@@ -9,7 +9,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/evmos/ethermint/x/evm/statedb"
+	"github.com/xpladev/ethermint/x/evm/statedb"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -113,7 +113,7 @@ func (suite *StateDBTestSuite) TestAccountOverride() {
 	// test balance carry over when overwritten
 	amount := big.NewInt(1)
 
-	// init an EOA account, account overriden only happens on EOA account.
+	// init an EOA account, account overridden only happens on EOA account.
 	db.AddBalance(address, amount)
 	db.SetNonce(address, 1)
 

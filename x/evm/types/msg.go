@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
 package types
 
 import (
@@ -32,10 +32,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	"github.com/evmos/ethermint/types"
+	"github.com/xpladev/ethermint/types"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )
@@ -57,29 +56,13 @@ const (
 
 // NewTx returns a reference to a new Ethereum transaction message.
 func NewTx(
-	chainID *big.Int, nonce uint64, to *common.Address, amount *big.Int,
-	gasLimit uint64, gasPrice, gasFeeCap, gasTipCap *big.Int, input []byte, accesses *ethtypes.AccessList,
+	tx *EvmTxArgs,
 ) *MsgEthereumTx {
-	return newMsgEthereumTx(chainID, nonce, to, amount, gasLimit, gasPrice, gasFeeCap, gasTipCap, input, accesses)
-}
-
-// NewTxContract returns a reference to a new Ethereum transaction
-// message designated for contract creation.
-func NewTxContract(
-	chainID *big.Int,
-	nonce uint64,
-	amount *big.Int,
-	gasLimit uint64,
-	gasPrice, gasFeeCap, gasTipCap *big.Int,
-	input []byte,
-	accesses *ethtypes.AccessList,
-) *MsgEthereumTx {
-	return newMsgEthereumTx(chainID, nonce, nil, amount, gasLimit, gasPrice, gasFeeCap, gasTipCap, input, accesses)
+	return newMsgEthereumTx(tx)
 }
 
 func newMsgEthereumTx(
-	chainID *big.Int, nonce uint64, to *common.Address, amount *big.Int,
-	gasLimit uint64, gasPrice, gasFeeCap, gasTipCap *big.Int, input []byte, accesses *ethtypes.AccessList,
+	tx *EvmTxArgs,
 ) *MsgEthereumTx {
 	var (
 		cid, amt, gp *sdkmath.Int
@@ -87,60 +70,60 @@ func newMsgEthereumTx(
 		txData       TxData
 	)
 
-	if to != nil {
-		toAddr = to.Hex()
+	if tx.To != nil {
+		toAddr = tx.To.Hex()
 	}
 
-	if amount != nil {
-		amountInt := sdkmath.NewIntFromBigInt(amount)
+	if tx.Amount != nil {
+		amountInt := sdkmath.NewIntFromBigInt(tx.Amount)
 		amt = &amountInt
 	}
 
-	if chainID != nil {
-		chainIDInt := sdkmath.NewIntFromBigInt(chainID)
+	if tx.ChainID != nil {
+		chainIDInt := sdkmath.NewIntFromBigInt(tx.ChainID)
 		cid = &chainIDInt
 	}
 
-	if gasPrice != nil {
-		gasPriceInt := sdkmath.NewIntFromBigInt(gasPrice)
+	if tx.GasPrice != nil {
+		gasPriceInt := sdkmath.NewIntFromBigInt(tx.GasPrice)
 		gp = &gasPriceInt
 	}
 
 	switch {
-	case accesses == nil:
+	case tx.Accesses == nil:
 		txData = &LegacyTx{
-			Nonce:    nonce,
 			To:       toAddr,
 			Amount:   amt,
-			GasLimit: gasLimit,
 			GasPrice: gp,
-			Data:     input,
+			Nonce:    tx.Nonce,
+			GasLimit: tx.GasLimit,
+			Data:     tx.Input,
 		}
-	case accesses != nil && gasFeeCap != nil && gasTipCap != nil:
-		gtc := sdkmath.NewIntFromBigInt(gasTipCap)
-		gfc := sdkmath.NewIntFromBigInt(gasFeeCap)
+	case tx.Accesses != nil && tx.GasFeeCap != nil && tx.GasTipCap != nil:
+		gtc := sdkmath.NewIntFromBigInt(tx.GasTipCap)
+		gfc := sdkmath.NewIntFromBigInt(tx.GasFeeCap)
 
 		txData = &DynamicFeeTx{
 			ChainID:   cid,
-			Nonce:     nonce,
-			To:        toAddr,
 			Amount:    amt,
-			GasLimit:  gasLimit,
+			To:        toAddr,
 			GasTipCap: &gtc,
 			GasFeeCap: &gfc,
-			Data:      input,
-			Accesses:  NewAccessList(accesses),
+			Nonce:     tx.Nonce,
+			GasLimit:  tx.GasLimit,
+			Data:      tx.Input,
+			Accesses:  NewAccessList(tx.Accesses),
 		}
-	case accesses != nil:
+	case tx.Accesses != nil:
 		txData = &AccessListTx{
 			ChainID:  cid,
-			Nonce:    nonce,
+			Nonce:    tx.Nonce,
 			To:       toAddr,
 			Amount:   amt,
-			GasLimit: gasLimit,
+			GasLimit: tx.GasLimit,
 			GasPrice: gp,
-			Data:     input,
-			Accesses: NewAccessList(accesses),
+			Data:     tx.Input,
+			Accesses: NewAccessList(tx.Accesses),
 		}
 	default:
 	}
@@ -197,9 +180,16 @@ func (msg MsgEthereumTx) ValidateBasic() error {
 		return errorsmod.Wrap(err, "failed to unpack tx data")
 	}
 
+	gas := txData.GetGas()
+
 	// prevent txs with 0 gas to fill up the mempool
-	if txData.GetGas() == 0 {
+	if gas == 0 {
 		return errorsmod.Wrap(ErrInvalidGasLimit, "gas limit must not be zero")
+	}
+
+	// prevent gas limit from overflow
+	if g := new(big.Int).SetUint64(gas); !g.IsInt64() {
+		return errorsmod.Wrap(ErrGasOverflow, "gas limit must be less than math.MaxInt64")
 	}
 
 	if err := txData.Validate(); err != nil {
@@ -326,42 +316,7 @@ func (msg MsgEthereumTx) AsTransaction() *ethtypes.Transaction {
 
 // AsMessage creates an Ethereum core.Message from the msg fields
 func (msg MsgEthereumTx) AsMessage(signer ethtypes.Signer, baseFee *big.Int) (core.Message, error) {
-	txData, err := UnpackTxData(msg.Data)
-	if err != nil {
-		return nil, err
-	}
-
-	gasPrice, gasFeeCap, gasTipCap := txData.GetGasPrice(), txData.GetGasFeeCap(), txData.GetGasTipCap()
-	if baseFee != nil {
-		gasPrice = math.BigMin(gasPrice.Add(gasTipCap, baseFee), gasFeeCap)
-	}
-	var from common.Address
-	if len(msg.From) > 0 {
-		// user can't set arbitrary value in `From` field in transaction,
-		// the SigVerify ante handler will verify the signature and recover
-		// the sender address and populate the `From` field, so the other code can
-		// use it directly when available.
-		from = common.HexToAddress(msg.From)
-	} else {
-		// heavy path
-		from, err = signer.Sender(msg.AsTransaction())
-		if err != nil {
-			return nil, err
-		}
-	}
-	ethMsg := ethtypes.NewMessage(
-		from,
-		txData.GetTo(),
-		txData.GetNonce(),
-		txData.GetValue(),
-		txData.GetGas(),
-		gasPrice, gasFeeCap, gasTipCap,
-		txData.GetData(),
-		txData.GetAccessList(),
-		false,
-	)
-
-	return ethMsg, nil
+	return msg.AsTransaction().AsMessage(signer, baseFee)
 }
 
 // GetSender extracts the sender address from the signature values using the latest signer for the given chainID.

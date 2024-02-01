@@ -13,19 +13,19 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/tests"
-	"github.com/evmos/ethermint/testutil"
-	"github.com/evmos/ethermint/x/feemarket/types"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
+	"github.com/xpladev/ethermint/encoding"
+	"github.com/xpladev/ethermint/tests"
+	"github.com/xpladev/ethermint/testutil"
+	"github.com/xpladev/ethermint/x/feemarket/types"
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 )
 
 var _ = Describe("Feemarket", func() {
@@ -226,18 +226,18 @@ func buildEthTx(
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 	nonce := getNonce(from.Bytes())
 	data := make([]byte, 0)
-	msgEthereumTx := evmtypes.NewTx(
-		chainID,
-		nonce,
-		to,
-		nil,
-		gasLimit,
-		gasPrice,
-		gasFeeCap,
-		gasTipCap,
-		data,
-		accesses,
-	)
+	ethTxParams := &evmtypes.EvmTxArgs{
+		ChainID:   chainID,
+		To:        to,
+		Nonce:     nonce,
+		GasLimit:  gasLimit,
+		GasPrice:  gasPrice,
+		GasTipCap: gasTipCap,
+		GasFeeCap: gasFeeCap,
+		Accesses:  accesses,
+		Input:     data,
+	}
+	msgEthereumTx := evmtypes.NewTx(ethTxParams)
 	msgEthereumTx.From = from.String()
 	return msgEthereumTx
 }

@@ -18,15 +18,15 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
 
-	"github.com/evmos/ethermint/app"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/evmos/ethermint/crypto/hd"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/indexer"
-	"github.com/evmos/ethermint/rpc/backend/mocks"
-	rpctypes "github.com/evmos/ethermint/rpc/types"
-	"github.com/evmos/ethermint/tests"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/app"
+	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
+	"github.com/xpladev/ethermint/crypto/hd"
+	"github.com/xpladev/ethermint/encoding"
+	"github.com/xpladev/ethermint/indexer"
+	"github.com/xpladev/ethermint/rpc/backend/mocks"
+	rpctypes "github.com/xpladev/ethermint/rpc/types"
+	"github.com/xpladev/ethermint/tests"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 )
 
 type BackendTestSuite struct {
@@ -92,18 +92,15 @@ func (suite *BackendTestSuite) SetupTest() {
 
 // buildEthereumTx returns an example legacy Ethereum transaction
 func (suite *BackendTestSuite) buildEthereumTx() (*evmtypes.MsgEthereumTx, []byte) {
-	msgEthereumTx := evmtypes.NewTx(
-		suite.backend.chainID,
-		uint64(0),
-		&common.Address{},
-		big.NewInt(0),
-		100000,
-		big.NewInt(1),
-		nil,
-		nil,
-		nil,
-		nil,
-	)
+	ethTxParams := evmtypes.EvmTxArgs{
+		ChainID:  suite.backend.chainID,
+		Nonce:    uint64(0),
+		To:       &common.Address{},
+		Amount:   big.NewInt(0),
+		GasLimit: 100000,
+		GasPrice: big.NewInt(1),
+	}
+	msgEthereumTx := evmtypes.NewTx(&ethTxParams)
 
 	// A valid msg should have empty `From`
 	msgEthereumTx.From = ""

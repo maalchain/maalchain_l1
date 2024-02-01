@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
 package keeper
 
 import (
@@ -31,10 +31,9 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/tendermint/tendermint/libs/log"
 
-	ethermint "github.com/evmos/ethermint/types"
-	"github.com/evmos/ethermint/x/evm/statedb"
-	"github.com/evmos/ethermint/x/evm/types"
-	evm "github.com/evmos/ethermint/x/evm/vm"
+	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/xpladev/ethermint/x/evm/statedb"
+	"github.com/xpladev/ethermint/x/evm/types"
 )
 
 // Keeper grants access to the EVM module state and implements the go-ethereum StateDB interface.
@@ -71,11 +70,6 @@ type Keeper struct {
 	// EVM Hooks for tx post-processing
 	hooks types.EvmHooks
 
-	// custom stateless precompiled smart contracts
-	customPrecompiles evm.PrecompiledContracts
-
-	// evm constructor function
-	evmConstructor evm.Constructor
 	// Legacy subspace
 	ss paramstypes.Subspace
 }
@@ -89,8 +83,6 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	sk types.StakingKeeper,
 	fmk types.FeeMarketKeeper,
-	customPrecompiles evm.PrecompiledContracts,
-	evmConstructor evm.Constructor,
 	tracer string,
 	ss paramstypes.Subspace,
 ) *Keeper {
@@ -106,18 +98,16 @@ func NewKeeper(
 
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
 	return &Keeper{
-		cdc:               cdc,
-		authority:         authority,
-		accountKeeper:     ak,
-		bankKeeper:        bankKeeper,
-		stakingKeeper:     sk,
-		feeMarketKeeper:   fmk,
-		storeKey:          storeKey,
-		transientKey:      transientKey,
-		customPrecompiles: customPrecompiles,
-		evmConstructor:    evmConstructor,
-		tracer:            tracer,
-		ss:                ss,
+		cdc:             cdc,
+		authority:       authority,
+		accountKeeper:   ak,
+		bankKeeper:      bankKeeper,
+		stakingKeeper:   sk,
+		feeMarketKeeper: fmk,
+		storeKey:        storeKey,
+		transientKey:    transientKey,
+		tracer:          tracer,
+		ss:              ss,
 	}
 }
 
@@ -256,6 +246,13 @@ func (k *Keeper) SetHooks(eh types.EvmHooks) *Keeper {
 	}
 
 	k.hooks = eh
+	return k
+}
+
+// CleanHooks resets the hooks for the EVM module
+// NOTE: Should only be used for testing purposes
+func (k *Keeper) CleanHooks() *Keeper {
+	k.hooks = nil
 	return k
 }
 

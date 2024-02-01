@@ -14,9 +14,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/evmos/ethermint/ethereum/eip712"
-	"github.com/evmos/ethermint/testutil"
-	utiltx "github.com/evmos/ethermint/testutil/tx"
+	"github.com/xpladev/ethermint/ethereum/eip712"
+	"github.com/xpladev/ethermint/testutil"
+	utiltx "github.com/xpladev/ethermint/testutil/tx"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -37,7 +37,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -45,13 +45,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/evmos/ethermint/app"
-	ante "github.com/evmos/ethermint/app/ante"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/tests"
-	"github.com/evmos/ethermint/x/evm/statedb"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+	"github.com/xpladev/ethermint/app"
+	ante "github.com/xpladev/ethermint/app/ante"
+	"github.com/xpladev/ethermint/encoding"
+	"github.com/xpladev/ethermint/tests"
+	"github.com/xpladev/ethermint/x/evm/statedb"
+	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
@@ -84,7 +84,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.Require().NoError(err)
 	suite.priv = priv
 
-	suite.app = app.Setup(checkTx, func(app *app.EthermintApp, genesis simapp.GenesisState) simapp.GenesisState {
+	suite.app = app.EthSetup(checkTx, func(app *app.EthermintApp, genesis simapp.GenesisState) simapp.GenesisState {
 		if suite.enableFeemarket {
 			// setup feemarketGenesis params
 			feemarketGenesis := feemarkettypes.DefaultGenesisState()
@@ -151,20 +151,6 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.anteHandler = anteHandler
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.app.EvmKeeper.ChainID())
 
-	// fund signer acc to pay for tx fees
-	amt := sdk.NewInt(int64(math.Pow10(18) * 2))
-	err = testutil.FundAccount(
-		suite.app.BankKeeper,
-		suite.ctx,
-		suite.priv.PubKey().Address().Bytes(),
-		sdk.NewCoins(sdk.NewCoin(testutil.BaseDenom, amt)),
-	)
-	suite.Require().NoError(err)
-
-	header := suite.ctx.BlockHeader()
-	suite.ctx = suite.ctx.WithBlockHeight(header.Height - 1)
-	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, time.Second*0, nil)
-	suite.Require().NoError(err)
 }
 
 func (s *AnteTestSuite) BuildTestEthTx(
@@ -183,18 +169,20 @@ func (s *AnteTestSuite) BuildTestEthTx(
 		common.BytesToAddress(from.Bytes()),
 	)
 
-	msgEthereumTx := evmtypes.NewTx(
-		chainID,
-		nonce,
-		&to,
-		amount,
-		TestGasLimit,
-		gasPrice,
-		gasFeeCap,
-		gasTipCap,
-		input,
-		accesses,
-	)
+	ethTxParams := &evmtypes.EvmTxArgs{
+		ChainID:   chainID,
+		Nonce:     nonce,
+		To:        &to,
+		Amount:    amount,
+		GasLimit:  TestGasLimit,
+		GasPrice:  gasPrice,
+		GasFeeCap: gasFeeCap,
+		GasTipCap: gasTipCap,
+		Input:     input,
+		Accesses:  accesses,
+	}
+
+	msgEthereumTx := evmtypes.NewTx(ethTxParams)
 	msgEthereumTx.From = from.String()
 	return msgEthereumTx
 }

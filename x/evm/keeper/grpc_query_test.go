@@ -13,14 +13,14 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	ethlogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/evmos/ethermint/tests"
-	"github.com/evmos/ethermint/x/evm/statedb"
+	"github.com/xpladev/ethermint/tests"
+	"github.com/xpladev/ethermint/x/evm/statedb"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/evmos/ethermint/server/config"
-	ethermint "github.com/evmos/ethermint/types"
-	"github.com/evmos/ethermint/x/evm/types"
+	"github.com/xpladev/ethermint/server/config"
+	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/xpladev/ethermint/x/evm/types"
 )
 
 // Not valid Ethereum address
@@ -901,16 +901,13 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 				chainID := suite.app.EvmKeeper.ChainID()
 				nonce := suite.app.EvmKeeper.GetNonce(suite.ctx, suite.address)
 				data := types.ERC20Contract.Bin
-				contractTx := types.NewTxContract(
-					chainID,
-					nonce,
-					nil,                             // amount
-					ethparams.TxGasContractCreation, // gasLimit
-					nil,                             // gasPrice
-					nil, nil,
-					data, // input
-					nil,  // accesses
-				)
+				ethTxParams := &types.EvmTxArgs{
+					ChainID:  chainID,
+					Nonce:    nonce,
+					GasLimit: ethparams.TxGasContractCreation,
+					Input:    data,
+				}
+				contractTx := types.NewTx(ethTxParams)
 
 				predecessors = append(predecessors, contractTx)
 				suite.Commit()
