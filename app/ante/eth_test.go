@@ -284,13 +284,13 @@ func (suite AnteTestSuite) TestEthGasConsumeDecorator() {
 		{
 			"success - gas limit on gasMeter is set on ReCheckTx mode",
 			dynamicFeeTx,
-			0, // for reCheckTX mode, gas limit should be set to 0
+			tx2GasLimit, // it's capped
 			func() {
 				vmdb.AddBalance(addr, big.NewInt(1001000000000000))
 				suite.ctx = suite.ctx.WithIsReCheckTx(true)
 			},
 			true, false,
-			0,
+			1,
 		},
 	}
 

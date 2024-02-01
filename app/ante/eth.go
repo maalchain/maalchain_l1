@@ -146,18 +146,6 @@ func NewEthGasConsumeDecorator(
 // - gas limit is greater than the block gas meter limit
 func (egcd EthGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	gasWanted := uint64(0)
-	// gas consumption limit already checked during CheckTx so there's no need to
-	// verify it again during ReCheckTx
-	if ctx.IsReCheckTx() {
-		// Use new context with gasWanted = 0
-		// Otherwise, there's an error on txmempool.postCheck (tendermint)
-		// that is not bubbled up. Thus, the Tx never runs on DeliverMode
-		// Error: "gas wanted -1 is negative"
-		// For more information, see issue #1554
-		// https://github.com/evmos/ethermint/issues/1554
-		newCtx := ctx.WithGasMeter(ethermint.NewInfiniteGasMeterWithLimit(gasWanted))
-		return next(newCtx, tx, simulate)
-	}
 
 	blockHeight := big.NewInt(ctx.BlockHeight())
 	homestead := egcd.ethCfg.IsHomestead(blockHeight)
@@ -179,6 +167,12 @@ func (egcd EthGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 			return ctx, errorsmod.Wrap(err, "failed to unpack tx data")
 		}
 
+		priority := evmtypes.GetTxPriority(txData, egcd.baseFee)
+
+		if priority < minPriority {
+			minPriority = priority
+		}
+
 		if ctx.IsCheckTx() && egcd.maxGasWanted != 0 {
 			// We can't trust the tx gas limit, because we'll refund the unused gas.
 			if txData.GetGas() > egcd.maxGasWanted {
@@ -188,6 +182,12 @@ func (egcd EthGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 			}
 		} else {
 			gasWanted += txData.GetGas()
+		}
+
+		// user balance is already checked during CheckTx so there's no need to
+		// verify it again during ReCheckTx
+		if ctx.IsReCheckTx() {
+			continue
 		}
 
 		fees, err := keeper.VerifyFee(txData, egcd.evmDenom, egcd.baseFee, homestead, istanbul, shanghai, ctx.IsCheckTx())
@@ -206,12 +206,6 @@ func (egcd EthGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 				sdk.NewAttribute(sdk.AttributeKeyFee, fees.String()),
 			),
 		)
-
-		priority := evmtypes.GetTxPriority(txData, egcd.baseFee)
-
-		if priority < minPriority {
-			minPriority = priority
-		}
 	}
 
 	ctx.EventManager().EmitEvents(events)
