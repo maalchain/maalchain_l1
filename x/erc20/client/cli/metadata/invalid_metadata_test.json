@@ -4,18 +4,18 @@
       "description": 1,
       "denom_units": [
         {
-          "denom": "aevmos",
+          "denom": "aphoton",
           "exponent": 0
         },
         {
-          "denom": "evmos",
+          "denom": "photon",
           "exponent": 18
         }
       ],
-      "base": "aevmos",
-      "display": "aevmos",
-      "name": "aevmos",
-      "symbol": "EVMOS"
+      "base": "aphoton",
+      "display": "aphoton",
+      "name": "aphoton",
+      "symbol": "PHOTON"
     }
   ]
 }

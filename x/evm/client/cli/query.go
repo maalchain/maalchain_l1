@@ -16,8 +16,8 @@
 package cli
 
 import (
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
 	"github.com/spf13/cobra"
+	rpctypes "github.com/xpladev/ethermint/rpc/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

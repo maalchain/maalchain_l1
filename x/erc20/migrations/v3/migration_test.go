@@ -11,8 +11,8 @@ import (
 
 	v3types "github.com/xpladev/ethermint/x/erc20/migrations/v3/types"
 
-	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/stretchr/testify/require"
+	"github.com/xpladev/ethermint/x/erc20/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"

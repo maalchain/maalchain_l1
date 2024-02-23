@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	rand "github.com/tendermint/tendermint/libs/rand"
+	rand "github.com/cometbft/cometbft/libs/rand"
 
-	"github.com/xpladev/ethermint/ethereum/eip712"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
+	"github.com/xpladev/ethermint/ethereum/eip712"
 )
 
 type EIP712FuzzTestParams struct {

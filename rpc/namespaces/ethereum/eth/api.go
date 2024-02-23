@@ -22,7 +22,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -35,8 +35,8 @@ import (
 	evmtypes "github.com/xpladev/ethermint/x/evm/types"
 )
 
-// The Ethereum API allows applications to connect to an Evmos node that is
-// part of the Evmos blockchain. Developers can interact with on-chain EVM data
+// The Ethereum API allows applications to connect to an Ethermint node that is
+// part of the Ethermint blockchain. Developers can interact with on-chain EVM data
 // and send different types of transactions to the network by utilizing the
 // endpoints provided by the API. The API follows a JSON-RPC standard. If not
 // otherwise specified, the interface is derived from the Alchemy Ethereum API:

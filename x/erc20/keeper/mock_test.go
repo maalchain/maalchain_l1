@@ -8,10 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/stretchr/testify/mock"
 	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/xpladev/ethermint/x/evm/statedb"
 	evm "github.com/xpladev/ethermint/x/evm/types"
-	"github.com/stretchr/testify/mock"
 )
 
 var _ types.EVMKeeper = &MockEVMKeeper{}

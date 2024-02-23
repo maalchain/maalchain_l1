@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/stretchr/testify/require"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 func TestSanitizeERC20Name(t *testing.T) {
@@ -60,37 +60,37 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"equal metadata",
 			banktypes.Metadata{
-				Base:        "aevmos",
-				Display:     "evmos",
-				Name:        "Evmos",
-				Symbol:      "EVMOS",
-				Description: "EVM, staking and governance denom of Evmos",
+				Base:        "aphoton",
+				Display:     "photon",
+				Name:        "Photon",
+				Symbol:      "PHOTON",
+				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aevmos",
+						Denom:    "aphoton",
 						Exponent: 0,
-						Aliases:  []string{"atto evmos"},
+						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "evmos",
+						Denom:    "photon",
 						Exponent: 18,
 					},
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aevmos",
-				Display:     "evmos",
-				Name:        "Evmos",
-				Symbol:      "EVMOS",
-				Description: "EVM, staking and governance denom of Evmos",
+				Base:        "aphoton",
+				Display:     "photon",
+				Name:        "Photon",
+				Symbol:      "PHOTON",
+				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aevmos",
+						Denom:    "aphoton",
 						Exponent: 0,
-						Aliases:  []string{"atto evmos"},
+						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "evmos",
+						Denom:    "photon",
 						Exponent: 18,
 					},
 				},
@@ -100,44 +100,44 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different base field",
 			banktypes.Metadata{
-				Base: "aevmos",
+				Base: "aphoton",
 			},
 			banktypes.Metadata{
-				Base: "taevmos",
+				Base: "taphoton",
 			},
 			true,
 		},
 		{
 			"different denom units length",
 			banktypes.Metadata{
-				Base:        "aevmos",
-				Display:     "evmos",
-				Name:        "Evmos",
-				Symbol:      "EVMOS",
-				Description: "EVM, staking and governance denom of Evmos",
+				Base:        "aphoton",
+				Display:     "photon",
+				Name:        "Photon",
+				Symbol:      "PHOTON",
+				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aevmos",
+						Denom:    "aphoton",
 						Exponent: 0,
-						Aliases:  []string{"atto evmos"},
+						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "evmos",
+						Denom:    "photon",
 						Exponent: 18,
 					},
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aevmos",
-				Display:     "evmos",
-				Name:        "Evmos",
-				Symbol:      "EVMOS",
-				Description: "EVM, staking and governance denom of Evmos",
+				Base:        "aphoton",
+				Display:     "photon",
+				Name:        "Photon",
+				Symbol:      "PHOTON",
+				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aevmos",
+						Denom:    "aphoton",
 						Exponent: 0,
-						Aliases:  []string{"atto evmos"},
+						Aliases:  []string{"atto photon"},
 					},
 				},
 			},
@@ -146,47 +146,47 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different denom units",
 			banktypes.Metadata{
-				Base:        "aevmos",
-				Display:     "evmos",
-				Name:        "Evmos",
-				Symbol:      "EVMOS",
-				Description: "EVM, staking and governance denom of Evmos",
+				Base:        "aphoton",
+				Display:     "photon",
+				Name:        "Photon",
+				Symbol:      "PHOTON",
+				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aevmos",
+						Denom:    "aphoton",
 						Exponent: 0,
-						Aliases:  []string{"atto evmos"},
+						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "uevmos",
+						Denom:    "uphoton",
 						Exponent: 12,
-						Aliases:  []string{"micro evmos"},
+						Aliases:  []string{"micro photon"},
 					},
 					{
-						Denom:    "evmos",
+						Denom:    "photon",
 						Exponent: 18,
 					},
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aevmos",
-				Display:     "evmos",
-				Name:        "Evmos",
-				Symbol:      "EVMOS",
-				Description: "EVM, staking and governance denom of Evmos",
+				Base:        "aphoton",
+				Display:     "photon",
+				Name:        "Photon",
+				Symbol:      "PHOTON",
+				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aevmos",
+						Denom:    "aphoton",
 						Exponent: 0,
-						Aliases:  []string{"atto evmos"},
+						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "Uevmos",
+						Denom:    "Uphoton",
 						Exponent: 12,
-						Aliases:  []string{"micro evmos"},
+						Aliases:  []string{"micro photon"},
 					},
 					{
-						Denom:    "evmos",
+						Denom:    "photon",
 						Exponent: 18,
 					},
 				},
@@ -221,25 +221,25 @@ func TestEqualAliases(t *testing.T) {
 		{
 			"different lengths",
 			[]string{},
-			[]string{"atto evmos"},
+			[]string{"atto photon"},
 			false,
 		},
 		{
 			"different values",
-			[]string{"attoevmos"},
-			[]string{"atto evmos"},
+			[]string{"attophoton"},
+			[]string{"atto photon"},
 			false,
 		},
 		{
 			"same values, unsorted",
-			[]string{"atto evmos", "aevmos"},
-			[]string{"aevmos", "atto evmos"},
+			[]string{"atto photon", "aphoton"},
+			[]string{"aphoton", "atto photon"},
 			false,
 		},
 		{
 			"same values, sorted",
-			[]string{"aevmos", "atto evmos"},
-			[]string{"aevmos", "atto evmos"},
+			[]string{"aphoton", "atto photon"},
+			[]string{"aphoton", "atto photon"},
 			true,
 		},
 	}

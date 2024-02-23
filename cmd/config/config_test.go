@@ -3,8 +3,8 @@ package config
 import (
 	"testing"
 
-	ethermint "github.com/xpladev/ethermint/types"
 	"github.com/stretchr/testify/require"
+	ethermint "github.com/xpladev/ethermint/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	sdk "github.com/cosmos/cosmos-sdk/types"

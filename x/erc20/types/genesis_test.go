@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/stretchr/testify/suite"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 type GenesisTestSuite struct {

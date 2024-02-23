@@ -6,12 +6,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+	"github.com/stretchr/testify/mock"
 	erc20types "github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/xpladev/ethermint/x/ibc/transfer/keeper"
-	"github.com/stretchr/testify/mock"
 )
 
 func (suite *KeeperTestSuite) TestTransfer() {
@@ -30,9 +30,9 @@ func (suite *KeeperTestSuite) TestTransfer() {
 			"pass - no token pair",
 			func() *types.MsgTransfer {
 				senderAcc := sdk.AccAddress(suite.address.Bytes())
-				transferMsg := types.NewMsgTransfer("transfer", "channel-0", sdk.NewCoin("aevmos", sdk.NewInt(10)), senderAcc.String(), "", timeoutHeight, 0, "")
+				transferMsg := types.NewMsgTransfer("transfer", "channel-0", sdk.NewCoin("aphoton", sdk.NewInt(10)), senderAcc.String(), "", timeoutHeight, 0, "")
 
-				coins := sdk.NewCoins(sdk.NewCoin("aevmos", sdk.NewInt(10)))
+				coins := sdk.NewCoins(sdk.NewCoin("aphoton", sdk.NewInt(10)))
 				err := suite.app.BankKeeper.MintCoins(suite.ctx, erc20types.ModuleName, coins)
 				suite.Require().NoError(err)
 				err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, erc20types.ModuleName, senderAcc, coins)

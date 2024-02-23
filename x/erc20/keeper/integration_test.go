@@ -10,10 +10,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
 
@@ -100,9 +100,9 @@ var _ = Describe("ERC20:", Ordered, func() {
 	BeforeEach(func() {
 		s.SetupTest()
 
-		tallyParams := s.app.GovKeeper.GetTallyParams(s.ctx)
+		tallyParams := s.app.GovKeeper.GetParams(s.ctx)
 		tallyParams.Quorum = "0.0000000001"
-		s.app.GovKeeper.SetTallyParams(s.ctx, tallyParams)
+		s.app.GovKeeper.SetParams(s.ctx, tallyParams)
 	})
 
 	Describe("Submitting a token pair proposal through governance", func() {
@@ -365,31 +365,31 @@ var _ = Describe("ERC20:", Ordered, func() {
 	})
 })
 
-func submitRegisterCoinProposal(ctx sdk.Context, appEvmos *app.EthermintApp, pk *ethsecp256k1.PrivKey, metadata []banktypes.Metadata) (id uint64, err error) {
+func submitRegisterCoinProposal(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256k1.PrivKey, metadata []banktypes.Metadata) (id uint64, err error) {
 	content := types.NewRegisterCoinProposal("test Coin", "foo", metadata...)
-	return testutil.SubmitProposal(ctx, appEvmos, pk, content, 8)
+	return testutil.SubmitProposal(ctx, appEthermint, pk, content, 8)
 }
 
-func submitRegisterERC20Proposal(ctx sdk.Context, appEvmos *app.EthermintApp, pk *ethsecp256k1.PrivKey, addrs []string) (id uint64, err error) {
+func submitRegisterERC20Proposal(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256k1.PrivKey, addrs []string) (id uint64, err error) {
 	content := types.NewRegisterERC20Proposal("test token", "foo", addrs...)
-	return testutil.SubmitProposal(ctx, appEvmos, pk, content, 8)
+	return testutil.SubmitProposal(ctx, appEthermint, pk, content, 8)
 }
 
-func convertCoin(ctx sdk.Context, appEvmos *app.EthermintApp, pk *ethsecp256k1.PrivKey, coin sdk.Coin) {
+func convertCoin(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256k1.PrivKey, coin sdk.Coin) {
 	addrBz := pk.PubKey().Address().Bytes()
 
 	convertCoinMsg := types.NewMsgConvertCoin(coin, common.BytesToAddress(addrBz), sdk.AccAddress(addrBz))
-	res, err := testutil.DeliverTx(ctx, appEvmos, pk, nil, convertCoinMsg)
+	res, err := testutil.DeliverTx(ctx, appEthermint, pk, nil, convertCoinMsg)
 	s.Require().NoError(err)
 
 	Expect(res.IsOK()).To(BeTrue(), "failed to convert coin: %s", res.Log)
 }
 
-func convertERC20(ctx sdk.Context, appEvmos *app.EthermintApp, pk *ethsecp256k1.PrivKey, amt math.Int, contract common.Address) {
+func convertERC20(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256k1.PrivKey, amt math.Int, contract common.Address) {
 	addrBz := pk.PubKey().Address().Bytes()
 
 	convertERC20Msg := types.NewMsgConvertERC20(amt, sdk.AccAddress(addrBz), contract, common.BytesToAddress(addrBz))
-	res, err := testutil.DeliverTx(ctx, appEvmos, pk, nil, convertERC20Msg)
+	res, err := testutil.DeliverTx(ctx, appEthermint, pk, nil, convertERC20Msg)
 	s.Require().NoError(err)
 	Expect(res.IsOK()).To(BeTrue(), "failed to convert ERC20: %s", res.Log)
 }

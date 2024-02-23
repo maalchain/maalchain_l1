@@ -7,9 +7,9 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/mock"
 	utiltx "github.com/xpladev/ethermint/testutil/tx"
 	evmtypes "github.com/xpladev/ethermint/x/evm/types"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/xpladev/ethermint/contracts"
 	"github.com/xpladev/ethermint/x/erc20/keeper"

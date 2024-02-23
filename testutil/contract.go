@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -24,15 +24,15 @@ import (
 // compiled contract data and constructor arguments
 func DeployContract(
 	ctx sdk.Context,
-	evmosApp *app.EthermintApp,
+	ethermintApp *app.EthermintApp,
 	priv cryptotypes.PrivKey,
 	queryClientEvm evm.QueryClient,
 	contract evm.CompiledContract,
 	constructorArgs ...interface{},
 ) (common.Address, error) {
-	chainID := evmosApp.EvmKeeper.ChainID()
+	chainID := ethermintApp.EvmKeeper.ChainID()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
-	nonce := evmosApp.EvmKeeper.GetNonce(ctx, from)
+	nonce := ethermintApp.EvmKeeper.GetNonce(ctx, from)
 
 	ctorArgs, err := contract.ABI.Pack("", constructorArgs...)
 	if err != nil {
@@ -49,19 +49,19 @@ func DeployContract(
 		ChainID:   chainID,
 		Nonce:     nonce,
 		GasLimit:  gas,
-		GasFeeCap: evmosApp.FeeMarketKeeper.GetBaseFee(ctx),
+		GasFeeCap: ethermintApp.FeeMarketKeeper.GetBaseFee(ctx),
 		GasTipCap: big.NewInt(1),
 		Input:     data,
 		Accesses:  &ethtypes.AccessList{},
 	})
 	msgEthereumTx.From = from.String()
 
-	res, err := DeliverEthTx(evmosApp, priv, msgEthereumTx)
+	res, err := DeliverEthTx(ethermintApp, priv, msgEthereumTx)
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	if _, err := CheckEthTxResponse(res, evmosApp.AppCodec()); err != nil {
+	if _, err := CheckEthTxResponse(res, ethermintApp.AppCodec()); err != nil {
 		return common.Address{}, err
 	}
 
@@ -72,14 +72,14 @@ func DeployContract(
 // with the provided factoryAddress
 func DeployContractWithFactory(
 	ctx sdk.Context,
-	evmosApp *app.EthermintApp,
+	ethermintApp *app.EthermintApp,
 	priv cryptotypes.PrivKey,
 	factoryAddress common.Address,
 ) (common.Address, abci.ResponseDeliverTx, error) {
-	chainID := evmosApp.EvmKeeper.ChainID()
+	chainID := ethermintApp.EvmKeeper.ChainID()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
-	factoryNonce := evmosApp.EvmKeeper.GetNonce(ctx, factoryAddress)
-	nonce := evmosApp.EvmKeeper.GetNonce(ctx, from)
+	factoryNonce := ethermintApp.EvmKeeper.GetNonce(ctx, factoryAddress)
+	nonce := ethermintApp.EvmKeeper.GetNonce(ctx, from)
 
 	msgEthereumTx := evm.NewTx(&evm.EvmTxArgs{
 		ChainID:  chainID,
@@ -90,12 +90,12 @@ func DeployContractWithFactory(
 	})
 	msgEthereumTx.From = from.String()
 
-	res, err := DeliverEthTx(evmosApp, priv, msgEthereumTx)
+	res, err := DeliverEthTx(ethermintApp, priv, msgEthereumTx)
 	if err != nil {
 		return common.Address{}, abci.ResponseDeliverTx{}, err
 	}
 
-	if _, err := CheckEthTxResponse(res, evmosApp.AppCodec()); err != nil {
+	if _, err := CheckEthTxResponse(res, ethermintApp.AppCodec()); err != nil {
 		return common.Address{}, abci.ResponseDeliverTx{}, err
 	}
 

@@ -20,19 +20,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xpladev/ethermint/server/config"
 	"github.com/gorilla/mux"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/spf13/cobra"
+	"github.com/xpladev/ethermint/server/config"
 	"golang.org/x/net/netutil"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/version"
 
-	tmcmd "github.com/tendermint/tendermint/cmd/cometbft/commands"
-	tmlog "github.com/tendermint/tendermint/libs/log"
-	rpcclient "github.com/tendermint/tendermint/rpc/jsonrpc/client"
+	tmcmd "github.com/cometbft/cometbft/cmd/cometbft/commands"
+	tmlog "github.com/cometbft/cometbft/libs/log"
+	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )
 
 // AddCommands adds server commands

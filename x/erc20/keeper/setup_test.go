@@ -11,14 +11,14 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibcgotesting "github.com/cosmos/ibc-go/v6/testing"
+	ibcgotesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/suite"
 	"github.com/xpladev/ethermint/app"
 	ibctesting "github.com/xpladev/ethermint/ibc/testing"
 	"github.com/xpladev/ethermint/x/erc20/types"
 	evm "github.com/xpladev/ethermint/x/evm/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {
@@ -40,24 +40,24 @@ type KeeperTestSuite struct {
 	coordinator *ibcgotesting.Coordinator
 
 	// testing chains used for convenience and readability
-	EvmosChain      *ibcgotesting.TestChain
+	EthermintChain  *ibcgotesting.TestChain
 	IBCOsmosisChain *ibcgotesting.TestChain
 	IBCCosmosChain  *ibcgotesting.TestChain
 
-	pathOsmosisEvmos  *ibctesting.Path
-	pathCosmosEvmos   *ibctesting.Path
-	pathOsmosisCosmos *ibctesting.Path
+	pathOsmosisEthermint *ibctesting.Path
+	pathCosmosEthermint  *ibctesting.Path
+	pathOsmosisCosmos    *ibctesting.Path
 
 	suiteIBCTesting bool
 }
 
 var (
 	s *KeeperTestSuite
-	// sendAndReceiveMsgFee corresponds to the fees paid on Evmos chain when calling the SendAndReceive function
+	// sendAndReceiveMsgFee corresponds to the fees paid on Ethermint chain when calling the SendAndReceive function
 	// This function makes 3 cosmos txs under the hood
 	sendAndReceiveMsgFee = sdk.NewInt(ibctesting.DefaultFeeAmt * 3)
-	// sendBackCoinsFee corresponds to the fees paid on Evmos chain when calling the SendBackCoins function
-	// or calling the SendAndReceive from another chain to Evmos
+	// sendBackCoinsFee corresponds to the fees paid on Ethermint chain when calling the SendBackCoins function
+	// or calling the SendAndReceive from another chain to Ethermint
 	// This function makes 2 cosmos txs under the hood
 	sendBackCoinsFee = sdk.NewInt(ibctesting.DefaultFeeAmt * 2)
 )

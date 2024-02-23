@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 	"github.com/xpladev/ethermint/tests"
 	"github.com/xpladev/ethermint/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIsEmptyHash(t *testing.T) {

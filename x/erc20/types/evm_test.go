@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	"github.com/xpladev/ethermint/x/erc20/types"
 	"github.com/stretchr/testify/require"
+	"github.com/xpladev/ethermint/x/erc20/types"
 )
 
 func TestNewERC20Data(t *testing.T) {

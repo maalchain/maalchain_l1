@@ -1,7 +1,7 @@
 package ibc
 
 import (
-	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 )
 
 var (
@@ -17,11 +17,11 @@ var (
 	}
 	UatomIbcdenom = UatomDenomtrace.IBCDenom()
 
-	UevmosDenomtrace = transfertypes.DenomTrace{
+	UethermintDenomtrace = transfertypes.DenomTrace{
 		Path:      "transfer/channel-0",
 		BaseDenom: "aphoton",
 	}
-	UevmosIbcdenom = UevmosDenomtrace.IBCDenom()
+	UethermintIbcdenom = UethermintDenomtrace.IBCDenom()
 
 	UatomOsmoDenomtrace = transfertypes.DenomTrace{
 		Path:      "transfer/channel-0/transfer/channel-1",
@@ -29,9 +29,9 @@ var (
 	}
 	UatomOsmoIbcdenom = UatomOsmoDenomtrace.IBCDenom()
 
-	AevmosDenomtrace = transfertypes.DenomTrace{
+	AethermintDenomtrace = transfertypes.DenomTrace{
 		Path:      "transfer/channel-0",
 		BaseDenom: "aphoton",
 	}
-	AevmosIbcdenom = AevmosDenomtrace.IBCDenom()
+	AethermintIbcdenom = AethermintDenomtrace.IBCDenom()
 )

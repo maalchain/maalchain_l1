@@ -7,13 +7,13 @@ import (
 
 	"cosmossdk.io/math"
 
+	chainparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/client"
-	chainparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/xpladev/ethermint/ethereum/eip712"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
+	"github.com/xpladev/ethermint/ethereum/eip712"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

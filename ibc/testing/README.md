@@ -260,10 +260,10 @@ import (
 	"encoding/json"
 
 	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
+	dbm "github.com/cometbft/cometbft-db"
 
-	"github.com/cosmos/ibc-go/v6/modules/apps/transfer/simapp"
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	"github.com/cosmos/ibc-go/v7/modules/apps/transfer/simapp"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 )
 
 func SetupTransferTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {

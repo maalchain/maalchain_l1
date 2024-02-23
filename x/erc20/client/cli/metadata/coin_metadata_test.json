@@ -1,21 +1,21 @@
 {
   "metadata": [
     {
-      "description": "The native staking and governance token of the Evmos chain",
+      "description": "The native staking and governance token of the Ethermint chain",
       "denom_units": [
         {
-          "denom": "aevmos",
+          "denom": "aphoton",
           "exponent": 0
         },
         {
-          "denom": "evmos",
+          "denom": "photon",
           "exponent": 18
         }
       ],
-      "base": "aevmos",
-      "display": "aevmos",
-      "name": "aevmos",
-      "symbol": "EVMOS"
+      "base": "aphoton",
+      "display": "aphoton",
+      "name": "aphoton",
+      "symbol": "PHOTON"
     }
   ]
 }
