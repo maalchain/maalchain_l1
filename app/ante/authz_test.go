@@ -2,6 +2,7 @@ package ante_test
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -15,8 +16,8 @@ import (
 	utiltx "github.com/xpladev/ethermint/testutil/tx"
 
 	"github.com/xpladev/ethermint/app/ante"
-
 	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
+	"github.com/xpladev/ethermint/tests"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	evmtypes "github.com/xpladev/ethermint/x/evm/types"
@@ -226,6 +227,10 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 	_, testAddresses, err := generatePrivKeyAddressPairs(10)
 	suite.Require().NoError(err)
 
+	from, _ := tests.NewAddrKey()
+	to := tests.GenerateAddress()
+	ethMsg := suite.BuildTestEthTx(from, to, nil, make([]byte, 0), big.NewInt(0), nil, nil, nil)
+
 	testcases := []struct {
 		name         string
 		msgs         []sdk.Msg
@@ -270,11 +275,11 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 					testAddresses[1],
 					[]sdk.Msg{
 						createMsgSend(testAddresses),
-						&evmtypes.MsgEthereumTx{},
+						ethMsg,
 					},
 				),
 			},
-			expectedCode: sdkerrors.ErrUnpackAny.ABCICode(),
+			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
 		},
 		{
 			name: "a MsgExec with nested MsgExec messages that has invalid messages is blocked",
@@ -283,11 +288,11 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 					testAddresses[1],
 					2,
 					[]sdk.Msg{
-						&evmtypes.MsgEthereumTx{},
+						ethMsg,
 					},
 				),
 			},
-			expectedCode: sdkerrors.ErrUnpackAny.ABCICode(),
+			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
 		},
 		{
 			name: "a MsgExec with more nested MsgExec messages than allowed and with valid messages is blocked",
