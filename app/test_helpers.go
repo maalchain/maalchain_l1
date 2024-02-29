@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/simapp"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -98,7 +99,7 @@ func Setup(
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(100000000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(100000000000000))),
 	}
 
 	db := dbm.NewMemDB()

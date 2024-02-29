@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
 	"github.com/xpladev/ethermint/x/erc20/keeper"
@@ -57,9 +58,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 
 	registeredDenom := cosmosTokenBase
 	coins := sdk.NewCoins(
-		sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(1000)),
-		sdk.NewCoin(registeredDenom, sdk.NewInt(1000)), // some ERC20 token
-		sdk.NewCoin(ibcBase, sdk.NewInt(1000)),         // some IBC coin with a registered token pair
+		sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(1000)),
+		sdk.NewCoin(registeredDenom, sdkmath.NewInt(1000)), // some ERC20 token
+		sdk.NewCoin(ibcBase, sdkmath.NewInt(1000)),         // some IBC coin with a registered token pair
 	)
 
 	testCases := []struct {
@@ -208,9 +209,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			receiver:   ethsecpAddr,
 			expErc20s:  big.NewInt(0),
 			expCoins: sdk.NewCoins(
-				sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(1000)),
-				sdk.NewCoin(registeredDenom, sdk.NewInt(0)),
-				sdk.NewCoin(ibcBase, sdk.NewInt(1000)),
+				sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(1000)),
+				sdk.NewCoin(registeredDenom, sdkmath.NewInt(0)),
+				sdk.NewCoin(ibcBase, sdkmath.NewInt(1000)),
 			),
 			checkBalances:    false,
 			disableTokenPair: true,
@@ -257,9 +258,9 @@ func (suite *KeeperTestSuite) TestOnRecvPacket() {
 			expErc20s:     big.NewInt(1000),
 			checkBalances: true,
 			expCoins: sdk.NewCoins(
-				sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(1000)),
-				sdk.NewCoin(registeredDenom, sdk.NewInt(0)),
-				sdk.NewCoin(ibcBase, sdk.NewInt(1000)),
+				sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(1000)),
+				sdk.NewCoin(registeredDenom, sdkmath.NewInt(0)),
+				sdk.NewCoin(ibcBase, sdkmath.NewInt(1000)),
 			),
 		},
 	}
@@ -394,7 +395,7 @@ func (suite *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 				sender := sdk.MustAccAddressFromBech32(senderAddr)
 
 				// Mint coins on account to simulate receiving ibc transfer
-				coinEthermint := sdk.NewCoin(pair.Denom, sdk.NewInt(10))
+				coinEthermint := sdk.NewCoin(pair.Denom, sdkmath.NewInt(10))
 				coins := sdk.NewCoins(coinEthermint)
 				err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, coins)
 				suite.Require().NoError(err)
@@ -468,7 +469,7 @@ func (suite *KeeperTestSuite) TestOnAcknowledgementPacket() {
 					suite.ctx,
 					moduleAcc.GetName(),
 					sdk.NewCoins(
-						sdk.NewCoin(pair.Denom, sdk.NewInt(100)),
+						sdk.NewCoin(pair.Denom, sdkmath.NewInt(100)),
 					),
 				)
 				suite.Require().NoError(err)
@@ -495,7 +496,7 @@ func (suite *KeeperTestSuite) TestOnAcknowledgementPacket() {
 					suite.ctx,
 					sender,
 					sdk.NewCoins(
-						sdk.NewCoin(pair.Denom, sdk.NewInt(100)),
+						sdk.NewCoin(pair.Denom, sdkmath.NewInt(100)),
 					),
 				)
 				suite.Require().NoError(err)
@@ -522,7 +523,7 @@ func (suite *KeeperTestSuite) TestOnAcknowledgementPacket() {
 					suite.ctx,
 					sender,
 					sdk.NewCoins(
-						sdk.NewCoin(pair.Denom, sdk.NewInt(100)),
+						sdk.NewCoin(pair.Denom, sdkmath.NewInt(100)),
 					),
 				)
 				suite.Require().NoError(err)
@@ -589,7 +590,7 @@ func (suite *KeeperTestSuite) TestOnTimeoutPacket() {
 				sender := sdk.MustAccAddressFromBech32(senderAddr)
 
 				// Mint coins on account to simulate receiving ibc transfer
-				coinEthermint := sdk.NewCoin(pair.Denom, sdk.NewInt(10))
+				coinEthermint := sdk.NewCoin(pair.Denom, sdkmath.NewInt(10))
 				coins := sdk.NewCoins(coinEthermint)
 				err := suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, coins)
 				suite.Require().NoError(err)

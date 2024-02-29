@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -428,7 +430,7 @@ func (suite *AnteTestSuite) createTx(priv cryptotypes.PrivKey, msgs ...sdk.Msg) 
 }
 
 func (suite *AnteTestSuite) createEIP712Tx(priv cryptotypes.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
-	coinAmount := sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20))
+	coinAmount := sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20))
 	fees := sdk.NewCoins(coinAmount)
 	cosmosTxArgs := utiltx.CosmosTxArgs{
 		TxCfg:   suite.clientCtx.TxConfig,

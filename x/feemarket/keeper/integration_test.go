@@ -126,7 +126,7 @@ var _ = Describe("Feemarket", func() {
 
 		Context("with MinGasPrices (feemarket param) < min-gas-prices (local)", func() {
 			BeforeEach(func() {
-				privKey, msg = setupTestWithContext("5", sdk.NewDec(3), sdk.NewInt(5))
+				privKey, msg = setupTestWithContext("5", sdk.NewDec(3), sdkmath.NewInt(5))
 			})
 			Context("during CheckTx", func() {
 				It("should reject transactions with gasPrice < MinGasPrices", func() {

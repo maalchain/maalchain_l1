@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	. "github.com/onsi/ginkgo/v2"
@@ -81,7 +81,7 @@ var _ = Describe("Performing EVM transactions", Ordered, func() {
 })
 
 var _ = Describe("ERC20:", Ordered, func() {
-	amt := sdk.NewInt(100)
+	amt := sdkmath.NewInt(100)
 	fundsAmt, _ := sdk.NewIntFromString("100000000000000000000000")
 
 	privKey, _ := ethsecp256k1.GenerateKey()
@@ -112,8 +112,8 @@ var _ = Describe("ERC20:", Ordered, func() {
 				coins := sdk.NewCoins(
 					sdk.NewCoin(testutil.BaseDenom, fundsAmt),
 					sdk.NewCoin(stakingtypes.DefaultParams().BondDenom, fundsAmt),
-					sdk.NewCoin(metadataIbc.Base, sdk.NewInt(1)),
-					sdk.NewCoin(metadataCoin.Base, sdk.NewInt(1)),
+					sdk.NewCoin(metadataIbc.Base, sdkmath.NewInt(1)),
+					sdk.NewCoin(metadataCoin.Base, sdkmath.NewInt(1)),
 				)
 				err := testutil.FundAccount(s.app.BankKeeper, s.ctx, accAddr, coins)
 				s.Require().NoError(err)
@@ -127,7 +127,7 @@ var _ = Describe("ERC20:", Ordered, func() {
 					proposal, found := s.app.GovKeeper.GetProposal(s.ctx, id)
 					s.Require().True(found)
 
-					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(500000000000000000)), s.validator)
+					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(500000000000000000)), s.validator)
 					s.Require().NoError(err)
 
 					_, err = testutil.Vote(s.ctx, s.app, privKey, id, govv1beta1.OptionYes)
@@ -153,7 +153,7 @@ var _ = Describe("ERC20:", Ordered, func() {
 					proposal, found := s.app.GovKeeper.GetProposal(s.ctx, id)
 					s.Require().True(found)
 
-					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(500000000000000000)), s.validator)
+					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(500000000000000000)), s.validator)
 					s.Require().NoError(err)
 
 					_, err = testutil.Vote(s.ctx, s.app, privKey, id, govv1beta1.OptionYes)
@@ -198,7 +198,7 @@ var _ = Describe("ERC20:", Ordered, func() {
 					proposal, found := s.app.GovKeeper.GetProposal(s.ctx, id)
 					s.Require().True(found)
 
-					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(500000000000000000)), s.validator)
+					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(500000000000000000)), s.validator)
 					s.Require().NoError(err)
 
 					_, err = testutil.Vote(s.ctx, s.app, privKey, id, govv1beta1.OptionYes)
@@ -224,7 +224,7 @@ var _ = Describe("ERC20:", Ordered, func() {
 					proposal, found := s.app.GovKeeper.GetProposal(s.ctx, id)
 					s.Require().True(found)
 
-					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdk.NewInt(500000000000000000)), s.validator)
+					_, err = testutil.Delegate(s.ctx, s.app, privKey, sdk.NewCoin(testutil.BaseDenom, sdkmath.NewInt(500000000000000000)), s.validator)
 					s.Require().NoError(err)
 
 					_, err = testutil.Vote(s.ctx, s.app, privKey, id, govv1beta1.OptionYes)
@@ -385,7 +385,7 @@ func convertCoin(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256
 	Expect(res.IsOK()).To(BeTrue(), "failed to convert coin: %s", res.Log)
 }
 
-func convertERC20(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256k1.PrivKey, amt math.Int, contract common.Address) {
+func convertERC20(ctx sdk.Context, appEthermint *app.EthermintApp, pk *ethsecp256k1.PrivKey, amt sdkmath.Int, contract common.Address) {
 	addrBz := pk.PubKey().Address().Bytes()
 
 	convertERC20Msg := types.NewMsgConvertERC20(amt, sdk.AccAddress(addrBz), contract, common.BytesToAddress(addrBz))

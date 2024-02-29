@@ -301,7 +301,7 @@ func (suite *AnteTestSuite) CreateTestEIP712MsgCreateValidator(from sdk.AccAddre
 	msgCreate, err := stakingtypes.NewMsgCreateValidator(
 		valAddr,
 		privEd.PubKey(),
-		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20)),
+		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20)),
 		stakingtypes.NewDescription("moniker", "indentity", "website", "security_contract", "details"),
 		stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
 		sdk.OneInt(),
@@ -317,7 +317,7 @@ func (suite *AnteTestSuite) CreateTestEIP712MsgCreateValidator2(from sdk.AccAddr
 	msgCreate, err := stakingtypes.NewMsgCreateValidator(
 		valAddr,
 		privEd.PubKey(),
-		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20)),
+		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20)),
 		// Ensure optional fields can be left blank
 		stakingtypes.NewDescription("moniker", "indentity", "", "", ""),
 		stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
@@ -613,7 +613,7 @@ func (suite *AnteTestSuite) createBaseTxBuilder(msg sdk.Msg, gas uint64) client.
 
 	txBuilder.SetGasLimit(gas)
 	txBuilder.SetFeeAmount(sdk.NewCoins(
-		sdk.NewCoin("aphoton", sdk.NewInt(10000)),
+		sdk.NewCoin("aphoton", sdkmath.NewInt(10000)),
 	))
 
 	err := txBuilder.SetMsgs(msg)

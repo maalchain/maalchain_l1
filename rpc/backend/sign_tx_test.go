@@ -3,6 +3,7 @@ package backend
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +26,7 @@ func (suite *BackendTestSuite) TestSendTransaction() {
 	priv, _ := ethsecp256k1.GenerateKey()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 	nonce := hexutil.Uint64(1)
-	baseFee := sdk.NewInt(1)
+	baseFee := sdkmath.NewInt(1)
 	callArgsDefault := evmtypes.TransactionArgs{
 		From:     &from,
 		To:       &toAddr,

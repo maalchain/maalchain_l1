@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -123,7 +124,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 	require.NoError(t, err)
 
 	// fund signer acc to pay for tx fees
-	amt := sdk.NewInt(int64(math.Pow10(18) * 2))
+	amt := sdkmath.NewInt(int64(math.Pow10(18) * 2))
 	err = testutil.FundAccount(
 		suite.app.BankKeeper,
 		suite.ctx,
@@ -264,7 +265,7 @@ func (suite *KeeperTestSuite) sendTx(contractAddr, from common.Address, transfer
 	nonce := suite.app.EvmKeeper.GetNonce(suite.ctx, suite.address)
 
 	// Mint the max gas to the FeeCollector to ensure balance in case of refund
-	suite.MintFeeCollector(sdk.NewCoins(sdk.NewCoin(evm.DefaultEVMDenom, sdk.NewInt(suite.app.FeeMarketKeeper.GetBaseFee(suite.ctx).Int64()*int64(res.Gas)))))
+	suite.MintFeeCollector(sdk.NewCoins(sdk.NewCoin(evm.DefaultEVMDenom, sdkmath.NewInt(suite.app.FeeMarketKeeper.GetBaseFee(suite.ctx).Int64()*int64(res.Gas)))))
 
 	ethTxParams := evm.EvmTxArgs{
 		ChainID:   chainID,
