@@ -335,7 +335,7 @@ def approve_proposal(n, rsp, event_query_tx=True):
     ev = find_log_event_attrs(rsp["logs"], "submit_proposal", cb)
     proposal_id = ev["proposal_id"]
     for i in range(len(n.config["validators"])):
-        rsp = n.cosmos_cli(i).gov_vote("validator", proposal_id, "yes")
+        rsp = n.cosmos_cli(i).gov_vote("validator", proposal_id, "yes", gas=100000)
         assert rsp["code"] == 0, rsp["raw_log"]
     wait_for_new_blocks(cli, 1)
     assert (

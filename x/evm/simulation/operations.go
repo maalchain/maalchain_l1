@@ -96,7 +96,7 @@ func WeightedOperations(
 // Other tx details like nonce, gasprice, gaslimit are calculated to get valid value.
 func SimulateEthSimpleTransfer(_ types.AccountKeeper, k *keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, bapp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bapp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, _ string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		var recipient simtypes.Account
@@ -119,7 +119,7 @@ func SimulateEthSimpleTransfer(_ types.AccountKeeper, k *keeper.Keeper) simtypes
 // to ensure valid contract call.
 func SimulateEthCreateContract(_ types.AccountKeeper, k *keeper.Keeper) simtypes.Operation {
 	return func(
-		r *rand.Rand, bapp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bapp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, _ string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 
@@ -157,7 +157,7 @@ func SimulateEthCreateContract(_ types.AccountKeeper, k *keeper.Keeper) simtypes
 // It is always calling an ERC20 contract.
 func operationSimulateEthCallContract(k *keeper.Keeper, contractAddr, to *common.Address, amount *big.Int) simtypes.Operation {
 	return func(
-		r *rand.Rand, bapp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
+		r *rand.Rand, bapp *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, _ string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 

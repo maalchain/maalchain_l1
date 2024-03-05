@@ -105,13 +105,11 @@ func (s *websocketsServer) Start() {
 
 	go func() {
 		var err error
-		/* #nosec G114 -- http functions have no support for timeouts */
 		if s.certFile == "" || s.keyFile == "" {
-			err = http.ListenAndServe(s.wsAddr, ws)
+			err = http.ListenAndServe(s.wsAddr, ws) // #nosec G114 -- http functions have no support for timeouts
 		} else {
-			err = http.ListenAndServeTLS(s.wsAddr, s.certFile, s.keyFile, ws)
+			err = http.ListenAndServeTLS(s.wsAddr, s.certFile, s.keyFile, ws) // #nosec G114 -- http functions have no support for timeouts
 		}
-
 		if err != nil {
 			if err == http.ErrServerClosed {
 				return
@@ -124,7 +122,7 @@ func (s *websocketsServer) Start() {
 
 func (s *websocketsServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
+		CheckOrigin: func(_ *http.Request) bool {
 			return true
 		},
 	}

@@ -396,25 +396,32 @@ func (suite *BackendTestSuite) TestFeeHistory() {
 			nil,
 		},
 		{
-			"fail - Invalid base fee",
+			"pass - skip invalid base fee",
 			func(validator sdk.AccAddress) {
-				// baseFee := sdk.NewInt(1)
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				suite.backend.cfg.JSONRPC.FeeHistoryCap = 2
 				var header metadata.MD
 				RegisterParams(queryClient, &header, 1)
+				RegisterParamsWithoutHeader(queryClient, 1)
 				RegisterBlock(client, ethrpc.BlockNumber(1).Int64(), nil)
 				RegisterBlockResults(client, 1)
 				RegisterBaseFeeError(queryClient)
 				RegisterValidatorAccount(queryClient, validator)
 				RegisterConsensusParams(client, 1)
+				fQueryClient := suite.backend.queryClient.FeeMarket.(*mocks.FeeMarketQueryClient)
+				RegisterFeeMarketParams(fQueryClient, 1)
 			},
 			1,
 			1,
-			nil,
+			&rpc.FeeHistoryResult{
+				OldestBlock:  (*hexutil.Big)(big.NewInt(1)),
+				BaseFee:      []*hexutil.Big{(*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(new(big.Int).SetBits([]big.Word{}))},
+				GasUsedRatio: []float64{0},
+				Reward:       [][]*hexutil.Big{{(*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0)), (*hexutil.Big)(big.NewInt(0))}},
+			},
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
-			false,
+			true,
 			nil,
 		},
 		{

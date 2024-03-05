@@ -168,12 +168,11 @@ func (b *Backend) processBlock(
 ) error {
 	blockHeight := tendermintBlock.Block.Height
 	blockBaseFee, err := b.BaseFee(tendermintBlockResult)
-	if err != nil {
-		return err
+	if err != nil || blockBaseFee == nil {
+		targetOneFeeHistory.BaseFee = big.NewInt(0)
+	} else {
+		targetOneFeeHistory.BaseFee = blockBaseFee
 	}
-
-	// set basefee
-	targetOneFeeHistory.BaseFee = blockBaseFee
 	cfg := b.ChainConfig()
 	// set gas used ratio
 	gasLimitUint64, ok := (*ethBlock)["gasLimit"].(hexutil.Uint64)
@@ -186,18 +185,19 @@ func (b *Backend) processBlock(
 		return fmt.Errorf("invalid gas used type: %T", (*ethBlock)["gasUsed"])
 	}
 
-	baseFee, ok := (*ethBlock)["baseFeePerGas"].(*hexutil.Big)
-	if !ok {
-		return fmt.Errorf("invalid baseFee: %T", (*ethBlock)["baseFeePerGas"])
-	}
-
 	if cfg.IsLondon(big.NewInt(blockHeight + 1)) {
 		var header ethtypes.Header
 		header.Number = new(big.Int).SetInt64(blockHeight)
-		header.BaseFee = baseFee.ToInt()
+		baseFee, ok := (*ethBlock)["baseFeePerGas"].(*hexutil.Big)
+		if !ok || baseFee == nil {
+			header.BaseFee = big.NewInt(0)
+		} else {
+			header.BaseFee = baseFee.ToInt()
+		}
 		header.GasLimit = uint64(gasLimitUint64)
 		header.GasUsed = gasUsedBig.ToInt().Uint64()
-		params, err := b.queryClient.FeeMarket.Params(b.ctx, &feemarkettypes.QueryParamsRequest{})
+		ctx := types.ContextWithHeight(blockHeight)
+		params, err := b.queryClient.FeeMarket.Params(ctx, &feemarkettypes.QueryParamsRequest{})
 		if err != nil {
 			return err
 		}
@@ -205,7 +205,6 @@ func (b *Backend) processBlock(
 	} else {
 		targetOneFeeHistory.NextBaseFee = new(big.Int)
 	}
-
 	gasusedfloat, _ := new(big.Float).SetInt(gasUsedBig.ToInt()).Float64()
 
 	if gasLimitUint64 <= 0 {
