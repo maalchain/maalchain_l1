@@ -263,7 +263,7 @@ func (s *StateDB) getStateObject(addr common.Address) *stateObject {
 		return nil
 	}
 	// Insert into the live set
-	obj := newObject(s, addr, *account)
+	obj := newObject(s, addr, account)
 	s.setStateObject(obj)
 	return obj
 }
@@ -282,7 +282,7 @@ func (s *StateDB) getOrNewStateObject(addr common.Address) *stateObject {
 func (s *StateDB) createObject(addr common.Address) *stateObject {
 	prev := s.getStateObject(addr)
 
-	newobj := newObject(s, addr, Account{})
+	newobj := newObject(s, addr, nil)
 	if prev == nil {
 		s.journal.append(createObjectChange{account: &addr})
 	} else {
@@ -612,11 +612,14 @@ func (s *StateDB) Commit() error {
 				return errorsmod.Wrap(err, "failed to delete account")
 			}
 		} else {
-			if obj.code != nil && obj.dirtyCode {
+			codeDirty := obj.codeDirty()
+			if codeDirty && obj.code != nil {
 				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
 			}
-			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account); err != nil {
-				return errorsmod.Wrap(err, "failed to set account")
+			if codeDirty || obj.nonceDirty() {
+				if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account); err != nil {
+					return errorsmod.Wrap(err, "failed to set account")
+				}
 			}
 			for _, key := range obj.dirtyStorage.SortedKeys() {
 				value := obj.dirtyStorage[key]
