@@ -20,7 +20,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
 	dbm "github.com/cometbft/cometbft-db"
@@ -28,7 +27,6 @@ import (
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 	tmlog "github.com/cometbft/cometbft/libs/log"
 
-	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -63,7 +61,7 @@ const EnvPrefix = "ETHERMINT"
 
 // NewRootCmd creates a new root command for simd. It is called once in the
 // main function.
-func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
+func NewRootCmd() (*cobra.Command, ethermint.EncodingConfig) {
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
@@ -210,22 +208,14 @@ func txCommand() *cobra.Command {
 }
 
 type appCreator struct {
-	encCfg params.EncodingConfig
+	encCfg ethermint.EncodingConfig
 }
 
 // newApp is an appCreator
 func (a appCreator) newApp(logger tmlog.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
-	home := cast.ToString(appOpts.Get(flags.FlagHome))
-	skipUpgradeHeights := make(map[int64]bool)
-	for _, h := range cast.ToIntSlice(appOpts.Get(sdkserver.FlagUnsafeSkipUpgrades)) {
-		skipUpgradeHeights[int64(h)] = true
-	}
 	baseappOptions := sdkserver.DefaultBaseappOptions(appOpts)
 	ethermintApp := app.NewEthermintApp(
-		logger, db, traceStore, true, skipUpgradeHeights,
-		home,
-		cast.ToUint(appOpts.Get(sdkserver.FlagInvCheckPeriod)),
-		a.encCfg,
+		logger, db, traceStore, true,
 		appOpts,
 		baseappOptions...,
 	)
@@ -251,13 +241,13 @@ func (a appCreator) appExport(
 	}
 
 	if height != -1 {
-		ethermintApp = app.NewEthermintApp(logger, db, traceStore, false, map[int64]bool{}, "", uint(1), a.encCfg, appOpts, baseapp.SetChainID(app.ChainID))
+		ethermintApp = app.NewEthermintApp(logger, db, traceStore, false, appOpts, baseapp.SetChainID(app.ChainID))
 
 		if err := ethermintApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		ethermintApp = app.NewEthermintApp(logger, db, traceStore, true, map[int64]bool{}, "", uint(1), a.encCfg, appOpts, baseapp.SetChainID(app.ChainID))
+		ethermintApp = app.NewEthermintApp(logger, db, traceStore, true, appOpts, baseapp.SetChainID(app.ChainID))
 	}
 
 	return ethermintApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

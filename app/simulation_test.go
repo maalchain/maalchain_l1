@@ -12,9 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/simapp"
-	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/server"
 
 	simcli "github.com/cosmos/cosmos-sdk/x/simulation/client/cli"
 
@@ -41,13 +40,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	"github.com/evmos/ethermint/app/ante"
-	evmenc "github.com/evmos/ethermint/encoding"
 )
-
-// MakeEncodingConfig creates the EncodingConfig
-func MakeEncodingConfig() params.EncodingConfig {
-	return evmenc.MakeConfig(ModuleBasics)
-}
 
 func init() {
 	simcli.GetSimulatorFlags()
@@ -70,23 +63,16 @@ func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
 	bapp.SetFauxMerkleMode()
 }
 
-// EmptyAppOptions is a stub implementing AppOptions
-type EmptyAppOptions struct{}
-
-// Get implements AppOptions
-func (ao EmptyAppOptions) Get(o string) interface{} {
-	return nil
-}
-
 // NewSimApp disable feemarket on native tx, otherwise the cosmos-sdk simulation tests will fail.
 func NewSimApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*baseapp.BaseApp)) (*EthermintApp, error) {
-	encodingConfig := MakeEncodingConfig()
-	app := NewEthermintApp(logger, db, nil, false, map[int64]bool{}, DefaultNodeHome, simcli.FlagPeriodValue, encodingConfig, EmptyAppOptions{}, baseAppOptions...)
+	appOptions := make(simtestutil.AppOptionsMap, 0)
+	appOptions[server.FlagInvCheckPeriod] = simcli.FlagPeriodValue
+	app := NewEthermintApp(logger, db, nil, false, appOptions, baseAppOptions...)
 	// disable feemarket on native tx
 	anteHandler, err := ante.NewAnteHandler(ante.HandlerOptions{
 		AccountKeeper:   app.AccountKeeper,
 		BankKeeper:      app.BankKeeper,
-		SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+		SignModeHandler: app.TxConfig().SignModeHandler(),
 		FeegrantKeeper:  app.FeeGrantKeeper,
 		SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		IBCKeeper:       app.IBCKeeper,
@@ -215,7 +201,7 @@ func TestAppImportExport(t *testing.T) {
 	require.Equal(t, appName, newApp.Name())
 	require.NoError(t, err)
 
-	var genesisState simapp.GenesisState
+	var genesisState GenesisState
 	err = json.Unmarshal(exported.AppState, &genesisState)
 	require.NoError(t, err)
 
