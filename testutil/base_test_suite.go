@@ -8,9 +8,12 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -20,6 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/evmos/ethermint/app"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/encoding"
 	"github.com/evmos/ethermint/server/config"
 	"github.com/evmos/ethermint/tests"
 	ethermint "github.com/evmos/ethermint/types"
@@ -38,12 +42,23 @@ type BaseTestSuite struct {
 }
 
 func (suite *BaseTestSuite) SetupTest() {
-	suite.SetupTestWithCb(nil)
+	suite.SetupTestWithCb(suite.T(), nil)
 }
 
-func (suite *BaseTestSuite) SetupTestWithCb(patch func(*app.EthermintApp, app.GenesisState) app.GenesisState) {
+func (suite *BaseTestSuite) SetupTestWithCb(
+	t require.TestingT,
+	patch func(*app.EthermintApp, app.GenesisState) app.GenesisState,
+) {
+	suite.SetupTestWithCbAndOpts(t, patch, nil)
+}
+
+func (suite *BaseTestSuite) SetupTestWithCbAndOpts(
+	_ require.TestingT,
+	patch func(*app.EthermintApp, app.GenesisState) app.GenesisState,
+	appOptions simtestutil.AppOptionsMap,
+) {
 	checkTx := false
-	suite.App = app.Setup(checkTx, patch)
+	suite.App = app.SetupWithOpts(checkTx, patch, appOptions)
 	suite.Ctx = suite.App.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:  1,
 		ChainID: app.ChainID,
@@ -58,7 +73,6 @@ func (suite *BaseTestSuite) StateDB() *statedb.StateDB {
 type BaseTestSuiteWithAccount struct {
 	BaseTestSuite
 	Address     common.Address
-	PubKey      cryptotypes.PubKey
 	Signer      keyring.Signer
 	ConsAddress sdk.ConsAddress
 	ConsPubKey  cryptotypes.PubKey
@@ -68,9 +82,20 @@ func (suite *BaseTestSuiteWithAccount) SetupTest(t require.TestingT) {
 	suite.SetupTestWithCb(t, nil)
 }
 
-func (suite *BaseTestSuiteWithAccount) SetupTestWithCb(t require.TestingT, patch func(*app.EthermintApp, app.GenesisState) app.GenesisState) {
+func (suite *BaseTestSuiteWithAccount) SetupTestWithCb(
+	t require.TestingT,
+	patch func(*app.EthermintApp, app.GenesisState) app.GenesisState,
+) {
+	suite.SetupTestWithCbAndOpts(t, patch, nil)
+}
+
+func (suite *BaseTestSuiteWithAccount) SetupTestWithCbAndOpts(
+	t require.TestingT,
+	patch func(*app.EthermintApp, app.GenesisState) app.GenesisState,
+	appOptions simtestutil.AppOptionsMap,
+) {
 	suite.setupAccount(t)
-	suite.BaseTestSuite.SetupTestWithCb(patch)
+	suite.BaseTestSuite.SetupTestWithCbAndOpts(t, patch, appOptions)
 	suite.postSetupValidator(t)
 }
 
@@ -81,8 +106,8 @@ func (suite *BaseTestSuiteWithAccount) setupAccount(t require.TestingT) {
 	priv := &ethsecp256k1.PrivKey{
 		Key: crypto.FromECDSA(ecdsaPriv),
 	}
-	suite.PubKey = priv.PubKey()
-	suite.Address = common.BytesToAddress(suite.PubKey.Address().Bytes())
+	pubKey := priv.PubKey()
+	suite.Address = common.BytesToAddress(pubKey.Address().Bytes())
 	suite.Signer = tests.NewSigner(priv)
 	// consensus key
 	priv, err = ethsecp256k1.GenerateKey()
@@ -105,6 +130,100 @@ func (suite *BaseTestSuiteWithAccount) postSetupValidator(t require.TestingT) st
 	require.NoError(t, err)
 	suite.App.StakingKeeper.SetValidator(suite.Ctx, validator)
 	return validator
+}
+
+func (suite *BaseTestSuiteWithAccount) GenerateKey() (*ethsecp256k1.PrivKey, sdk.AccAddress) {
+	address, priv := tests.NewAddrKey()
+	return priv.(*ethsecp256k1.PrivKey), sdk.AccAddress(address.Bytes())
+}
+
+func (suite *BaseTestSuiteWithAccount) getNonce(addressBytes []byte) uint64 {
+	return suite.App.EvmKeeper.GetNonce(
+		suite.Ctx,
+		common.BytesToAddress(addressBytes),
+	)
+}
+
+func (suite *BaseTestSuiteWithAccount) BuildEthTx(
+	to *common.Address,
+	gasLimit uint64,
+	gasPrice *big.Int,
+	gasFeeCap *big.Int,
+	gasTipCap *big.Int,
+	accesses *ethtypes.AccessList,
+	privKey *ethsecp256k1.PrivKey,
+) *types.MsgEthereumTx {
+	chainID := suite.App.EvmKeeper.ChainID()
+	adr := privKey.PubKey().Address()
+	from := common.BytesToAddress(adr.Bytes())
+	nonce := suite.getNonce(from.Bytes())
+	data := make([]byte, 0)
+	msgEthereumTx := types.NewTx(
+		chainID,
+		nonce,
+		to,
+		nil,
+		gasLimit,
+		gasPrice,
+		gasFeeCap,
+		gasTipCap,
+		data,
+		accesses,
+	)
+	msgEthereumTx.From = from.Bytes()
+	return msgEthereumTx
+}
+
+func (suite *BaseTestSuiteWithAccount) PrepareEthTx(msgEthereumTx *types.MsgEthereumTx, privKey *ethsecp256k1.PrivKey) []byte {
+	ethSigner := ethtypes.LatestSignerForChainID(suite.App.EvmKeeper.ChainID())
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	option, err := codectypes.NewAnyWithValue(&types.ExtensionOptionsEthereumTx{})
+	suite.Require().NoError(err)
+
+	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
+	builder, ok := txBuilder.(authtx.ExtensionOptionsTxBuilder)
+	suite.Require().True(ok)
+	builder.SetExtensionOptions(option)
+
+	err = msgEthereumTx.Sign(ethSigner, tests.NewSigner(privKey))
+	suite.Require().NoError(err)
+
+	err = txBuilder.SetMsgs(msgEthereumTx)
+	suite.Require().NoError(err)
+
+	txData, err := types.UnpackTxData(msgEthereumTx.Data)
+	suite.Require().NoError(err)
+
+	evmDenom := suite.App.EvmKeeper.GetParams(suite.Ctx).EvmDenom
+	fees := sdk.Coins{{Denom: evmDenom, Amount: sdk.NewIntFromBigInt(txData.Fee())}}
+	builder.SetFeeAmount(fees)
+	builder.SetGasLimit(msgEthereumTx.GetGas())
+
+	// bz are bytes to be broadcasted over the network
+	bz, err := encodingConfig.TxConfig.TxEncoder()(txBuilder.GetTx())
+	suite.Require().NoError(err)
+
+	return bz
+}
+
+func (suite *BaseTestSuiteWithAccount) CheckTx(tx []byte) abci.ResponseCheckTx {
+	return suite.App.BaseApp.CheckTx(abci.RequestCheckTx{Tx: tx})
+}
+
+func (suite *BaseTestSuiteWithAccount) DeliverTx(tx []byte) abci.ResponseDeliverTx {
+	return suite.App.BaseApp.DeliverTx(abci.RequestDeliverTx{Tx: tx})
+}
+
+// Commit and begin new block
+func (suite *BaseTestSuiteWithAccount) Commit() {
+	_ = suite.App.Commit()
+	header := suite.Ctx.BlockHeader()
+	header.Height++
+	suite.App.BeginBlock(abci.RequestBeginBlock{
+		Header: header,
+	})
+	// update ctx
+	suite.Ctx = suite.App.BaseApp.NewContext(false, header)
 }
 
 type evmQueryClientTrait struct {
@@ -133,13 +252,14 @@ type BaseTestSuiteWithFeeMarketQueryClient struct {
 }
 
 func (suite *BaseTestSuiteWithFeeMarketQueryClient) SetupTest() {
-	suite.SetupTestWithCb(nil)
+	suite.SetupTestWithCb(suite.T(), nil)
 }
 
 func (suite *BaseTestSuiteWithFeeMarketQueryClient) SetupTestWithCb(
+	t require.TestingT,
 	patch func(*app.EthermintApp, app.GenesisState) app.GenesisState,
 ) {
-	suite.BaseTestSuite.SetupTestWithCb(patch)
+	suite.BaseTestSuite.SetupTestWithCb(t, patch)
 	suite.feemarketQueryClientTrait.Setup(&suite.BaseTestSuite)
 }
 
@@ -222,14 +342,7 @@ func (suite *EVMTestSuiteWithAccountAndQueryClient) DeployTestContract(
 
 // Commit and begin new block
 func (suite *EVMTestSuiteWithAccountAndQueryClient) Commit() {
-	_ = suite.App.Commit()
-	header := suite.Ctx.BlockHeader()
-	header.Height++
-	suite.App.BeginBlock(abci.RequestBeginBlock{
-		Header: header,
-	})
-	// update ctx
-	suite.Ctx = suite.App.BaseApp.NewContext(false, header)
+	suite.BaseTestSuiteWithAccount.Commit()
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, suite.App.EvmKeeper)
 	suite.EvmQueryClient = types.NewQueryClient(queryHelper)
@@ -255,7 +368,7 @@ func (suite *FeeMarketTestSuiteWithAccountAndQueryClient) SetupTestWithCb(
 	patch func(*app.EthermintApp, app.GenesisState) app.GenesisState,
 ) {
 	suite.setupAccount(t)
-	suite.BaseTestSuite.SetupTestWithCb(patch)
+	suite.BaseTestSuite.SetupTestWithCb(t, patch)
 	validator := suite.postSetupValidator(t)
 	validator = stakingkeeper.TestingUpdateValidator(suite.App.StakingKeeper, suite.Ctx, validator, true)
 	err := suite.App.StakingKeeper.Hooks().AfterValidatorCreated(suite.Ctx, validator.GetOperator())
