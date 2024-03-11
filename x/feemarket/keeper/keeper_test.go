@@ -6,9 +6,6 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -40,15 +37,11 @@ var s *KeeperTestSuite
 func TestKeeperTestSuite(t *testing.T) {
 	s = new(KeeperTestSuite)
 	suite.Run(t, s)
-
-	// Run Ginkgo integration tests
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Keeper Suite")
 }
 
 // SetupTest setup test environment, it uses`require.TestingT` to support both `testing.T` and `testing.B`.
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.FeeMarketTestSuiteWithAccountAndQueryClient.SetupTest()
+	suite.FeeMarketTestSuiteWithAccountAndQueryClient.SetupTest(suite.T())
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	suite.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.App.EvmKeeper.ChainID())
@@ -57,17 +50,13 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 // Commit commits and starts a new block with an updated context.
 func (suite *KeeperTestSuite) Commit() {
-	suite.CommitAfter(time.Second * 0)
-}
-
-// Commit commits a block at a given time.
-func (suite *KeeperTestSuite) CommitAfter(t time.Duration) {
+	jumpTime := time.Second * 0
 	header := suite.Ctx.BlockHeader()
 	suite.App.EndBlock(abci.RequestEndBlock{Height: header.Height})
 	_ = suite.App.Commit()
 
 	header.Height += 1
-	header.Time = header.Time.Add(t)
+	header.Time = header.Time.Add(jumpTime)
 	suite.App.BeginBlock(abci.RequestBeginBlock{
 		Header: header,
 	})
