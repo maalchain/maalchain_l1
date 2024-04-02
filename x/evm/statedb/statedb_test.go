@@ -825,7 +825,6 @@ func newTestKeeper(t *testing.T, cms sdk.MultiStore) (sdk.Context, *evmkeeper.Ke
 		"",
 		paramstypes.Subspace{}, nil,
 		allKeys,
-		nil,
 	)
 
 	ctx := sdk.NewContext(cms, tmproto.Header{}, false, log.NewNopLogger())

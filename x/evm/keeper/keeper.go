@@ -79,8 +79,6 @@ type Keeper struct {
 	// a set of store keys that should cover all the precompile use cases,
 	// or ideally just pass the application's all stores.
 	keys map[string]storetypes.StoreKey
-
-	forkEnabledFunc func(sdk.Context) bool
 }
 
 // NewKeeper generates new evm module keeper
@@ -96,7 +94,6 @@ func NewKeeper(
 	ss paramstypes.Subspace,
 	customContractFns []CustomContractFn,
 	keys map[string]storetypes.StoreKey,
-	forkEnabledFunc func(sdk.Context) bool,
 ) *Keeper {
 	// ensure evm module account is set
 	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
@@ -106,12 +103,6 @@ func NewKeeper(
 	// ensure the authority account is correct
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
 		panic(err)
-	}
-
-	if forkEnabledFunc == nil {
-		forkEnabledFunc = func(sdk.Context) bool {
-			return false
-		}
 	}
 
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
@@ -128,7 +119,6 @@ func NewKeeper(
 		ss:                ss,
 		customContractFns: customContractFns,
 		keys:              keys,
-		forkEnabledFunc:   forkEnabledFunc,
 	}
 }
 

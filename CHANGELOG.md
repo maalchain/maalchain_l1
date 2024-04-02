@@ -35,7 +35,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## Unreleased
+## v0.22.x-cronos
+
+### State Machine Breaking
+
+* (rpc) [#449](https://github.com/crypto-org-chain/ethermint/pull/449) Remove forkEnabled callback to keep zero random as default.
+
+## v0.21.x-cronos
 
 ### Bug Fixes
 
@@ -46,7 +52,6 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### State Machine Breaking
 
 * (rpc) [#443](https://github.com/crypto-org-chain/ethermint/pull/443) Keep behavior of random opcode as before.
-
 
 ## v0.21.x-cronos
 
