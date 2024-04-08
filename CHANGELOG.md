@@ -41,6 +41,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 * (rpc) [#449](https://github.com/crypto-org-chain/ethermint/pull/449) Remove forkEnabled callback to keep zero random as default.
 
+### Bug Fixes
+
+* (rpc) [#457](https://github.com/crypto-org-chain/ethermint/pull/457) Add param keytable in evm for old upgrade.
+
 ## v0.21.x-cronos
 
 ### Bug Fixes
