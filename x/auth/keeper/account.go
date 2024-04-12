@@ -16,12 +16,3 @@ func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.A
 
 	return ak.decodeAccount(iterator.Value())
 }
-
-func (ak AccountKeeper) decodeAccount(bz []byte) types.AccountI {
-	acc, err := ak.AccountKeeper.UnmarshalAccount(bz)
-	if err != nil {
-		panic(err)
-	}
-
-	return acc
-}

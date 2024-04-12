@@ -22,3 +22,12 @@ func NewAccountKeeper(
 		key:           key,
 	}
 }
+
+func (ak AccountKeeper) decodeAccount(bz []byte) authtypes.AccountI {
+	acc, err := ak.AccountKeeper.UnmarshalAccount(bz)
+	if err != nil {
+		panic(err)
+	}
+
+	return acc
+}
