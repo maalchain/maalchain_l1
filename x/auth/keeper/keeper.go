@@ -10,16 +10,16 @@ import (
 
 type AccountKeeper struct {
 	authkeeper.AccountKeeper
-	key storetypes.StoreKey
+	storeKey storetypes.StoreKey
 }
 
 func NewAccountKeeper(
-	cdc codec.BinaryCodec, key storetypes.StoreKey, proto func() authtypes.AccountI,
+	cdc codec.BinaryCodec, storeKey storetypes.StoreKey, proto func() authtypes.AccountI,
 	maccPerms map[string][]string, bech32Prefix string, authority string,
 ) AccountKeeper {
 	return AccountKeeper{
-		AccountKeeper: authkeeper.NewAccountKeeper(cdc, key, proto, maccPerms, bech32Prefix, authority),
-		key:           key,
+		AccountKeeper: authkeeper.NewAccountKeeper(cdc, storeKey, proto, maccPerms, bech32Prefix, authority),
+		storeKey:      storeKey,
 	}
 }
 
