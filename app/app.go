@@ -54,7 +54,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
@@ -136,6 +135,8 @@ import (
 	"github.com/xpladev/ethermint/ethereum/eip712"
 	srvflags "github.com/xpladev/ethermint/server/flags"
 	ethermint "github.com/xpladev/ethermint/types"
+	ethermintauth "github.com/xpladev/ethermint/x/auth"
+	ethermintauthkeeper "github.com/xpladev/ethermint/x/auth/keeper"
 	"github.com/xpladev/ethermint/x/erc20"
 	erc20client "github.com/xpladev/ethermint/x/erc20/client"
 	erc20keeper "github.com/xpladev/ethermint/x/erc20/keeper"
@@ -255,7 +256,7 @@ type EthermintApp struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper         authkeeper.AccountKeeper
+	AccountKeeper         ethermintauthkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
 	CapabilityKeeper      *capabilitykeeper.Keeper
 	StakingKeeper         *stakingkeeper.Keeper
@@ -396,7 +397,7 @@ func NewEthermintApp(
 	app.CapabilityKeeper.Seal()
 
 	// use custom Ethermint account for contracts
-	app.AccountKeeper = authkeeper.NewAccountKeeper(
+	app.AccountKeeper = ethermintauthkeeper.NewAccountKeeper(
 		appCodec, keys[authtypes.StoreKey],
 		ethermint.ProtoAccount,
 		maccPerms,
@@ -610,8 +611,8 @@ func NewEthermintApp(
 			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
-		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
+		ethermintauth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+		vesting.NewAppModule(app.AccountKeeper.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
@@ -761,7 +762,7 @@ func NewEthermintApp(
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing
 	// transactions
 	overrideModules := map[string]module.AppModuleSimulation{
-		authtypes.ModuleName: auth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+		authtypes.ModuleName: ethermintauth.NewAppModule(app.appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 	}
 	app.sm = module.NewSimulationManagerFromAppModules(app.mm.Modules, overrideModules)
 

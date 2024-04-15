@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 
 	"github.com/xpladev/ethermint/x/erc20/keeper"
 	"github.com/xpladev/ethermint/x/erc20/types"
@@ -30,7 +29,7 @@ import (
 func InitGenesis(
 	ctx sdk.Context,
 	k keeper.Keeper,
-	accountKeeper authkeeper.AccountKeeper,
+	accountKeeper types.AccountKeeper,
 	data types.GenesisState,
 ) {
 	err := k.SetParams(ctx, data.Params)
