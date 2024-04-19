@@ -21,9 +21,11 @@ import (
 	"strconv"
 	"sync"
 
+	errorsmod "cosmossdk.io/errors"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -226,7 +228,14 @@ func (b *Backend) FeeHistory(
 			}
 			wg.Add(1)
 			go func(index int32) {
-				defer wg.Done()
+				defer func() {
+					if r := recover(); r != nil {
+						err = errorsmod.Wrapf(errortypes.ErrPanic, "%v", r)
+						b.logger.Error("FeeHistory panicked", "error", err)
+						chanErr <- err
+					}
+					wg.Done()
+				}()
 				// fetch block
 				// tendermint block
 				blockNum := rpctypes.BlockNumber(blockStart + int64(index))
