@@ -215,6 +215,8 @@ var (
 	_ servertypes.Application = (*EthermintApp)(nil)
 )
 
+type PendingTxListener func([]byte)
+
 // var _ server.Application (*EthermintApp)(nil)
 
 // EthermintApp implements an extended ABCI application. It is an application
@@ -230,6 +232,8 @@ type EthermintApp struct {
 	interfaceRegistry types.InterfaceRegistry
 
 	invCheckPeriod uint
+
+	pendingTxListeners []PendingTxListener
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -945,6 +949,21 @@ func (app *EthermintApp) RegisterTendermintService(clientCtx client.Context) {
 
 func (app *EthermintApp) RegisterNodeService(clientCtx client.Context) {
 	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter())
+}
+
+// RegisterPendingTxListener is used by json-rpc server to listen to pending transactions in CheckTx.
+func (app *EthermintApp) RegisterPendingTxListener(listener PendingTxListener) {
+	app.pendingTxListeners = append(app.pendingTxListeners, listener)
+}
+
+func (app *EthermintApp) CheckTx(req abci.RequestCheckTx) abci.ResponseCheckTx {
+	res := app.BaseApp.CheckTx(req)
+	if res.Code == 0 && req.Type == abci.CheckTxType_New {
+		for _, listener := range app.pendingTxListeners {
+			listener(req.Tx)
+		}
+	}
+	return res
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server

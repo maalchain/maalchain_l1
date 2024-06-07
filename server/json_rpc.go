@@ -29,6 +29,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/types"
 	ethlog "github.com/ethereum/go-ethereum/log"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/evmos/ethermint/app"
 	"github.com/evmos/ethermint/rpc"
 	"github.com/evmos/ethermint/rpc/stream"
 
@@ -36,11 +37,18 @@ import (
 	ethermint "github.com/evmos/ethermint/types"
 )
 
+const MaxRetry = 6
+
+type AppWithPendingTxStream interface {
+	RegisterPendingTxListener(listener app.PendingTxListener)
+}
+
 // StartJSONRPC starts the JSON-RPC server
 func StartJSONRPC(ctx *server.Context,
 	clientCtx client.Context,
 	config *config.Config,
 	indexer ethermint.EVMTxIndexer,
+	app AppWithPendingTxStream,
 ) (*http.Server, chan struct{}, error) {
 	logger := ctx.Logger.With("module", "geth")
 
@@ -49,10 +57,21 @@ func StartJSONRPC(ctx *server.Context,
 		return nil, nil, fmt.Errorf("client %T does not implement EventsClient", clientCtx.Client)
 	}
 
-	stream, err := stream.NewRPCStreams(evtClient, logger, clientCtx.TxConfig.TxDecoder())
+	var rpcStream *stream.RPCStream
+	var err error
+	for i := 0; i < MaxRetry; i++ {
+		rpcStream, err = stream.NewRPCStreams(evtClient, logger, clientCtx.TxConfig.TxDecoder())
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create rpc streams: %w", err)
 	}
+
+	app.RegisterPendingTxListener(rpcStream.ListenPendingTx)
 
 	ethlog.Root().SetHandler(ethlog.FuncHandler(func(r *ethlog.Record) error {
 		switch r.Lvl {
@@ -71,7 +90,7 @@ func StartJSONRPC(ctx *server.Context,
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
-	apis := rpc.GetRPCAPIs(ctx, clientCtx, stream, allowUnprotectedTxs, indexer, rpcAPIArr)
+	apis := rpc.GetRPCAPIs(ctx, clientCtx, rpcStream, allowUnprotectedTxs, indexer, rpcAPIArr)
 
 	for _, api := range apis {
 		if err := rpcServer.RegisterName(api.Namespace, api.Service); err != nil {
@@ -130,7 +149,7 @@ func StartJSONRPC(ctx *server.Context,
 
 	ctx.Logger.Info("Starting JSON WebSocket server", "address", config.JSONRPC.WsAddress)
 
-	wsSrv := rpc.NewWebsocketsServer(clientCtx, ctx.Logger, stream, config)
+	wsSrv := rpc.NewWebsocketsServer(clientCtx, ctx.Logger, rpcStream, config)
 	wsSrv.Start()
 	return httpSrv, httpSrvDone, nil
 }

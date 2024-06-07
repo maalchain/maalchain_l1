@@ -556,7 +556,11 @@ func startInProcess(svrCtx *server.Context, clientCtx client.Context, opts Start
 	)
 
 	if config.JSONRPC.Enable {
-		httpSrv, httpSrvDone, err = StartJSONRPC(svrCtx, clientCtx, &config, idxer)
+		txApp, ok := app.(AppWithPendingTxStream)
+		if !ok {
+			return fmt.Errorf("json-rpc server requires AppWithPendingTxStream")
+		}
+		httpSrv, httpSrvDone, err = StartJSONRPC(svrCtx, clientCtx, &config, idxer, txApp)
 		if err != nil {
 			return err
 		}
