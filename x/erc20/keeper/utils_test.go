@@ -73,7 +73,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 	feemarketGenesis := feemarkettypes.DefaultGenesisState()
 	suite.app = app.Setup(false, feemarketGenesis)
 	header := testutil.NewHeader(
-		1, time.Now().UTC(), "ethermint_9000-1", consAddress, nil, nil,
+		1, time.Now().UTC(), "maalchain_7862-1", consAddress, nil, nil,
 	)
 	suite.ctx = suite.app.BaseApp.NewContext(false, header)
 

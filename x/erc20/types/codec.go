@@ -40,9 +40,9 @@ var (
 
 const (
 	// Amino names
-	convertERC20Name = "ethermint/MsgConvertERC20"
-	convertCoinName  = "ethermint/MsgConvertCoin"
-	updateParams     = "ethermint/erc20/MsgUpdateParams"
+	convertERC20Name = "evmos/MsgConvertERC20"
+	convertCoinName  = "evmos/MsgConvertCoin"
+	updateParams     = "evmos/erc20/MsgUpdateParams"
 )
 
 // NOTE: This is required for the GetSignBytes function

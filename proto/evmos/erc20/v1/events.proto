@@ -1,5 +1,5 @@
 syntax = "proto3";
-package ethermint.erc20.v1;
+package evmos.erc20.v1;
 
 option go_package = "github.com/xpladev/ethermint/x/erc20/types";
 

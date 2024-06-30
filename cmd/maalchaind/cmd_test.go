@@ -11,16 +11,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	"github.com/xpladev/ethermint/app"
-	ethermintd "github.com/xpladev/ethermint/cmd/ethermintd"
+	maalchaind "github.com/xpladev/ethermint/cmd/ethermintd"
 )
 
 func TestInitCmd(t *testing.T) {
-	rootCmd, _ := ethermintd.NewRootCmd()
+	rootCmd, _ := maalchaind.NewRootCmd()
 	rootCmd.SetArgs([]string{
 		"init",          // Test the init cmd
 		"etherminttest", // Moniker
 		fmt.Sprintf("--%s=%s", cli.FlagOverwrite, "true"), // Overwrite genesis.json, in case it already exists
-		fmt.Sprintf("--%s=%s", flags.FlagChainID, "ethermint_9000-1"),
+		fmt.Sprintf("--%s=%s", flags.FlagChainID, "maalchain_7862-1"),
 	})
 
 	err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome)

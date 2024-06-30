@@ -356,7 +356,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		ctx.Logger = logger
 
 		nodeDirName := fmt.Sprintf("node%d", i)
-		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "ethermintd")
+		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "maalchaind")
 		clientDir := filepath.Join(network.BaseDir, nodeDirName, "ethermintcli")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 

@@ -78,14 +78,14 @@ def test_grpc_mode(custom_ethermint):
     for i in range(2):
         wait_for_block(custom_ethermint.cosmos_cli(i), 1)
     supervisorctl(
-        custom_ethermint.base_dir / "../tasks.ini", "stop", "ethermint_9000-1-node1"
+        custom_ethermint.base_dir / "../tasks.ini", "stop", "maalchain_7862-1-node1"
     )
 
     # run grpc-only mode directly with existing chain state
     with (custom_ethermint.base_dir / "node1.log").open("a") as logfile:
         proc = subprocess.Popen(
             [
-                "ethermintd",
+                "maalchaind",
                 "start",
                 "--grpc-only",
                 "--home",

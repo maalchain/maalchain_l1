@@ -39,7 +39,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 	suite.app = app.Setup(false, feemarketGenesis)
 	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{
 		Height:          1,
-		ChainID:         "ethermint_9000-1",
+		ChainID:         "maalchain_7862-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -96,7 +96,7 @@ func (suite *GenesisTestSuite) TestERC20InitGenesis() {
 	for _, tc := range testCases {
 
 		suite.Require().NotPanics(func() {
-			erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper, tc.genesisState)
+			erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper.AccountKeeper, tc.genesisState)
 		})
 		params := suite.app.Erc20Keeper.GetParams(suite.ctx)
 
@@ -139,7 +139,7 @@ func (suite *GenesisTestSuite) TestErc20ExportGenesis() {
 	}
 
 	for _, tc := range testGenCases {
-		erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper, tc.genesisState)
+		erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper.AccountKeeper, tc.genesisState)
 		suite.Require().NotPanics(func() {
 			genesisExported := erc20.ExportGenesis(suite.ctx, suite.app.Erc20Keeper)
 			params := suite.app.Erc20Keeper.GetParams(suite.ctx)

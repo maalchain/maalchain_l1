@@ -51,13 +51,13 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 		Base:        testutil.BaseDenom,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    ibc.AethermintDenomtrace.BaseDenom,
+				Denom:    ibc.Amaalchaindenomtrace.BaseDenom,
 				Exponent: 0,
 			},
 		},
 		Name:    testutil.BaseDenom,
 		Symbol:  erc20Symbol,
-		Display: ibc.AethermintDenomtrace.BaseDenom,
+		Display: ibc.Amaalchaindenomtrace.BaseDenom,
 	}
 
 	BeforeEach(func() {
@@ -165,7 +165,7 @@ var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {
 			s.Require().Equal(amount, aethermintIBCBalanceBefore.Amount.Int64())
 
 			// 2. Send aethermint IBC coins from Osmosis to Ethermint
-			ibcCoinMeta := fmt.Sprintf("%s/%s", ibc.AethermintDenomtrace.Path, ibc.AethermintDenomtrace.BaseDenom)
+			ibcCoinMeta := fmt.Sprintf("%s/%s", ibc.Amaalchaindenomtrace.Path, ibc.Amaalchaindenomtrace.BaseDenom)
 			s.SendBackCoins(s.pathOsmosisEthermint, s.IBCOsmosisChain, ibc.AethermintIbcdenom, amount, sender, receiver, 1, ibcCoinMeta)
 
 			// check ibc aethermint coins balance on Osmosis - should be zero

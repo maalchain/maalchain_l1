@@ -108,7 +108,7 @@ func (s AnteTestSuite) TestMinGasPriceDecorator() {
 				params.MinGasPrice = sdk.NewDec(10)
 				s.app.FeeMarketKeeper.SetParams(s.ctx, params)
 
-				txBuilder := s.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), "stake", &testMsg)
+				txBuilder := s.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), "maal", &testMsg)
 				return txBuilder.GetTx()
 			},
 			false,

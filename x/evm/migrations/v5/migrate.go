@@ -32,7 +32,7 @@ func MigrateStore(
 	cdc.MustUnmarshal(extraEIPsBz, &extraEIPs)
 
 	// revert ExtraEIP change for Ethermint testnet
-	if ctx.ChainID() == "ethermint_9000-4" {
+	if ctx.ChainID() == "maalchain_7862-4" {
 		extraEIPs.EIPs = []int64{}
 	}
 
