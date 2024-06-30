@@ -85,7 +85,7 @@ def test_grpc_mode(custom_ethermint):
     with (custom_ethermint.base_dir / "node1.log").open("a") as logfile:
         proc = subprocess.Popen(
             [
-                "ethermintd",
+                "maalchaind",
                 "start",
                 "--grpc-only",
                 "--home",
