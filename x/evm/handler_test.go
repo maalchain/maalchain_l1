@@ -116,7 +116,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 	// Initialize the chain
 	suite.app.InitChain(
 		abci.RequestInitChain{
-			ChainId:         "ethermint_9000-1",
+			ChainId:         "maalchain_7862-1",
 			Validators:      []abci.ValidatorUpdate{},
 			ConsensusParams: app.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
@@ -125,7 +125,7 @@ func (suite *EvmTestSuite) DoSetupTest(t require.TestingT) {
 
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:          1,
-		ChainID:         "ethermint_9000-1",
+		ChainID:         "maalchain_7862-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 		Version: tmversion.Consensus{
@@ -675,7 +675,7 @@ func (suite *EvmTestSuite) TestERC20TransferReverted() {
 
 			txData, err := types.UnpackTxData(tx.Data)
 			suite.Require().NoError(err)
-			fees, err := keeper.VerifyFee(txData, "aphoton", baseFee, true, true, suite.ctx.IsCheckTx())
+			fees, err := keeper.VerifyFee(txData, "maal", baseFee, true, true, suite.ctx.IsCheckTx())
 			suite.Require().NoError(err)
 			err = k.DeductTxCostsFromUserBalance(suite.ctx, fees, common.HexToAddress(tx.From))
 			suite.Require().NoError(err)

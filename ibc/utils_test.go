@@ -16,7 +16,7 @@ import (
 
 func init() {
 	cfg := sdk.GetConfig()
-	cfg.SetBech32PrefixForAccount("ethm", "ethmpub")
+	cfg.SetBech32PrefixForAccount("maal", "maalpub")
 }
 
 func TestGetTransferSenderRecipient(t *testing.T) {
@@ -243,7 +243,7 @@ func TestGetReceivedCoin(t *testing.T) {
 			"channel-0",
 			"transfer/channel-0/aphoton",
 			"10",
-			sdk.Coin{Denom: "aphoton", Amount: sdkmath.NewInt(10)},
+			sdk.Coin{Denom: "maal", Amount: sdkmath.NewInt(10)},
 		},
 		{
 			"transfer 2x ibc wrapped coin to destination which is its source",
@@ -282,9 +282,9 @@ func TestGetSentCoin(t *testing.T) {
 	}{
 		{
 			"get unwrapped aphoton coin",
-			"aphoton",
+			"maal",
 			"10",
-			sdk.Coin{Denom: "aphoton", Amount: sdkmath.NewInt(10)},
+			sdk.Coin{Denom: "maal", Amount: sdkmath.NewInt(10)},
 		},
 		{
 			"get ibc wrapped aphoton coin",
@@ -333,7 +333,7 @@ func TestGetAddressFromBech32(t *testing.T) {
 		},
 		{
 			"invalid bech32 address",
-			"ethm",
+			"maal",
 			"",
 			true,
 		},

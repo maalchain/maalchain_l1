@@ -1,5 +1,5 @@
 dotenv: .env
-ethermint_9000-1:
+maalchain_7862-1:
   cmd: maalchaind
   start-flags: "--trace"
   app-config:
@@ -43,7 +43,7 @@ ethermint_9000-1:
         deposit_params:
           max_deposit_period: "10s"
           min_deposit:
-            - denom: "aphoton"
+            - denom: "maal"
               amount: "1"
       transfer:
         params:

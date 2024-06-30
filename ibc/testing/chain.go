@@ -42,7 +42,7 @@ import (
 )
 
 // ChainIDPrefix defines the default chain ID prefix for Ethermint test chains
-var ChainIDPrefix = "ethermint_9000-"
+var ChainIDPrefix = "maalchain_7862-"
 var ChainIDSuffix = ""
 
 func init() {

@@ -60,37 +60,37 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"equal metadata",
 			banktypes.Metadata{
-				Base:        "aphoton",
-				Display:     "photon",
-				Name:        "Photon",
-				Symbol:      "PHOTON",
+				Base:        "maal",
+				Display:     "maal",
+				Name:        "Maal",
+				Symbol:      "MAAL",
 				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aphoton",
+						Denom:    "maal",
 						Exponent: 0,
 						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "photon",
+						Denom:    "maal",
 						Exponent: 18,
 					},
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aphoton",
-				Display:     "photon",
-				Name:        "Photon",
-				Symbol:      "PHOTON",
+				Base:        "maal",
+				Display:     "maal",
+				Name:        "Maal",
+				Symbol:      "MAAL",
 				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aphoton",
+						Denom:    "maal",
 						Exponent: 0,
 						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "photon",
+						Denom:    "maal",
 						Exponent: 18,
 					},
 				},
@@ -100,7 +100,7 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different base field",
 			banktypes.Metadata{
-				Base: "aphoton",
+				Base: "maal",
 			},
 			banktypes.Metadata{
 				Base: "taphoton",
@@ -110,32 +110,32 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different denom units length",
 			banktypes.Metadata{
-				Base:        "aphoton",
-				Display:     "photon",
-				Name:        "Photon",
-				Symbol:      "PHOTON",
+				Base:        "maal",
+				Display:     "maal",
+				Name:        "Maal",
+				Symbol:      "MAAL",
 				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aphoton",
+						Denom:    "maal",
 						Exponent: 0,
 						Aliases:  []string{"atto photon"},
 					},
 					{
-						Denom:    "photon",
+						Denom:    "maal",
 						Exponent: 18,
 					},
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aphoton",
-				Display:     "photon",
-				Name:        "Photon",
-				Symbol:      "PHOTON",
+				Base:        "maal",
+				Display:     "maal",
+				Name:        "Maal",
+				Symbol:      "MAAL",
 				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aphoton",
+						Denom:    "maal",
 						Exponent: 0,
 						Aliases:  []string{"atto photon"},
 					},
@@ -146,14 +146,14 @@ func TestEqualMetadata(t *testing.T) {
 		{
 			"different denom units",
 			banktypes.Metadata{
-				Base:        "aphoton",
-				Display:     "photon",
-				Name:        "Photon",
-				Symbol:      "PHOTON",
+				Base:        "maal",
+				Display:     "maal",
+				Name:        "Maal",
+				Symbol:      "MAAL",
 				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aphoton",
+						Denom:    "maal",
 						Exponent: 0,
 						Aliases:  []string{"atto photon"},
 					},
@@ -163,20 +163,20 @@ func TestEqualMetadata(t *testing.T) {
 						Aliases:  []string{"micro photon"},
 					},
 					{
-						Denom:    "photon",
+						Denom:    "maal",
 						Exponent: 18,
 					},
 				},
 			},
 			banktypes.Metadata{
-				Base:        "aphoton",
-				Display:     "photon",
-				Name:        "Photon",
-				Symbol:      "PHOTON",
+				Base:        "maal",
+				Display:     "maal",
+				Name:        "Maal",
+				Symbol:      "MAAL",
 				Description: "EVM, staking and governance denom of Photon",
 				DenomUnits: []*banktypes.DenomUnit{
 					{
-						Denom:    "aphoton",
+						Denom:    "maal",
 						Exponent: 0,
 						Aliases:  []string{"atto photon"},
 					},
@@ -186,7 +186,7 @@ func TestEqualMetadata(t *testing.T) {
 						Aliases:  []string{"micro photon"},
 					},
 					{
-						Denom:    "photon",
+						Denom:    "maal",
 						Exponent: 18,
 					},
 				},
@@ -232,14 +232,14 @@ func TestEqualAliases(t *testing.T) {
 		},
 		{
 			"same values, unsorted",
-			[]string{"atto photon", "aphoton"},
-			[]string{"aphoton", "atto photon"},
+			[]string{"atto photon", "maal"},
+			[]string{"maal", "atto photon"},
 			false,
 		},
 		{
 			"same values, sorted",
-			[]string{"aphoton", "atto photon"},
-			[]string{"aphoton", "atto photon"},
+			[]string{"maal", "atto photon"},
+			[]string{"maal", "atto photon"},
 			true,
 		},
 	}

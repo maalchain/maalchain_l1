@@ -19,7 +19,7 @@ var (
 
 	Umaalchaindenomtrace = transfertypes.DenomTrace{
 		Path:      "transfer/channel-0",
-		BaseDenom: "aphoton",
+		BaseDenom: "maal",
 	}
 	UethermintIbcdenom = Umaalchaindenomtrace.IBCDenom()
 
@@ -31,7 +31,7 @@ var (
 
 	Amaalchaindenomtrace = transfertypes.DenomTrace{
 		Path:      "transfer/channel-0",
-		BaseDenom: "aphoton",
+		BaseDenom: "maal",
 	}
 	AethermintIbcdenom = Amaalchaindenomtrace.IBCDenom()
 )

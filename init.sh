@@ -215,10 +215,10 @@ fi
 # 	--home "$HOMEDIR" \
 # 	--chain-id "$CHAINID"
 
-./build/maalchaind start \
-	--metrics "" \
-	--log_level info \
-	--minimum-gas-prices=0.0001maal \
-	--json-rpc.api eth,txpool,personal,net,debug,web3 \
-	--home "./build/node" \
-	--chain-id maalchain_7862-1
+# ./build/maalchaind start \
+# 	--metrics "" \
+# 	--log_level info \
+# 	--minimum-gas-prices=0.0001maal \
+# 	--json-rpc.api eth,txpool,personal,net,debug,web3 \
+# 	--home "./build/node" \
+# 	--chain-id maalchain_7862-1

@@ -1,0 +1,14 @@
+- address: maal10jmp6sgh4cc6zt3e8gw05wavvejgr5pw0wrg97
+  name: mykey
+
+- address: maal1cml96vmptgw99syqrrz8az79xer2pcgp6gra0f
+  name: dev0
+
+- address: maal1jcltmuhplrdcwp7stlr4hlhlhgd4htqhvqu4r6
+  name: dev1
+
+- address: maal1gzsvk8rruqn2sx64acfsskrwy8hvrmafatlj2a
+  name: dev2
+
+- address: maal1fx944mzagwdhx0wz7k9tfztc8g3lkfk6772uf9
+  name: dev3

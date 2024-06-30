@@ -140,7 +140,7 @@ class CosmosCLI:
             self.raw("query", "bank", "balances", addr, home=self.data_dir)
         )["balances"]
 
-    def balance(self, addr, denom="aphoton"):
+    def balance(self, addr, denom="maal"):
         denoms = {coin["denom"]: int(coin["amount"]) for coin in self.balances(addr)}
         return denoms.get(denom, 0)
 

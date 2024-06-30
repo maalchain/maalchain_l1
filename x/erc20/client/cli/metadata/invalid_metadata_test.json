@@ -4,18 +4,18 @@
       "description": 1,
       "denom_units": [
         {
-          "denom": "aphoton",
+          "denom": "maal",
           "exponent": 0
         },
         {
-          "denom": "photon",
+          "denom": "maal",
           "exponent": 18
         }
       ],
-      "base": "aphoton",
-      "display": "aphoton",
-      "name": "aphoton",
-      "symbol": "PHOTON"
+      "base": "maal",
+      "display": "maal",
+      "name": "maal",
+      "symbol": "MAAL"
     }
   ]
 }
