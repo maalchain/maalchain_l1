@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package rpc
 
 import (
@@ -23,16 +23,16 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/xpladev/ethermint/rpc/backend"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/debug"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/eth"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/eth/filters"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/miner"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/net"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/personal"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/txpool"
-	"github.com/xpladev/ethermint/rpc/namespaces/ethereum/web3"
-	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/maalchain/maalchain_l1/rpc/backend"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/debug"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/eth"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/eth/filters"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/miner"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/net"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/personal"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/txpool"
+	"github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/web3"
+	ethermint "github.com/maalchain/maalchain_l1/types"
 
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 )

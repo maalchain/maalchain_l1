@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/encoding"
-	v4 "github.com/xpladev/ethermint/x/evm/migrations/v4"
-	v4types "github.com/xpladev/ethermint/x/evm/migrations/v4/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/encoding"
+	v4 "github.com/maalchain/maalchain_l1/x/evm/migrations/v4"
+	v4types "github.com/maalchain/maalchain_l1/x/evm/migrations/v4/types"
 )
 
 type mockSubspace struct {

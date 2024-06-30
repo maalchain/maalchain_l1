@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	cryptocodec "github.com/xpladev/ethermint/crypto/codec"
-	enccodec "github.com/xpladev/ethermint/encoding/codec"
-	ethermint "github.com/xpladev/ethermint/types"
+	cryptocodec "github.com/maalchain/maalchain_l1/crypto/codec"
+	enccodec "github.com/maalchain/maalchain_l1/encoding/codec"
+	ethermint "github.com/maalchain/maalchain_l1/types"
 )
 
 var TestCodec amino.Codec

@@ -5,8 +5,8 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/xpladev/ethermint/app/ante"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app/ante"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func (suite AnteTestSuite) TestEthSetupContextDecorator() {

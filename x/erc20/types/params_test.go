@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
 )
 
 type ParamsTestSuite struct {

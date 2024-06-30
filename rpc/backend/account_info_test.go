@@ -11,10 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/xpladev/ethermint/rpc/backend/mocks"
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
-	"github.com/xpladev/ethermint/tests"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
+	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
+	"github.com/maalchain/maalchain_l1/tests"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func (suite *BackendTestSuite) TestGetCode() {

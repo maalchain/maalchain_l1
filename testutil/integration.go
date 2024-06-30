@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 
 package testutil
 
@@ -26,8 +26,8 @@ import (
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
 )
 
 // SubmitProposal delivers a submit proposal tx for a given gov content.

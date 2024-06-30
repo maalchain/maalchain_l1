@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/xpladev/ethermint/testutil/network"
+	"github.com/maalchain/maalchain_l1/testutil/network"
 )
 
 type IntegrationTestSuite struct {

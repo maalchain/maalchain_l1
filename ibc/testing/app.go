@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 
 package ibctesting
 
@@ -35,9 +35,9 @@ import (
 
 	ibcgotesting "github.com/cosmos/ibc-go/v7/testing"
 
-	ethermintapp "github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	ethermintapp "github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 var DefaultTestingAppInit func() (ibcgotesting.TestingApp, map[string]json.RawMessage) = ethermintapp.SetupTestingApp

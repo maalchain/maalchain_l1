@@ -13,12 +13,12 @@ import (
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
 
-	utiltx "github.com/xpladev/ethermint/testutil/tx"
-	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
+	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/x/erc20"
-	"github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/x/erc20"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
 )
 
 type GenesisTestSuite struct {

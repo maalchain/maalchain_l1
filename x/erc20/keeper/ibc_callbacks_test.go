@@ -7,8 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/x/erc20/keeper"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/x/erc20/keeper"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -17,7 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/xpladev/ethermint/testutil"
+	"github.com/maalchain/maalchain_l1/testutil"
 
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
@@ -25,8 +25,8 @@ import (
 	ibcgotesting "github.com/cosmos/ibc-go/v7/testing"
 	ibcmock "github.com/cosmos/ibc-go/v7/testing/mock"
 
-	"github.com/xpladev/ethermint/contracts"
-	"github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/contracts"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
 )
 
 var erc20Denom = "erc20/0xdac17f958d2ee523a2206206994597c13d831ec7"

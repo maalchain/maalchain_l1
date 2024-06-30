@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 
 package contracts
 
@@ -21,9 +21,9 @@ import (
 	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/common"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 
-	"github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
 )
 
 var (

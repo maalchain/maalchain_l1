@@ -6,10 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/encoding"
-	v4 "github.com/xpladev/ethermint/x/feemarket/migrations/v4"
-	"github.com/xpladev/ethermint/x/feemarket/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/encoding"
+	v4 "github.com/maalchain/maalchain_l1/x/feemarket/migrations/v4"
+	"github.com/maalchain/maalchain_l1/x/feemarket/types"
 )
 
 type mockSubspace struct {

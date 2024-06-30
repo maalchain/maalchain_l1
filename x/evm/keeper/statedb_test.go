@@ -16,10 +16,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/tests"
-	"github.com/xpladev/ethermint/x/evm/statedb"
-	"github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func (suite *KeeperTestSuite) TestCreateAccount() {

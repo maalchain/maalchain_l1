@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package backend
 
 import (
@@ -34,11 +34,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
-	"github.com/xpladev/ethermint/server/config"
-	ethermint "github.com/xpladev/ethermint/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
+	"github.com/maalchain/maalchain_l1/server/config"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // Accounts returns the list of accounts available to this node.

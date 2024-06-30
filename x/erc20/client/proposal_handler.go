@@ -12,14 +12,14 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 
 package client
 
 import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 
-	"github.com/xpladev/ethermint/x/erc20/client/cli"
+	"github.com/maalchain/maalchain_l1/x/erc20/client/cli"
 )
 
 var (

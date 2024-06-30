@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 
 package types
 
@@ -20,7 +20,7 @@ import (
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	etherminttypes "github.com/xpladev/ethermint/types"
+	etherminttypes "github.com/maalchain/maalchain_l1/types"
 )
 
 // NewTokenPair returns an instance of TokenPair

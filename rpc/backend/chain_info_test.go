@@ -7,17 +7,17 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
-	rpc "github.com/xpladev/ethermint/rpc/types"
-	"github.com/xpladev/ethermint/tests"
+	rpc "github.com/maalchain/maalchain_l1/rpc/types"
+	"github.com/maalchain/maalchain_l1/tests"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/xpladev/ethermint/rpc/backend/mocks"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
-	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
+	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
 )
 
 func (suite *BackendTestSuite) TestBaseFee() {

@@ -16,10 +16,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
-	"github.com/xpladev/ethermint/app"
-	ibctesting "github.com/xpladev/ethermint/ibc/testing"
-	"github.com/xpladev/ethermint/x/erc20/types"
-	evm "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	ibctesting "github.com/maalchain/maalchain_l1/ibc/testing"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
+	evm "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 type KeeperTestSuite struct {

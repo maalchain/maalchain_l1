@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 
 package app
 
@@ -40,11 +40,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/xpladev/ethermint/encoding"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
-	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
+	"github.com/maalchain/maalchain_l1/encoding"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
 
-	"github.com/xpladev/ethermint/cmd/config"
+	"github.com/maalchain/maalchain_l1/cmd/config"
 )
 
 func init() {

@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package debug
 
 import (
@@ -29,7 +29,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 
 	stderrors "github.com/pkg/errors"
 
@@ -40,8 +40,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/xpladev/ethermint/rpc/backend"
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
+	"github.com/maalchain/maalchain_l1/rpc/backend"
+	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
 )
 
 // HandlerT keeps track of the cpu profiler and trace execution

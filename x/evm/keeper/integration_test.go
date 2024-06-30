@@ -15,19 +15,19 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/encoding"
-	"github.com/xpladev/ethermint/tests"
-	"github.com/xpladev/ethermint/testutil"
-	"github.com/xpladev/ethermint/x/feemarket/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/encoding"
+	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/maalchain/maalchain_l1/testutil"
+	"github.com/maalchain/maalchain_l1/x/feemarket/types"
 
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 var _ = Describe("Feemarket", func() {

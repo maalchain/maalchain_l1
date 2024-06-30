@@ -17,9 +17,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
-	ethermint "github.com/xpladev/ethermint/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

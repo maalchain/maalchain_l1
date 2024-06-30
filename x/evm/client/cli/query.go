@@ -12,17 +12,17 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package cli
 
 import (
 	"github.com/spf13/cobra"
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
+	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // GetQueryCmd returns the parent command for all x/bank CLi query commands.

@@ -11,14 +11,14 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/contracts"
-	"github.com/xpladev/ethermint/ibc"
-	ibctesting "github.com/xpladev/ethermint/ibc/testing"
-	"github.com/xpladev/ethermint/testutil"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/contracts"
+	"github.com/maalchain/maalchain_l1/ibc"
+	ibctesting "github.com/maalchain/maalchain_l1/ibc/testing"
+	"github.com/maalchain/maalchain_l1/testutil"
 
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
 )
 
 var _ = Describe("Convert receiving IBC to Erc20", Ordered, func() {

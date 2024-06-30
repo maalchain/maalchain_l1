@@ -27,10 +27,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/xpladev/ethermint/app/ante"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/tests"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app/ante"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/tests"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"

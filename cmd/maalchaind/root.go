@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package main
 
 import (
@@ -50,16 +50,16 @@ import (
 
 	rosettaCmd "cosmossdk.io/tools/rosetta/cmd"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/xpladev/ethermint/app"
-	ethermintclient "github.com/xpladev/ethermint/client"
-	"github.com/xpladev/ethermint/client/debug"
-	"github.com/xpladev/ethermint/crypto/hd"
-	"github.com/xpladev/ethermint/encoding"
-	"github.com/xpladev/ethermint/ethereum/eip712"
-	"github.com/xpladev/ethermint/server"
-	servercfg "github.com/xpladev/ethermint/server/config"
-	srvflags "github.com/xpladev/ethermint/server/flags"
-	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/maalchain/maalchain_l1/app"
+	ethermintclient "github.com/maalchain/maalchain_l1/client"
+	"github.com/maalchain/maalchain_l1/client/debug"
+	"github.com/maalchain/maalchain_l1/crypto/hd"
+	"github.com/maalchain/maalchain_l1/encoding"
+	"github.com/maalchain/maalchain_l1/ethereum/eip712"
+	"github.com/maalchain/maalchain_l1/server"
+	servercfg "github.com/maalchain/maalchain_l1/server/config"
+	srvflags "github.com/maalchain/maalchain_l1/server/flags"
+	ethermint "github.com/maalchain/maalchain_l1/types"
 )
 
 const EnvPrefix = "ETHERMINT"

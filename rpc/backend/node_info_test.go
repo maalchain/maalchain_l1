@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/viper"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/rpc/backend/mocks"
-	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
+	ethermint "github.com/maalchain/maalchain_l1/types"
 	"google.golang.org/grpc/metadata"
 )
 

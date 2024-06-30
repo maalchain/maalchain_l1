@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package types
 
 import (
@@ -23,8 +23,8 @@ import (
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	ethermint "github.com/xpladev/ethermint/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // EventFormat is the format version of the events.

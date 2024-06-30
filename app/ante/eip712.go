@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package ante
 
 import (
@@ -33,11 +33,11 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/ethereum/eip712"
-	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/ethereum/eip712"
+	ethermint "github.com/maalchain/maalchain_l1/types"
 
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 var ethermintCodec codec.ProtoCodecMarshaler

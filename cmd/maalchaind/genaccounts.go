@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package main
 
 import (
@@ -33,9 +33,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	"github.com/xpladev/ethermint/crypto/hd"
-	ethermint "github.com/xpladev/ethermint/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/crypto/hd"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 const (

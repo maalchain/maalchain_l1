@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package server
 
 import (
@@ -62,11 +62,11 @@ import (
 	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/xpladev/ethermint/indexer"
-	ethdebug "github.com/xpladev/ethermint/rpc/namespaces/ethereum/debug"
-	"github.com/xpladev/ethermint/server/config"
-	srvflags "github.com/xpladev/ethermint/server/flags"
-	ethermint "github.com/xpladev/ethermint/types"
+	"github.com/maalchain/maalchain_l1/indexer"
+	ethdebug "github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/debug"
+	"github.com/maalchain/maalchain_l1/server/config"
+	srvflags "github.com/maalchain/maalchain_l1/server/flags"
+	ethermint "github.com/maalchain/maalchain_l1/types"
 )
 
 // DBOpener is a function to open `application.db`, potentially with customized options.

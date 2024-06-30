@@ -18,15 +18,15 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	"github.com/xpladev/ethermint/crypto/hd"
-	"github.com/xpladev/ethermint/encoding"
-	"github.com/xpladev/ethermint/indexer"
-	"github.com/xpladev/ethermint/rpc/backend/mocks"
-	rpctypes "github.com/xpladev/ethermint/rpc/types"
-	"github.com/xpladev/ethermint/tests"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/crypto/hd"
+	"github.com/maalchain/maalchain_l1/encoding"
+	"github.com/maalchain/maalchain_l1/indexer"
+	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
+	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
+	"github.com/maalchain/maalchain_l1/tests"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 type BackendTestSuite struct {

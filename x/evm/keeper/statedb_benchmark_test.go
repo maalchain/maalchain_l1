@@ -10,7 +10,7 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/xpladev/ethermint/tests"
+	"github.com/maalchain/maalchain_l1/tests"
 )
 
 func BenchmarkCreateAccountNew(b *testing.B) {

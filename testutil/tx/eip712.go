@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package tx
 
 import (
@@ -26,18 +26,18 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	cryptocodec "github.com/xpladev/ethermint/crypto/codec"
+	cryptocodec "github.com/maalchain/maalchain_l1/crypto/codec"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/xpladev/ethermint/ethereum/eip712"
+	"github.com/maalchain/maalchain_l1/ethereum/eip712"
 
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/xpladev/ethermint/types"
+	"github.com/maalchain/maalchain_l1/types"
 
-	"github.com/xpladev/ethermint/app"
+	"github.com/maalchain/maalchain_l1/app"
 )
 
 type EIP712TxArgs struct {

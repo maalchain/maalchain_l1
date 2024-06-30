@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package filters
 
 import (
@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/xpladev/ethermint/rpc/backend"
-	"github.com/xpladev/ethermint/rpc/types"
+	"github.com/maalchain/maalchain_l1/rpc/backend"
+	"github.com/maalchain/maalchain_l1/rpc/types"
 
 	"github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"

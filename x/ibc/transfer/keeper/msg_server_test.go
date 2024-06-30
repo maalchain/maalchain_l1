@@ -11,8 +11,8 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	"github.com/stretchr/testify/mock"
-	erc20types "github.com/xpladev/ethermint/x/erc20/types"
-	"github.com/xpladev/ethermint/x/ibc/transfer/keeper"
+	erc20types "github.com/maalchain/maalchain_l1/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/x/ibc/transfer/keeper"
 )
 
 func (suite *KeeperTestSuite) TestTransfer() {
