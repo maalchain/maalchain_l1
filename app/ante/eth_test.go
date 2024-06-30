@@ -6,12 +6,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/xpladev/ethermint/app/ante"
-	"github.com/xpladev/ethermint/server/config"
-	"github.com/xpladev/ethermint/tests"
-	ethermint "github.com/xpladev/ethermint/types"
-	"github.com/xpladev/ethermint/x/evm/statedb"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app/ante"
+	"github.com/maalchain/maalchain_l1/server/config"
+	"github.com/maalchain/maalchain_l1/tests"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 )

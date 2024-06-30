@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package client
 
 // DONTCOVER
@@ -53,13 +53,13 @@ import (
 	mintypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/xpladev/ethermint/crypto/hd"
-	"github.com/xpladev/ethermint/server/config"
-	srvflags "github.com/xpladev/ethermint/server/flags"
-	ethermint "github.com/xpladev/ethermint/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/crypto/hd"
+	"github.com/maalchain/maalchain_l1/server/config"
+	srvflags "github.com/maalchain/maalchain_l1/server/flags"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 
-	"github.com/xpladev/ethermint/testutil/network"
+	"github.com/maalchain/maalchain_l1/testutil/network"
 )
 
 var (

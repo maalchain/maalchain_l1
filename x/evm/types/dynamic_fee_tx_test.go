@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
-	"github.com/xpladev/ethermint/tests"
+	"github.com/maalchain/maalchain_l1/tests"
 )
 
 type TxDataTestSuite struct {

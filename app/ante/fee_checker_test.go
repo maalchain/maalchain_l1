@@ -14,10 +14,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/xpladev/ethermint/encoding"
-	ethermint "github.com/xpladev/ethermint/types"
-	"github.com/xpladev/ethermint/x/evm/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/encoding"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 var _ DynamicFeeEVMKeeper = MockEVMKeeper{}

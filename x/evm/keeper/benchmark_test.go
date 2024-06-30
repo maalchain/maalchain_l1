@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	ethermint "github.com/xpladev/ethermint/types"
-	"github.com/xpladev/ethermint/x/evm/types"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func SetupContract(b *testing.B) (*KeeperTestSuite, common.Address) {

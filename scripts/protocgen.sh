@@ -21,5 +21,5 @@ done
 # TODO: command to generate docs using protoc-gen-doc was deleted here
 
 # move proto files to the right places
-cp -r github.com/xpladev/ethermint/* ./
+cp -r github.com/maalchain/maalchain_l1/* ./
 rm -rf github.com

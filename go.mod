@@ -1,4 +1,4 @@
-module github.com/xpladev/ethermint
+module github.com/maalchain/maalchain_l1
 
 go 1.19
 

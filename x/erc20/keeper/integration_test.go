@@ -15,12 +15,12 @@ import (
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/testutil"
-	"github.com/xpladev/ethermint/x/erc20/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/testutil"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 var _ = Describe("Performing EVM transactions", Ordered, func() {

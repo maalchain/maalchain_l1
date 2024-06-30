@@ -17,9 +17,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/xpladev/ethermint/rpc/backend/mocks"
-	rpc "github.com/xpladev/ethermint/rpc/types"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
+	rpc "github.com/maalchain/maalchain_l1/rpc/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // Client defines a mocked object that implements the Tendermint JSON-RPC Client

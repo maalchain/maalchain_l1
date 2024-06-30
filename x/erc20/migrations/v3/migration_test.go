@@ -5,14 +5,14 @@ import (
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/encoding"
-	v3 "github.com/xpladev/ethermint/x/erc20/migrations/v3"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/encoding"
+	v3 "github.com/maalchain/maalchain_l1/x/erc20/migrations/v3"
 
-	v3types "github.com/xpladev/ethermint/x/erc20/migrations/v3/types"
+	v3types "github.com/maalchain/maalchain_l1/x/erc20/migrations/v3/types"
 
 	"github.com/stretchr/testify/require"
-	"github.com/xpladev/ethermint/x/erc20/types"
+	"github.com/maalchain/maalchain_l1/x/erc20/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"

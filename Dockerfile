@@ -4,7 +4,7 @@ FROM golang:alpine AS build-env
 ENV PACKAGES git build-base
 
 # Set working directory for the build
-WORKDIR /go/src/github.com/xpladev/ethermint
+WORKDIR /go/src/github.com/maalchain/maalchain_l1
 
 # Install dependencies
 RUN apk add --update $PACKAGES
@@ -24,7 +24,7 @@ RUN apk add --update ca-certificates jq
 WORKDIR /
 
 # Copy over binaries from the build-env
-COPY --from=build-env /go/src/github.com/xpladev/ethermint/build/maalchaind /usr/bin/maalchaind
+COPY --from=build-env /go/src/github.com/maalchain/maalchain_l1/build/maalchaind /usr/bin/maalchaind
 
 # Run maalchaind by default
 CMD ["maalchaind"]

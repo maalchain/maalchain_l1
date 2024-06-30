@@ -13,14 +13,14 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	ethlogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/xpladev/ethermint/tests"
-	"github.com/xpladev/ethermint/x/evm/statedb"
+	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/xpladev/ethermint/server/config"
-	ethermint "github.com/xpladev/ethermint/types"
-	"github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/server/config"
+	ethermint "github.com/maalchain/maalchain_l1/types"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // Not valid Ethereum address

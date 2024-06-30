@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xpladev/ethermint/app"
+	"github.com/maalchain/maalchain_l1/app"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	evmkeeper "github.com/xpladev/ethermint/x/evm/keeper"
-	"github.com/xpladev/ethermint/x/evm/statedb"
+	evmkeeper "github.com/maalchain/maalchain_l1/x/evm/keeper"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
@@ -33,7 +33,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
 )
 
 var (

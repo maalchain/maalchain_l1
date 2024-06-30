@@ -13,12 +13,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/crypto/ethsecp256k1"
-	evmenc "github.com/xpladev/ethermint/encoding"
-	"github.com/xpladev/ethermint/indexer"
-	"github.com/xpladev/ethermint/tests"
-	"github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	evmenc "github.com/maalchain/maalchain_l1/encoding"
+	"github.com/maalchain/maalchain_l1/indexer"
+	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func TestKVIndexer(t *testing.T) {

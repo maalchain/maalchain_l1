@@ -15,9 +15,9 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/testutil/tx"
-	evm "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/testutil/tx"
+	evm "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // DeployContract deploys a contract with the provided private key,

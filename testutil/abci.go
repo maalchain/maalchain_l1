@@ -11,9 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/encoding"
-	"github.com/xpladev/ethermint/testutil/tx"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/encoding"
+	"github.com/maalchain/maalchain_l1/testutil/tx"
 )
 
 // Commit commits a block at a given time. Reminder: At the end of each

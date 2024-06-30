@@ -3,9 +3,9 @@ package ante_test
 import (
 	"math/big"
 
-	"github.com/xpladev/ethermint/tests"
-	"github.com/xpladev/ethermint/x/evm/statedb"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func (suite AnteTestSuite) TestSignatures() {

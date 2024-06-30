@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package app
 
 import (
@@ -37,8 +37,8 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
-	feemarkettypes "github.com/xpladev/ethermint/x/feemarket/types"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
 )
 
 func (app *EthermintApp) RegisterUpgradeHandlers(cdc codec.BinaryCodec, clientKeeper ibctmmigrations.ClientKeeper) {

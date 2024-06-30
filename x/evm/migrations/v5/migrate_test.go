@@ -7,11 +7,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/xpladev/ethermint/app"
-	"github.com/xpladev/ethermint/encoding"
-	v5 "github.com/xpladev/ethermint/x/evm/migrations/v5"
-	v5types "github.com/xpladev/ethermint/x/evm/migrations/v5/types"
-	"github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/encoding"
+	v5 "github.com/maalchain/maalchain_l1/x/evm/migrations/v5"
+	v5types "github.com/maalchain/maalchain_l1/x/evm/migrations/v5/types"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func TestMigrate(t *testing.T) {

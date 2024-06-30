@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/exported"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	ethauthkeeper "github.com/xpladev/ethermint/x/auth/keeper"
+	ethauthkeeper "github.com/maalchain/maalchain_l1/x/auth/keeper"
 )
 
 type AppModule struct {

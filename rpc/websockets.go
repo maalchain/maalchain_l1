@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/xpladev/ethermint/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
 package rpc
 
 import (
@@ -41,11 +41,11 @@ import (
 	rpcclient "github.com/cometbft/cometbft/rpc/jsonrpc/client"
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	"github.com/xpladev/ethermint/rpc/ethereum/pubsub"
-	rpcfilters "github.com/xpladev/ethermint/rpc/namespaces/ethereum/eth/filters"
-	"github.com/xpladev/ethermint/rpc/types"
-	"github.com/xpladev/ethermint/server/config"
-	evmtypes "github.com/xpladev/ethermint/x/evm/types"
+	"github.com/maalchain/maalchain_l1/rpc/ethereum/pubsub"
+	rpcfilters "github.com/maalchain/maalchain_l1/rpc/namespaces/ethereum/eth/filters"
+	"github.com/maalchain/maalchain_l1/rpc/types"
+	"github.com/maalchain/maalchain_l1/server/config"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 type WebsocketsServer interface {
