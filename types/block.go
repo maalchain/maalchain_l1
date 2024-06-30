@@ -1,21 +1,12 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	math "math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // BlockGasLimit returns the max gas (limit) defined in the block gas meter. If the meter is not
 // set, it returns the max gas from the application consensus params.
@@ -35,8 +26,15 @@ func BlockGasLimit(ctx sdk.Context) uint64 {
 	}
 
 	maxGas := cp.Block.MaxGas
+
+	// Setting max_gas to -1 in Tendermint means there is no limit on the maximum gas consumption for transactions
+	// https://github.com/cometbft/cometbft/blob/v0.37.2/proto/tendermint/types/params.proto#L25-L27
+	if maxGas == -1 {
+		return math.MaxUint64
+	}
+
 	if maxGas > 0 {
-		return uint64(maxGas)
+		return uint64(maxGas) // #nosec G701 -- maxGas is int64 type. It can never be greater than math.MaxUint64
 	}
 
 	return 0

@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
 	sdkmath "cosmossdk.io/math"
@@ -30,6 +32,7 @@ import (
 	"github.com/maalchain/maalchain_l1/server/config"
 	"github.com/maalchain/maalchain_l1/testutil"
 	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	"github.com/maalchain/maalchain_l1/utils"
 	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 	evm "github.com/maalchain/maalchain_l1/x/evm/types"
 	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
@@ -50,7 +53,7 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	ctx              sdk.Context
-	app              *app.EthermintApp
+	app              *app.Evmos
 	queryClientEvm   evm.QueryClient
 	queryClient      types.QueryClient
 	address          common.Address
@@ -93,9 +96,10 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 	suite.consAddress = consAddress
 
 	// init app
-	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState())
+	chainID := utils.TestnetChainID + "-1"
+	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState(), chainID)
 	header := testutil.NewHeader(
-		1, time.Now().UTC(), "maalchain_7862-1", suite.consAddress, nil, nil,
+		1, time.Now().UTC(), chainID, suite.consAddress, nil, nil,
 	)
 	suite.ctx = suite.app.BaseApp.NewContext(false, header)
 
@@ -110,14 +114,15 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 
 	// bond denom
 	stakingParams := suite.app.StakingKeeper.GetParams(suite.ctx)
-	stakingParams.BondDenom = testutil.BaseDenom
-	suite.app.StakingKeeper.SetParams(suite.ctx, stakingParams)
+	stakingParams.BondDenom = utils.BaseDenom
+	err = suite.app.StakingKeeper.SetParams(suite.ctx, stakingParams)
+	suite.Require().NoError(err)
 
 	// Set Validator
 	valAddr := sdk.ValAddress(suite.address.Bytes())
 	validator, err := stakingtypes.NewValidator(valAddr, privCons.PubKey(), stakingtypes.Description{})
 	require.NoError(t, err)
-	validator = stakingkeeper.TestingUpdateValidator(suite.app.StakingKeeper, suite.ctx, validator, true)
+	validator = stakingkeeper.TestingUpdateValidator(suite.app.StakingKeeper.Keeper, suite.ctx, validator, true)
 	err = suite.app.StakingKeeper.Hooks().AfterValidatorCreated(suite.ctx, validator.GetOperator())
 	require.NoError(t, err)
 	err = suite.app.StakingKeeper.SetValidatorByConsAddr(suite.ctx, validator)
@@ -126,10 +131,10 @@ func (suite *KeeperTestSuite) DoSetupTest(t require.TestingT) {
 	// fund signer acc to pay for tx fees
 	amt := sdkmath.NewInt(int64(math.Pow10(18) * 2))
 	err = testutil.FundAccount(
-		suite.app.BankKeeper,
 		suite.ctx,
+		suite.app.BankKeeper,
 		suite.priv.PubKey().Address().Bytes(),
-		sdk.NewCoins(sdk.NewCoin(testutil.BaseDenom, amt)),
+		sdk.NewCoins(sdk.NewCoin(utils.BaseDenom, amt)),
 	)
 	suite.Require().NoError(err)
 
@@ -171,7 +176,7 @@ func (suite *KeeperTestSuite) Commit() {
 //  4. Commit
 func (suite *KeeperTestSuite) CommitAndBeginBlockAfter(t time.Duration) {
 	var err error
-	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, t, nil)
+	suite.ctx, err = testutil.CommitAndCreateNewCtx(suite.ctx, suite.app, t, nil)
 	suite.Require().NoError(err)
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	evm.RegisterQueryServer(queryHelper, suite.app.EvmKeeper)
@@ -196,6 +201,7 @@ func (b *MockChannelKeeper) GetNextSequenceSend(ctx sdk.Context, portID, channel
 	return 1, true
 }
 
+//nolint:revive // allow unused parameters to indicate expected signature
 func (b *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel {
 	return []channeltypes.IdentifiedChannel{}
 }

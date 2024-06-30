@@ -1,18 +1,5 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package statedb
 
 import (
@@ -21,10 +8,8 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
-
-var emptyCodeHash = crypto.Keccak256(nil)
 
 // Account is the Ethereum consensus representation of accounts.
 // These objects are stored in the storage of auth module.
@@ -38,13 +23,13 @@ type Account struct {
 func NewEmptyAccount() *Account {
 	return &Account{
 		Balance:  new(big.Int),
-		CodeHash: emptyCodeHash,
+		CodeHash: types.EmptyCodeHash,
 	}
 }
 
 // IsContract returns if the account contains contract code.
 func (acct Account) IsContract() bool {
-	return !bytes.Equal(acct.CodeHash, emptyCodeHash)
+	return !types.IsEmptyCodeHash(acct.CodeHash)
 }
 
 // Storage represents in-memory cache/buffer of contract storage.
@@ -52,11 +37,9 @@ type Storage map[common.Hash]common.Hash
 
 // SortedKeys sort the keys for deterministic iteration
 func (s Storage) SortedKeys() []common.Hash {
-	keys := make([]common.Hash, len(s))
-	i := 0
+	keys := make([]common.Hash, 0, len(s))
 	for k := range s {
-		keys[i] = k
-		i++
+		keys = append(keys, k)
 	}
 	sort.Slice(keys, func(i, j int) bool {
 		return bytes.Compare(keys[i].Bytes(), keys[j].Bytes()) < 0
@@ -75,6 +58,10 @@ type stateObject struct {
 	originStorage Storage
 	dirtyStorage  Storage
 
+	// transientStorage is an in memory storage of the latest committed entries in the current transaction execution.
+	// It is only used when multiple commits are made within the same transaction execution.
+	transientStorage Storage
+
 	address common.Address
 
 	// flags
@@ -87,21 +74,26 @@ func newObject(db *StateDB, address common.Address, account Account) *stateObjec
 	if account.Balance == nil {
 		account.Balance = new(big.Int)
 	}
+
 	if account.CodeHash == nil {
-		account.CodeHash = emptyCodeHash
+		account.CodeHash = types.EmptyCodeHash
 	}
+
 	return &stateObject{
-		db:            db,
-		address:       address,
-		account:       account,
-		originStorage: make(Storage),
-		dirtyStorage:  make(Storage),
+		db:               db,
+		address:          address,
+		account:          account,
+		originStorage:    make(Storage),
+		dirtyStorage:     make(Storage),
+		transientStorage: make(Storage),
 	}
 }
 
 // empty returns whether the account is considered empty.
 func (s *stateObject) empty() bool {
-	return s.account.Nonce == 0 && s.account.Balance.Sign() == 0 && bytes.Equal(s.account.CodeHash, emptyCodeHash)
+	return s.account.Nonce == 0 &&
+		s.account.Balance.Sign() == 0 &&
+		types.IsEmptyCodeHash(s.account.CodeHash)
 }
 
 func (s *stateObject) markSuicided() {
@@ -153,11 +145,14 @@ func (s *stateObject) Code() []byte {
 	if s.code != nil {
 		return s.code
 	}
-	if bytes.Equal(s.CodeHash(), emptyCodeHash) {
+
+	if types.IsEmptyCodeHash(s.CodeHash()) {
 		return nil
 	}
+
 	code := s.db.keeper.GetCode(s.db.ctx, common.BytesToHash(s.CodeHash()))
 	s.code = code
+
 	return code
 }
 

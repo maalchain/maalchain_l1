@@ -1,18 +1,5 @@
-// Copyright 2022 Evmos Foundation
-// This file is part of the Ethermint Network packages.
-//
-// Ethermint is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint packages are distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 
 package keeper
 
@@ -23,6 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	transferkeeper "github.com/maalchain/maalchain_l1/x/ibc/transfer/keeper"
 
 	"github.com/maalchain/maalchain_l1/x/erc20/types"
 )
@@ -34,10 +24,12 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this should be the x/gov module account.
 	authority sdk.AccAddress
 
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	evmKeeper     types.EVMKeeper
-	stakingKeeper types.StakingKeeper
+	accountKeeper  types.AccountKeeper
+	bankKeeper     bankkeeper.Keeper
+	evmKeeper      types.EVMKeeper
+	stakingKeeper  types.StakingKeeper
+	authzKeeper    authzkeeper.Keeper
+	transferKeeper *transferkeeper.Keeper
 }
 
 // NewKeeper creates new instances of the erc20 Keeper
@@ -46,9 +38,11 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	authority sdk.AccAddress,
 	ak types.AccountKeeper,
-	bk types.BankKeeper,
+	bk bankkeeper.Keeper,
 	evmKeeper types.EVMKeeper,
 	sk types.StakingKeeper,
+	authzKeeper authzkeeper.Keeper,
+	transferKeeper *transferkeeper.Keeper,
 ) Keeper {
 	// ensure gov module account is set and is not nil
 	if err := sdk.VerifyAddressFormat(authority); err != nil {
@@ -56,13 +50,15 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		authority:     authority,
-		storeKey:      storeKey,
-		cdc:           cdc,
-		accountKeeper: ak,
-		bankKeeper:    bk,
-		evmKeeper:     evmKeeper,
-		stakingKeeper: sk,
+		authority:      authority,
+		storeKey:       storeKey,
+		cdc:            cdc,
+		accountKeeper:  ak,
+		bankKeeper:     bk,
+		evmKeeper:      evmKeeper,
+		stakingKeeper:  sk,
+		authzKeeper:    authzKeeper,
+		transferKeeper: transferKeeper,
 	}
 }
 

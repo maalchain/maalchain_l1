@@ -1,21 +1,21 @@
 {
   "metadata": [
     {
-      "description": "The native staking and governance token of the Ethermint chain",
+      "description": "The native staking and governance token of the Evmos chain",
       "denom_units": [
         {
-          "denom": "maal",
+          "denom": "aevmos",
           "exponent": 0
         },
         {
-          "denom": "maal",
+          "denom": "evmos",
           "exponent": 18
         }
       ],
-      "base": "maal",
-      "display": "maal",
-      "name": "maal",
-      "symbol": "MAAL"
+      "base": "aevmos",
+      "display": "aevmos",
+      "name": "aevmos",
+      "symbol": "EVMOS"
     },
     {
       "description": "The native staking and governance token of the Osmosis chain",

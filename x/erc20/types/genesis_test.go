@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
 	"github.com/maalchain/maalchain_l1/x/erc20/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type GenesisTestSuite struct {

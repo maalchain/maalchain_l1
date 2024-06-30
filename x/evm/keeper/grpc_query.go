@@ -1,18 +1,5 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package keeper
 
 import (
@@ -32,6 +19,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core"
@@ -39,7 +27,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	ethparams "github.com/ethereum/go-ethereum/params"
 
-	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmostypes "github.com/maalchain/maalchain_l1/types"
+	evmante "github.com/maalchain/maalchain_l1/x/evm/ante"
 	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
@@ -56,7 +45,7 @@ func (k Keeper) Account(c context.Context, req *types.QueryAccountRequest) (*typ
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if err := ethermint.ValidateAddress(req.Address); err != nil {
+	if err := evmostypes.ValidateAddress(req.Address); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument, err.Error(),
 		)
@@ -79,7 +68,7 @@ func (k Keeper) CosmosAccount(c context.Context, req *types.QueryCosmosAccountRe
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if err := ethermint.ValidateAddress(req.Address); err != nil {
+	if err := evmostypes.ValidateAddress(req.Address); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument, err.Error(),
 		)
@@ -144,7 +133,7 @@ func (k Keeper) Balance(c context.Context, req *types.QueryBalanceRequest) (*typ
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if err := ethermint.ValidateAddress(req.Address); err != nil {
+	if err := evmostypes.ValidateAddress(req.Address); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument,
 			types.ErrZeroAddress.Error(),
@@ -166,7 +155,7 @@ func (k Keeper) Storage(c context.Context, req *types.QueryStorageRequest) (*typ
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if err := ethermint.ValidateAddress(req.Address); err != nil {
+	if err := evmostypes.ValidateAddress(req.Address); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument,
 			types.ErrZeroAddress.Error(),
@@ -192,7 +181,7 @@ func (k Keeper) Code(c context.Context, req *types.QueryCodeRequest) (*types.Que
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if err := ethermint.ValidateAddress(req.Address); err != nil {
+	if err := evmostypes.ValidateAddress(req.Address); err != nil {
 		return nil, status.Error(
 			codes.InvalidArgument,
 			types.ErrZeroAddress.Error(),
@@ -268,6 +257,16 @@ func (k Keeper) EthCall(c context.Context, req *types.EthCallRequest) (*types.Ms
 
 // EstimateGas implements eth_estimateGas rpc api.
 func (k Keeper) EstimateGas(c context.Context, req *types.EthCallRequest) (*types.EstimateGasResponse, error) {
+	return k.EstimateGasInternal(c, req, types.RPC)
+}
+
+// EstimateGasInternal returns the gas estimation for the corresponding request.
+// This function is called from the RPC client (eth_estimateGas) and internally
+// by the CallEVMWithData function in the x/erc20 module keeper.
+// When called from the RPC client, we need to reset the gas meter before
+// simulating the transaction to have
+// an accurate gas estimation for EVM extensions transactions.
+func (k Keeper) EstimateGasInternal(c context.Context, req *types.EthCallRequest, fromType types.CallType) (*types.EstimateGasResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -279,7 +278,7 @@ func (k Keeper) EstimateGas(c context.Context, req *types.EthCallRequest) (*type
 	}
 
 	if req.GasCap < ethparams.TxGas {
-		return nil, status.Error(codes.InvalidArgument, "gas cap cannot be lower than 21,000")
+		return nil, status.Errorf(codes.InvalidArgument, "gas cap cannot be lower than %d", ethparams.TxGas)
 	}
 
 	var args types.TransactionArgs
@@ -314,6 +313,7 @@ func (k Keeper) EstimateGas(c context.Context, req *types.EthCallRequest) (*type
 	if req.GasCap != 0 && hi > req.GasCap {
 		hi = req.GasCap
 	}
+
 	gasCap = hi
 	cfg, err := k.EVMConfig(ctx, GetProposerAddress(ctx, req.ProposerAddress), chainID)
 	if err != nil {
@@ -352,8 +352,30 @@ func (k Keeper) EstimateGas(c context.Context, req *types.EthCallRequest) (*type
 			msg.IsFake(),
 		)
 
+		tmpCtx := ctx
+		if fromType == types.RPC {
+			tmpCtx, _ = ctx.CacheContext()
+
+			acct := k.GetAccount(tmpCtx, msg.From())
+
+			from := msg.From()
+			if acct == nil {
+				acc := k.accountKeeper.NewAccountWithAddress(tmpCtx, from[:])
+				k.accountKeeper.SetAccount(tmpCtx, acc)
+				acct = statedb.NewEmptyAccount()
+			}
+			// When submitting a transaction, the `EthIncrementSenderSequence` ante handler increases the account nonce
+			acct.Nonce = nonce + 1
+			err = k.SetAccount(tmpCtx, from, *acct)
+			if err != nil {
+				return true, nil, err
+			}
+			// resetting the gasMeter after increasing the sequence to have an accurate gas estimation on EVM extensions transactions
+			gasMeter := evmostypes.NewInfiniteGasMeterWithLimit(msg.Gas())
+			tmpCtx = evmante.BuildEvmExecutionCtx(tmpCtx).WithGasMeter(gasMeter)
+		}
 		// pass false to not commit StateDB
-		rsp, err = k.ApplyMessageWithConfig(ctx, msg, nil, false, cfg, txConfig)
+		rsp, err = k.ApplyMessageWithConfig(tmpCtx, msg, nil, false, cfg, txConfig)
 		if err != nil {
 			if errors.Is(err, core.ErrIntrinsicGas) {
 				return true, nil, nil // Special case, raise gas limit
@@ -413,6 +435,12 @@ func (k Keeper) TraceTx(c context.Context, req *types.QueryTraceTxRequest) (*typ
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(common.Hex2Bytes(req.BlockHash))
+
+	// to get the base fee we only need the block max gas in the consensus params
+	ctx = ctx.WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxGas: req.BlockMaxGas},
+	})
+
 	chainID, err := getChainID(ctx, req.ChainId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -421,9 +449,21 @@ func (k Keeper) TraceTx(c context.Context, req *types.QueryTraceTxRequest) (*typ
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to load evm config: %s", err.Error())
 	}
+
+	// compute and use base fee of the height that is being traced
+	baseFee := k.feeMarketKeeper.CalculateBaseFee(ctx)
+	if baseFee != nil {
+		cfg.BaseFee = baseFee
+	}
+
 	signer := ethtypes.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
 
 	txConfig := statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash().Bytes()))
+
+	// gas used at this point corresponds to GetProposerAddress & CalculateBaseFee
+	// need to reset gas meter per transaction to be consistent with tx execution
+	// and avoid stacking the gas used of every predecessor in the same gas meter
+
 	for i, tx := range req.Predecessors {
 		ethTx := tx.AsTransaction()
 		msg, err := ethTx.AsMessage(signer, cfg.BaseFee)
@@ -432,6 +472,9 @@ func (k Keeper) TraceTx(c context.Context, req *types.QueryTraceTxRequest) (*typ
 		}
 		txConfig.TxHash = ethTx.Hash()
 		txConfig.TxIndex = uint(i)
+		// reset gas meter for each transaction
+		ctx = evmante.BuildEvmExecutionCtx(ctx).
+			WithGasMeter(evmostypes.NewInfiniteGasMeterWithLimit(msg.Gas()))
 		rsp, err := k.ApplyMessageWithConfig(ctx, msg, types.NewNoOpTracer(), true, cfg, txConfig)
 		if err != nil {
 			continue
@@ -490,6 +533,12 @@ func (k Keeper) TraceBlock(c context.Context, req *types.QueryTraceBlockRequest)
 	ctx = ctx.WithBlockHeight(contextHeight)
 	ctx = ctx.WithBlockTime(req.BlockTime)
 	ctx = ctx.WithHeaderHash(common.Hex2Bytes(req.BlockHash))
+
+	// to get the base fee we only need the block max gas in the consensus params
+	ctx = ctx.WithConsensusParams(&tmproto.ConsensusParams{
+		Block: &tmproto.BlockParams{MaxGas: req.BlockMaxGas},
+	})
+
 	chainID, err := getChainID(ctx, req.ChainId)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -499,11 +548,19 @@ func (k Keeper) TraceBlock(c context.Context, req *types.QueryTraceBlockRequest)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "failed to load evm config")
 	}
+
+	// compute and use base fee of height that is being traced
+	baseFee := k.feeMarketKeeper.CalculateBaseFee(ctx)
+	if baseFee != nil {
+		cfg.BaseFee = baseFee
+	}
+
 	signer := ethtypes.MakeSigner(cfg.ChainConfig, big.NewInt(ctx.BlockHeight()))
 	txsLength := len(req.Txs)
 	results := make([]*types.TxTraceResult, 0, txsLength)
 
 	txConfig := statedb.NewEmptyTxConfig(common.BytesToHash(ctx.HeaderHash().Bytes()))
+
 	for i, tx := range req.Txs {
 		result := types.TxTraceResult{}
 		ethTx := tx.AsTransaction()
@@ -602,6 +659,9 @@ func (k *Keeper) traceTx(
 		}
 	}()
 
+	// Build EVM execution context
+	ctx = evmante.BuildEvmExecutionCtx(ctx).
+		WithGasMeter(evmostypes.NewInfiniteGasMeterWithLimit(msg.Gas()))
 	res, err := k.ApplyMessageWithConfig(ctx, msg, tracer, commitMessage, cfg, txConfig)
 	if err != nil {
 		return nil, 0, status.Error(codes.Internal, err.Error())
@@ -636,7 +696,7 @@ func (k Keeper) BaseFee(c context.Context, _ *types.QueryBaseFeeRequest) (*types
 // getChainID parse chainID from current context if not provided
 func getChainID(ctx sdk.Context, chainID int64) (*big.Int, error) {
 	if chainID == 0 {
-		return ethermint.ParseChainID(ctx.ChainID())
+		return evmostypes.ParseChainID(ctx.ChainID())
 	}
 	return big.NewInt(chainID), nil
 }

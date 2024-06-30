@@ -13,8 +13,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	auth "github.com/evmos/evmos/v18/precompiles/authorization"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
+	auth "github.com/maalchain/maalchain_l1/precompiles/authorization"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
 )
 
 const (

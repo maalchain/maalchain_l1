@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/evmos/evmos/v18/cmd/config"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
-	"github.com/evmos/evmos/v18/precompiles/distribution"
-	"github.com/evmos/evmos/v18/utils"
+	"github.com/maalchain/maalchain_l1/cmd/config"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
+	"github.com/maalchain/maalchain_l1/precompiles/distribution"
+	"github.com/maalchain/maalchain_l1/utils"
 )
 
 func (s *PrecompileTestSuite) TestSetWithdrawAddressEvent() {

@@ -4,8 +4,8 @@
 package contracts
 
 import (
-	contractutils "github.com/evmos/evmos/v18/contracts/utils"
-	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
+	contractutils "github.com/maalchain/maalchain_l1/contracts/utils"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func LoadDistributionCallerContract() (evmtypes.CompiledContract, error) {

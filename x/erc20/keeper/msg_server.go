@@ -1,18 +1,5 @@
-// Copyright 2022 Evmos Foundation
-// This file is part of the Ethermint Network packages.
-//
-// Ethermint is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint packages are distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 
 package keeper
 
@@ -146,7 +133,7 @@ func (k Keeper) convertCoinNativeCoin(
 	}
 
 	// Mint tokens and send to receiver
-	_, err = k.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "mint", receiver, msg.Coin.Amount.BigInt())
+	_, err = k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "mint", receiver, msg.Coin.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +213,7 @@ func (k Keeper) convertERC20NativeCoin(
 	}
 
 	// Burn escrowed tokens
-	_, err := k.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "burnCoins", sender, msg.Amount.BigInt())
+	_, err := k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "burnCoins", sender, msg.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +318,7 @@ func (k Keeper) convertERC20NativeToken(
 		return nil, err
 	}
 
-	res, err := k.CallEVMWithData(ctx, sender, &contract, transferData, true)
+	res, err := k.evmKeeper.CallEVMWithData(ctx, sender, &contract, transferData, true)
 	if err != nil {
 		return nil, err
 	}
@@ -456,7 +443,7 @@ func (k Keeper) convertCoinNativeERC20(
 	}
 
 	// Unescrow Tokens and send to receiver
-	res, err := k.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "transfer", receiver, msg.Coin.Amount.BigInt())
+	res, err := k.evmKeeper.CallEVM(ctx, erc20, types.ModuleAddress, contract, true, "transfer", receiver, msg.Coin.Amount.BigInt())
 	if err != nil {
 		return nil, err
 	}

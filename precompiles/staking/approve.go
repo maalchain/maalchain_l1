@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/evmos/evmos/v18/precompiles/authorization"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
+	"github.com/maalchain/maalchain_l1/precompiles/authorization"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
 )
 
 var (

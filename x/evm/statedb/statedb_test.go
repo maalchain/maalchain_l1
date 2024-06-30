@@ -9,8 +9,8 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/suite"
 	"github.com/maalchain/maalchain_l1/x/evm/statedb"
+	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -193,7 +193,7 @@ func (suite *StateDBTestSuite) TestState() {
 		malleate  func(*statedb.StateDB)
 		expStates statedb.Storage
 	}{
-		{"empty state", func(db *statedb.StateDB) {
+		{"empty state", func(_ *statedb.StateDB) {
 		}, nil},
 		{"set empty value", func(db *statedb.StateDB) {
 			db.SetState(address, key1, common.Hash{})
@@ -439,6 +439,7 @@ func (suite *StateDBTestSuite) TestAccessList() {
 				Address:     address3,
 				StorageKeys: []common.Hash{value1},
 			}}
+
 			db.PrepareAccessList(address, &address2, vm.PrecompiledAddressesBerlin, al)
 
 			// check sender and dst
@@ -557,20 +558,25 @@ func (suite *StateDBTestSuite) TestIterateStorage() {
 
 	// break early iteration
 	storage = make(statedb.Storage)
-	db.ForEachStorage(address, func(k, v common.Hash) bool {
+	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
 		storage[k] = v
 		// return false to break early
 		return false
 	})
+	suite.Require().NoError(err)
 	suite.Require().Equal(1, len(storage))
 }
 
 func CollectContractStorage(db vm.StateDB) statedb.Storage {
 	storage := make(statedb.Storage)
-	db.ForEachStorage(address, func(k, v common.Hash) bool {
+	err := db.ForEachStorage(address, func(k, v common.Hash) bool {
 		storage[k] = v
 		return true
 	})
+	if err != nil {
+		return nil
+	}
+
 	return storage
 }
 

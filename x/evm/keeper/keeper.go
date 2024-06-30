@@ -1,24 +1,12 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package keeper
 
 import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -31,7 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
 
-	ethermint "github.com/maalchain/maalchain_l1/types"
+	evmostypes "github.com/maalchain/maalchain_l1/types"
 	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
@@ -67,11 +55,13 @@ type Keeper struct {
 	// Tracer used to collect execution traces from the EVM transaction execution
 	tracer string
 
-	// EVM Hooks for tx post-processing
-	hooks types.EvmHooks
-
 	// Legacy subspace
 	ss paramstypes.Subspace
+
+	// precompiles defines the map of all available precompiled smart contracts.
+	// Some these precompiled contracts might not be active depending on the EVM
+	// parameters.
+	precompiles map[common.Address]vm.PrecompiledContract
 }
 
 // NewKeeper generates new evm module keeper
@@ -113,12 +103,12 @@ func NewKeeper(
 
 // Logger returns a module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", "x/"+types.ModuleName)
+	return ctx.Logger().With("module", types.ModuleName)
 }
 
 // WithChainID sets the chain id to the local variable in the keeper
 func (k *Keeper) WithChainID(ctx sdk.Context) {
-	chainID, err := ethermint.ParseChainID(ctx.ChainID())
+	chainID, err := evmostypes.ParseChainID(ctx.ChainID())
 	if err != nil {
 		panic(err)
 	}
@@ -238,32 +228,6 @@ func (k Keeper) GetAccountStorage(ctx sdk.Context, address common.Address) types
 // Account
 // ----------------------------------------------------------------------------
 
-// SetHooks sets the hooks for the EVM module
-// It should be called only once during initialization, it panic if called more than once.
-func (k *Keeper) SetHooks(eh types.EvmHooks) *Keeper {
-	if k.hooks != nil {
-		panic("cannot set evm hooks twice")
-	}
-
-	k.hooks = eh
-	return k
-}
-
-// CleanHooks resets the hooks for the EVM module
-// NOTE: Should only be used for testing purposes
-func (k *Keeper) CleanHooks() *Keeper {
-	k.hooks = nil
-	return k
-}
-
-// PostTxProcessing delegate the call to the hooks. If no hook has been registered, this function returns with a `nil` error
-func (k *Keeper) PostTxProcessing(ctx sdk.Context, msg core.Message, receipt *ethtypes.Receipt) error {
-	if k.hooks == nil {
-		return nil
-	}
-	return k.hooks.PostTxProcessing(ctx, msg, receipt)
-}
-
 // Tracer return a default vm.Tracer based on current keeper state
 func (k Keeper) Tracer(ctx sdk.Context, msg core.Message, ethCfg *params.ChainConfig) vm.EVMLogger {
 	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
@@ -278,19 +242,15 @@ func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) 
 		return nil
 	}
 
-	codeHash := types.EmptyCodeHash
-	ethAcct, ok := acct.(ethermint.EthAccountI)
-	if ok {
-		codeHash = ethAcct.GetCodeHash().Bytes()
-	}
+	codeHashBz := k.GetCodeHash(ctx, addr).Bytes()
 
 	return &statedb.Account{
 		Nonce:    acct.GetSequence(),
-		CodeHash: codeHash,
+		CodeHash: codeHashBz,
 	}
 }
 
-// GetAccountOrEmpty returns empty account if not exist, returns error if it's not `EthAccount`
+// GetAccountOrEmpty returns empty account if not exist
 func (k *Keeper) GetAccountOrEmpty(ctx sdk.Context, addr common.Address) statedb.Account {
 	acct := k.GetAccount(ctx, addr)
 	if acct != nil {
@@ -318,17 +278,13 @@ func (k *Keeper) GetNonce(ctx sdk.Context, addr common.Address) uint64 {
 // GetBalance load account's balance of gas token
 func (k *Keeper) GetBalance(ctx sdk.Context, addr common.Address) *big.Int {
 	cosmosAddr := sdk.AccAddress(addr.Bytes())
-	acct := k.accountKeeper.GetAccount(ctx, cosmosAddr)
-	if acct == nil {
-		return big.NewInt(0)
-	}
 	evmParams := k.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 	// if node is pruned, params is empty. Return invalid value
 	if evmDenom == "" {
 		return big.NewInt(-1)
 	}
-	coin := k.bankKeeper.GetBalance(ctx, acct.GetAddress(), evmDenom)
+	coin := k.bankKeeper.GetBalance(ctx, cosmosAddr, evmDenom)
 	return coin.Amount.BigInt()
 }
 
@@ -353,13 +309,8 @@ func (k Keeper) getBaseFee(ctx sdk.Context, london bool) *big.Int {
 }
 
 // GetMinGasMultiplier returns the MinGasMultiplier param from the fee market module
-func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) sdk.Dec {
-	fmkParmas := k.feeMarketKeeper.GetParams(ctx)
-	if fmkParmas.MinGasMultiplier.IsNil() {
-		// in case we are executing eth_call on a legacy block, returns a zero value.
-		return sdk.ZeroDec()
-	}
-	return fmkParmas.MinGasMultiplier
+func (k Keeper) GetMinGasMultiplier(ctx sdk.Context) math.LegacyDec {
+	return k.feeMarketKeeper.GetParams(ctx).MinGasMultiplier
 }
 
 // ResetTransientGasUsed reset gas used to prepare for execution of current cosmos tx, called in ante handler.

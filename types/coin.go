@@ -1,18 +1,5 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package types
 
 import (
@@ -24,17 +11,17 @@ import (
 )
 
 const (
-	// AttoPhoton defines the default coin denomination used in Ethermint in:
+	// AttoEvmos defines the default coin denomination used in Evmos in:
 	//
 	// - Staking parameters: denomination used as stake in the dPoS chain
 	// - Mint parameters: denomination minted due to fee distribution rewards
 	// - Governance parameters: denomination used for spam prevention in proposal deposits
 	// - Crisis parameters: constant fee denomination used for spam prevention to check broken invariant
-	// - EVM parameters: denomination used for running EVM state transitions in Ethermint.
-	AttoPhoton string = "maal"
+	// - EVM parameters: denomination used for running EVM state transitions in Evmos.
+	AttoEvmos string = "aevmos"
 
-	// BaseDenomUnit defines the base denomination unit for Photons.
-	// 1 photon = 1x10^{BaseDenomUnit} aphoton
+	// BaseDenomUnit defines the base denomination unit for Evmos.
+	// 1 evmos = 1x10^{BaseDenomUnit} aevmos
 	BaseDenomUnit = 18
 
 	// DefaultGasPrice is default gas price for evm transactions
@@ -44,20 +31,20 @@ const (
 // PowerReduction defines the default power reduction value for staking
 var PowerReduction = sdkmath.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(BaseDenomUnit), nil))
 
-// NewPhotonCoin is a utility function that returns an "maal" coin with the given sdkmath.Int amount.
+// NewEvmosCoin is a utility function that returns an "aevmos" coin with the given sdkmath.Int amount.
 // The function will panic if the provided amount is negative.
-func NewPhotonCoin(amount sdkmath.Int) sdk.Coin {
-	return sdk.NewCoin(AttoPhoton, amount)
+func NewEvmosCoin(amount sdkmath.Int) sdk.Coin {
+	return sdk.NewCoin(AttoEvmos, amount)
 }
 
-// NewPhotonDecCoin is a utility function that returns an "maal" decimal coin with the given sdkmath.Int amount.
+// NewEvmosDecCoin is a utility function that returns an "aevmos" decimal coin with the given sdkmath.Int amount.
 // The function will panic if the provided amount is negative.
-func NewPhotonDecCoin(amount sdkmath.Int) sdk.DecCoin {
-	return sdk.NewDecCoin(AttoPhoton, amount)
+func NewEvmosDecCoin(amount sdkmath.Int) sdk.DecCoin {
+	return sdk.NewDecCoin(AttoEvmos, amount)
 }
 
-// NewPhotonCoinInt64 is a utility function that returns an "maal" coin with the given int64 amount.
+// NewEvmosCoinInt64 is a utility function that returns an "aevmos" coin with the given int64 amount.
 // The function will panic if the provided amount is negative.
-func NewPhotonCoinInt64(amount int64) sdk.Coin {
-	return sdk.NewInt64Coin(AttoPhoton, amount)
+func NewEvmosCoinInt64(amount int64) sdk.Coin {
+	return sdk.NewInt64Coin(AttoEvmos, amount)
 }

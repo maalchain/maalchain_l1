@@ -1,18 +1,5 @@
-// Copyright 2022 Evmos Foundation
-// This file is part of the Ethermint Network packages.
-//
-// Ethermint is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint packages are distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 
 package types
 
@@ -33,18 +20,19 @@ const (
 	RouterKey = ModuleName
 )
 
-// ModuleAddress is the native module address for EVM
+// ModuleAddress is the native module address for ERC-20
 var ModuleAddress common.Address
 
 func init() {
 	ModuleAddress = common.BytesToAddress(authtypes.NewModuleAddress(ModuleName).Bytes())
 }
 
-// prefix bytes for the EVM persistent store
+// prefix bytes for the ERC-20 persistent store
 const (
 	prefixTokenPair = iota + 1
 	prefixTokenPairByERC20
 	prefixTokenPairByDenom
+	prefixSTRv2Addresses
 )
 
 // KVStore key prefixes
@@ -52,4 +40,5 @@ var (
 	KeyPrefixTokenPair        = []byte{prefixTokenPair}
 	KeyPrefixTokenPairByERC20 = []byte{prefixTokenPairByERC20}
 	KeyPrefixTokenPairByDenom = []byte{prefixTokenPairByDenom}
+	KeyPrefixSTRv2Addresses   = []byte{prefixSTRv2Addresses}
 )

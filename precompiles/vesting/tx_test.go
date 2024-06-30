@@ -11,13 +11,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
-	"github.com/evmos/evmos/v18/precompiles/testutil"
-	"github.com/evmos/evmos/v18/precompiles/vesting"
-	evmosutil "github.com/evmos/evmos/v18/testutil"
-	evmosutiltx "github.com/evmos/evmos/v18/testutil/tx"
-	"github.com/evmos/evmos/v18/utils"
-	vestingtypes "github.com/evmos/evmos/v18/x/vesting/types"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
+	"github.com/maalchain/maalchain_l1/precompiles/testutil"
+	"github.com/maalchain/maalchain_l1/precompiles/vesting"
+	evmosutil "github.com/maalchain/maalchain_l1/testutil"
+	evmosutiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	"github.com/maalchain/maalchain_l1/utils"
+	vestingtypes "github.com/maalchain/maalchain_l1/x/vesting/types"
 )
 
 var (

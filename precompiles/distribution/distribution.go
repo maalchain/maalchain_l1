@@ -14,8 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
-	stakingkeeper "github.com/evmos/evmos/v18/x/staking/keeper"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
+	stakingkeeper "github.com/maalchain/maalchain_l1/x/staking/keeper"
 )
 
 // PrecompileAddress of the distribution EVM extension in hex format.

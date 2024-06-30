@@ -9,16 +9,17 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	proto "github.com/cosmos/gogoproto/proto"
-	"github.com/maalchain/maalchain_l1/app"
-	"github.com/maalchain/maalchain_l1/encoding"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
-
-	"github.com/maalchain/maalchain_l1/tests"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	proto "github.com/cosmos/gogoproto/proto"
+
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/encoding"
+	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEvmDataEncoding(t *testing.T) {
@@ -33,9 +34,9 @@ func TestEvmDataEncoding(t *testing.T) {
 		Ret: ret,
 	}
 
-	any := codectypes.UnsafePackAny(data)
+	anyData := codectypes.UnsafePackAny(data)
 	txData := &sdk.TxMsgData{
-		MsgResponses: []*codectypes.Any{any},
+		MsgResponses: []*codectypes.Any{anyData},
 	}
 
 	txDataBz, err := proto.Marshal(txData)
@@ -69,35 +70,37 @@ func TestUnwrapEthererumMsg(t *testing.T) {
 		GasPrice: big.NewInt(0),
 		Input:    []byte{},
 	}
+
 	msg := evmtypes.NewTx(evmTxParams)
 	err = builder.SetMsgs(msg)
+	require.Nil(t, err)
 
 	tx = builder.GetTx().(sdk.Tx)
-	msg_, err := evmtypes.UnwrapEthereumMsg(&tx, msg.AsTransaction().Hash())
+	unwrappedMsg, err := evmtypes.UnwrapEthereumMsg(&tx, msg.AsTransaction().Hash())
 	require.Nil(t, err)
-	require.Equal(t, msg_, msg)
+	require.Equal(t, unwrappedMsg, msg)
 }
 
 func TestBinSearch(t *testing.T) {
-	success_executable := func(gas uint64) (bool, *evmtypes.MsgEthereumTxResponse, error) {
+	successExecutable := func(gas uint64) (bool, *evmtypes.MsgEthereumTxResponse, error) {
 		target := uint64(21000)
 		return gas < target, nil, nil
 	}
-	failed_executable := func(gas uint64) (bool, *evmtypes.MsgEthereumTxResponse, error) {
+	failedExecutable := func(_ uint64) (bool, *evmtypes.MsgEthereumTxResponse, error) {
 		return true, nil, errors.New("contract failed")
 	}
 
-	gas, err := evmtypes.BinSearch(20000, 21001, success_executable)
+	gas, err := evmtypes.BinSearch(20000, 21001, successExecutable)
 	require.NoError(t, err)
 	require.Equal(t, gas, uint64(21000))
 
-	gas, err = evmtypes.BinSearch(20000, 21001, failed_executable)
+	gas, err = evmtypes.BinSearch(20000, 21001, failedExecutable)
 	require.Error(t, err)
 	require.Equal(t, gas, uint64(0))
 }
 
 func TestTransactionLogsEncodeDecode(t *testing.T) {
-	addr := tests.GenerateAddress().String()
+	addr := utiltx.GenerateAddress().String()
 
 	txLogs := evmtypes.TransactionLogs{
 		Hash: common.BytesToHash([]byte("tx_hash")).String(),

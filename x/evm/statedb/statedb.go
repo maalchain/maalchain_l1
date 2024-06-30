@@ -1,18 +1,5 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package statedb
 
 import (
@@ -83,6 +70,11 @@ func New(ctx sdk.Context, keeper Keeper, txConfig TxConfig) *StateDB {
 // Keeper returns the underlying `Keeper`
 func (s *StateDB) Keeper() Keeper {
 	return s.keeper
+}
+
+// GetContext returns the transaction Context.
+func (s *StateDB) GetContext() sdk.Context {
+	return s.ctx
 }
 
 // AddLog adds a log, called by evm.
@@ -455,22 +447,43 @@ func (s *StateDB) Commit() error {
 		obj := s.stateObjects[addr]
 		if obj.suicided {
 			if err := s.keeper.DeleteAccount(s.ctx, obj.Address()); err != nil {
-				return errorsmod.Wrap(err, "failed to delete account")
+				return errorsmod.Wrap(err, fmt.Sprintf("failed to delete account %s", obj.Address()))
 			}
 		} else {
 			if obj.code != nil && obj.dirtyCode {
-				s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
+				if len(obj.code) == 0 {
+					s.keeper.DeleteCode(s.ctx, obj.CodeHash())
+				} else {
+					s.keeper.SetCode(s.ctx, obj.CodeHash(), obj.code)
+				}
 			}
+
 			if err := s.keeper.SetAccount(s.ctx, obj.Address(), obj.account); err != nil {
 				return errorsmod.Wrap(err, "failed to set account")
 			}
+
 			for _, key := range obj.dirtyStorage.SortedKeys() {
-				value := obj.dirtyStorage[key]
+				dirtyValue := obj.dirtyStorage[key]
+				originValue := obj.originStorage[key]
 				// Skip noop changes, persist actual changes
-				if value == obj.originStorage[key] {
+				transientStorageValue, ok := obj.transientStorage[key]
+				if (ok && transientStorageValue == dirtyValue) ||
+					(!ok && dirtyValue == originValue) {
 					continue
 				}
-				s.keeper.SetState(s.ctx, obj.Address(), key, value.Bytes())
+
+				dirtyBytes := dirtyValue.Bytes()
+				if len(dirtyBytes) == 0 {
+					s.keeper.DeleteState(s.ctx, obj.Address(), key)
+				} else {
+					s.keeper.SetState(s.ctx, obj.Address(), key, dirtyValue.Bytes())
+				}
+
+				// Update the pendingStorage cache to the new value.
+				// This is specially needed for precompiles calls where
+				// multiple Commits calls are done within the same transaction
+				// for the appropriate changes to be committed.
+				obj.transientStorage[key] = dirtyValue
 			}
 		}
 	}

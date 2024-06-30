@@ -12,11 +12,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/evmos/evmos/v18/app"
-	"github.com/evmos/evmos/v18/precompiles/authorization"
-	"github.com/evmos/evmos/v18/precompiles/staking"
-	"github.com/evmos/evmos/v18/utils"
-	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
+	"github.com/maalchain/maalchain_l1/app"
+	"github.com/maalchain/maalchain_l1/precompiles/authorization"
+	"github.com/maalchain/maalchain_l1/precompiles/staking"
+	"github.com/maalchain/maalchain_l1/utils"
+	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func (s *PrecompileTestSuite) TestIsTransaction() {

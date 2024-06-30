@@ -1,29 +1,15 @@
-// Copyright 2022 Evmos Foundation
-// This file is part of the Ethermint Network packages.
-//
-// Ethermint is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint packages are distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 
 package types
 
 import (
-	context "context"
-
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -35,24 +21,8 @@ import (
 
 // AccountKeeper defines the expected interface needed to retrieve account info.
 type AccountKeeper interface {
-	GetModuleAccount(ctx sdk.Context, moduleName string) authtypes.ModuleAccountI
-	GetModuleAddress(moduleName string) sdk.AccAddress
 	GetSequence(sdk.Context, sdk.AccAddress) (uint64, error)
 	GetAccount(sdk.Context, sdk.AccAddress) authtypes.AccountI
-}
-
-// BankKeeper defines the expected interface needed to retrieve account balances.
-type BankKeeper interface {
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
-	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-	IsSendEnabledCoin(ctx sdk.Context, coin sdk.Coin) bool
-	BlockedAddr(addr sdk.AccAddress) bool
-	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
-	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
-	HasSupply(ctx sdk.Context, denom string) bool
-	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 // StakingKeeper defines the expected interface needed to retrieve the staking denom.
@@ -64,8 +34,26 @@ type StakingKeeper interface {
 type EVMKeeper interface {
 	GetParams(ctx sdk.Context) evmtypes.Params
 	GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) *statedb.Account
-	EstimateGas(c context.Context, req *evmtypes.EthCallRequest) (*evmtypes.EstimateGasResponse, error)
+	EstimateGasInternal(c context.Context, req *evmtypes.EthCallRequest, fromType evmtypes.CallType) (*evmtypes.EstimateGasResponse, error)
 	ApplyMessage(ctx sdk.Context, msg core.Message, tracer vm.EVMLogger, commit bool) (*evmtypes.MsgEthereumTxResponse, error)
+	AddEVMExtensions(ctx sdk.Context, precompiles ...vm.PrecompiledContract) error
+	DeleteAccount(ctx sdk.Context, addr common.Address) error
+	IsAvailablePrecompile(addr common.Address) bool
+	CallEVMWithData(
+		ctx sdk.Context,
+		from common.Address,
+		contract *common.Address,
+		data []byte,
+		commit bool,
+	) (*evmtypes.MsgEthereumTxResponse, error)
+	CallEVM(
+		ctx sdk.Context,
+		abi abi.ABI,
+		from, contract common.Address,
+		commit bool,
+		method string,
+		args ...interface{},
+	) (*evmtypes.MsgEthereumTxResponse, error)
 }
 
 type (

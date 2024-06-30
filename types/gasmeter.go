@@ -1,25 +1,12 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package types
 
 import (
 	fmt "fmt"
 	math "math"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 )
 
 // ErrorNegativeGasConsumed defines an error thrown when the amount of gas refunded results in a
@@ -36,27 +23,33 @@ type ErrorGasOverflow struct {
 }
 
 type infiniteGasMeterWithLimit struct {
-	consumed sdk.Gas
-	limit    sdk.Gas
+	consumed storetypes.Gas
+	limit    storetypes.Gas
 }
 
 // NewInfiniteGasMeterWithLimit returns a reference to a new infiniteGasMeter.
-func NewInfiniteGasMeterWithLimit(limit sdk.Gas) sdk.GasMeter {
+func NewInfiniteGasMeterWithLimit(limit storetypes.Gas) storetypes.GasMeter {
 	return &infiniteGasMeterWithLimit{
 		consumed: 0,
 		limit:    limit,
 	}
 }
 
-func (g *infiniteGasMeterWithLimit) GasConsumed() sdk.Gas {
+// GasConsumed returns the gas consumed from the GasMeter.
+func (g *infiniteGasMeterWithLimit) GasConsumed() storetypes.Gas {
 	return g.consumed
 }
 
-func (g *infiniteGasMeterWithLimit) GasConsumedToLimit() sdk.Gas {
+// GasConsumedToLimit returns the gas limit if gas consumed is past the limit,
+// otherwise it returns the consumed gas.
+// NOTE: This behavior is only called when recovering from panic when
+// BlockGasMeter consumes gas past the limit.
+func (g *infiniteGasMeterWithLimit) GasConsumedToLimit() storetypes.Gas {
 	return g.consumed
 }
 
-func (g *infiniteGasMeterWithLimit) Limit() sdk.Gas {
+// Limit returns the gas limit of the GasMeter.
+func (g *infiniteGasMeterWithLimit) Limit() storetypes.Gas {
 	return g.limit
 }
 
@@ -70,7 +63,8 @@ func addUint64Overflow(a, b uint64) (uint64, bool) {
 	return a + b, false
 }
 
-func (g *infiniteGasMeterWithLimit) ConsumeGas(amount sdk.Gas, descriptor string) {
+// ConsumeGas adds the given amount of gas to the gas consumed and panics if it overflows the limit or out of gas.
+func (g *infiniteGasMeterWithLimit) ConsumeGas(amount storetypes.Gas, descriptor string) {
 	var overflow bool
 	// TODO: Should we set the consumed field after overflow checking?
 	g.consumed, overflow = addUint64Overflow(g.consumed, amount)
@@ -85,7 +79,7 @@ func (g *infiniteGasMeterWithLimit) ConsumeGas(amount sdk.Gas, descriptor string
 // Use case: This functionality enables refunding gas to the trasaction or block gas pools so that
 // EVM-compatible chains can fully support the go-ethereum StateDb interface.
 // See https://github.com/cosmos/cosmos-sdk/pull/9403 for reference.
-func (g *infiniteGasMeterWithLimit) RefundGas(amount sdk.Gas, descriptor string) {
+func (g *infiniteGasMeterWithLimit) RefundGas(amount storetypes.Gas, descriptor string) {
 	if g.consumed < amount {
 		panic(ErrorNegativeGasConsumed{Descriptor: descriptor})
 	}
@@ -93,18 +87,22 @@ func (g *infiniteGasMeterWithLimit) RefundGas(amount sdk.Gas, descriptor string)
 	g.consumed -= amount
 }
 
+// IsPastLimit returns true if gas consumed is past limit, otherwise it returns false.
 func (g *infiniteGasMeterWithLimit) IsPastLimit() bool {
 	return false
 }
 
+// IsOutOfGas returns true if gas consumed is greater than or equal to gas limit, otherwise it returns false.
 func (g *infiniteGasMeterWithLimit) IsOutOfGas() bool {
 	return false
 }
 
+// String returns the BasicGasMeter's gas limit and gas consumed.
 func (g *infiniteGasMeterWithLimit) String() string {
 	return fmt.Sprintf("InfiniteGasMeter:\n  consumed: %d", g.consumed)
 }
 
-func (g *infiniteGasMeterWithLimit) GasRemaining() sdk.Gas {
+// GasRemaining returns MaxUint64 since limit is not confined in infiniteGasMeter.
+func (g *infiniteGasMeterWithLimit) GasRemaining() storetypes.Gas {
 	return math.MaxUint64
 }

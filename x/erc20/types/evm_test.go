@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	"github.com/maalchain/maalchain_l1/x/erc20/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewERC20Data(t *testing.T) {

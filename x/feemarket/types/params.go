@@ -1,34 +1,20 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package types
 
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/ethereum/go-ethereum/params"
 )
 
 var (
 	// DefaultMinGasMultiplier is 0.5 or 50%
-	DefaultMinGasMultiplier = sdk.NewDecWithPrec(50, 2)
+	DefaultMinGasMultiplier = math.LegacyNewDecWithPrec(50, 2)
 	// DefaultMinGasPrice is 0 (i.e disabled)
-	DefaultMinGasPrice = sdk.ZeroDec()
+	DefaultMinGasPrice = math.LegacyZeroDec()
 	// DefaultEnableHeight is 0 (i.e disabled)
 	DefaultEnableHeight = int64(0)
 	// DefaultNoBaseFee is false
@@ -72,14 +58,14 @@ func NewParams(
 	elasticityMultiplier uint32,
 	baseFee uint64,
 	enableHeight int64,
-	minGasPrice sdk.Dec,
-	minGasPriceMultiplier sdk.Dec,
+	minGasPrice math.LegacyDec,
+	minGasPriceMultiplier math.LegacyDec,
 ) Params {
 	return Params{
 		NoBaseFee:                noBaseFee,
 		BaseFeeChangeDenominator: baseFeeChangeDenom,
 		ElasticityMultiplier:     elasticityMultiplier,
-		BaseFee:                  sdkmath.NewIntFromUint64(baseFee),
+		BaseFee:                  math.NewIntFromUint64(baseFee),
 		EnableHeight:             enableHeight,
 		MinGasPrice:              minGasPrice,
 		MinGasMultiplier:         minGasPriceMultiplier,
@@ -92,7 +78,7 @@ func DefaultParams() Params {
 		NoBaseFee:                DefaultNoBaseFee,
 		BaseFeeChangeDenominator: params.BaseFeeChangeDenominator,
 		ElasticityMultiplier:     params.ElasticityMultiplier,
-		BaseFee:                  sdkmath.NewIntFromUint64(params.InitialBaseFee),
+		BaseFee:                  math.NewIntFromUint64(params.InitialBaseFee),
 		EnableHeight:             DefaultEnableHeight,
 		MinGasPrice:              DefaultMinGasPrice,
 		MinGasMultiplier:         DefaultMinGasMultiplier,
@@ -133,7 +119,7 @@ func (p *Params) IsBaseFeeEnabled(height int64) bool {
 }
 
 func validateMinGasPrice(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(math.LegacyDec)
 
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -172,7 +158,7 @@ func validateElasticityMultiplier(i interface{}) error {
 }
 
 func validateBaseFee(i interface{}) error {
-	value, ok := i.(sdkmath.Int)
+	value, ok := i.(math.Int)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -198,7 +184,7 @@ func validateEnableHeight(i interface{}) error {
 }
 
 func validateMinGasMultiplier(i interface{}) error {
-	v, ok := i.(sdk.Dec)
+	v, ok := i.(math.LegacyDec)
 
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
@@ -212,7 +198,7 @@ func validateMinGasMultiplier(i interface{}) error {
 		return fmt.Errorf("value cannot be negative: %s", v)
 	}
 
-	if v.GT(sdk.OneDec()) {
+	if v.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("value cannot be greater than 1: %s", v)
 	}
 	return nil

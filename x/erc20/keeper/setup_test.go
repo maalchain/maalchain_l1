@@ -3,10 +3,12 @@ package keeper_test
 import (
 	"testing"
 
+	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/ginkgo/v2"
+	//nolint:revive // dot imports are fine for Ginkgo
 	. "github.com/onsi/gomega"
 
-	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -15,18 +17,18 @@ import (
 	ibcgotesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/suite"
 	"github.com/maalchain/maalchain_l1/app"
 	ibctesting "github.com/maalchain/maalchain_l1/ibc/testing"
 	"github.com/maalchain/maalchain_l1/x/erc20/types"
 	evm "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
 
 	ctx              sdk.Context
-	app              *app.EthermintApp
+	app              *app.Evmos
 	queryClientEvm   evm.QueryClient
 	queryClient      types.QueryClient
 	address          common.Address
@@ -41,37 +43,36 @@ type KeeperTestSuite struct {
 	coordinator *ibcgotesting.Coordinator
 
 	// testing chains used for convenience and readability
-	EthermintChain  *ibcgotesting.TestChain
+	EvmosChain      *ibcgotesting.TestChain
 	IBCOsmosisChain *ibcgotesting.TestChain
 	IBCCosmosChain  *ibcgotesting.TestChain
 
-	pathOsmosisEthermint *ibctesting.Path
-	pathCosmosEthermint  *ibctesting.Path
-	pathOsmosisCosmos    *ibctesting.Path
+	pathOsmosisEvmos  *ibctesting.Path
+	pathCosmosEvmos   *ibctesting.Path
+	pathOsmosisCosmos *ibctesting.Path
 
 	suiteIBCTesting bool
 }
 
 var (
 	s *KeeperTestSuite
-	// sendAndReceiveMsgFee corresponds to the fees paid on Ethermint chain when calling the SendAndReceive function
+	// sendAndReceiveMsgFee corresponds to the fees paid on Evmos chain when calling the SendAndReceive function
 	// This function makes 3 cosmos txs under the hood
-	sendAndReceiveMsgFee = sdkmath.NewInt(ibctesting.DefaultFeeAmt * 3)
-	// sendBackCoinsFee corresponds to the fees paid on Ethermint chain when calling the SendBackCoins function
-	// or calling the SendAndReceive from another chain to Ethermint
+	sendAndReceiveMsgFee = math.NewInt(ibctesting.DefaultFeeAmt * 3)
+	// sendBackCoinsFee corresponds to the fees paid on Evmos chain when calling the SendBackCoins function
+	// or calling the SendAndReceive from another chain to Evmos
 	// This function makes 2 cosmos txs under the hood
-	sendBackCoinsFee = sdkmath.NewInt(ibctesting.DefaultFeeAmt * 2)
+	sendBackCoinsFee = math.NewInt(ibctesting.DefaultFeeAmt * 2)
 )
 
 func TestKeeperTestSuite(t *testing.T) {
 	s = new(KeeperTestSuite)
 	suite.Run(t, s)
 
-	// Run Ginkgo integration tests
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Keeper Suite")
+	RunSpecs(t, "ERC20 Keeper Integration Tests Suite")
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.DoSetupTest(suite.T())
+	suite.DoSetupTest()
 }

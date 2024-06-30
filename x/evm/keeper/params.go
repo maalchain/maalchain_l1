@@ -1,22 +1,13 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package keeper
 
 import (
+	"slices"
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
@@ -33,6 +24,10 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 
 // SetParams sets the EVM params each in their individual key for better get performance
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	// NOTE: We need to sort the precompiles in order to enable searching with binary search
+	// in params.IsActivePrecompile.
+	slices.Sort(params.ActivePrecompiles)
+
 	if err := params.Validate(); err != nil {
 		return err
 	}
@@ -52,4 +47,35 @@ func (k Keeper) GetLegacyParams(ctx sdk.Context) types.Params {
 	var params types.Params
 	k.ss.GetParamSetIfExists(ctx, &params)
 	return params
+}
+
+// EnablePrecompiles appends the addresses of the given Precompiles to the list
+// of active precompiles.
+func (k Keeper) EnablePrecompiles(ctx sdk.Context, addresses ...common.Address) error {
+	params := k.GetParams(ctx)
+	activePrecompiles := params.ActivePrecompiles
+
+	for _, address := range addresses {
+		activePrecompiles = append(activePrecompiles, address.String())
+	}
+
+	sort.Slice(activePrecompiles, func(i, j int) bool {
+		return activePrecompiles[i] < activePrecompiles[j]
+	})
+
+	params.ActivePrecompiles = activePrecompiles
+
+	return k.SetParams(ctx, params)
+}
+
+// EnableEIPs enables the given EIPs in the EVM parameters.
+func (k Keeper) EnableEIPs(ctx sdk.Context, eips ...int64) error {
+	evmParams := k.GetParams(ctx)
+	evmParams.ExtraEIPs = append(evmParams.ExtraEIPs, eips...)
+
+	sort.Slice(evmParams.ExtraEIPs, func(i, j int) bool {
+		return evmParams.ExtraEIPs[i] < evmParams.ExtraEIPs[j]
+	})
+
+	return k.SetParams(ctx, evmParams)
 }

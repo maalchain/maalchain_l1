@@ -4,8 +4,8 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/evmos/v18/precompiles/bank"
-	evmosutiltx "github.com/evmos/evmos/v18/testutil/tx"
+	"github.com/maalchain/maalchain_l1/precompiles/bank"
+	evmosutiltx "github.com/maalchain/maalchain_l1/testutil/tx"
 )
 
 func (s *PrecompileTestSuite) TestBalances() {

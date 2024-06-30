@@ -1,22 +1,11 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package types
 
 import (
 	"math/big"
+
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,7 +13,7 @@ import (
 	"github.com/maalchain/maalchain_l1/types"
 )
 
-func newLegacyTx(tx *ethtypes.Transaction) (*LegacyTx, error) {
+func NewLegacyTx(tx *ethtypes.Transaction) (*LegacyTx, error) {
 	txData := &LegacyTx{
 		Nonce:    tx.Nonce(),
 		Data:     tx.Data(),
@@ -135,7 +124,7 @@ func (tx *LegacyTx) GetTo() *common.Address {
 	return &to
 }
 
-// AsEthereumData returns an AccessListTx transaction tx from the proto-formatted
+// AsEthereumData returns an LegacyTx transaction tx from the proto-formatted
 // TxData defined on the Cosmos EVM.
 func (tx *LegacyTx) AsEthereumData() ethtypes.TxData {
 	v, r, s := tx.GetRawSignatureValues()
@@ -201,6 +190,13 @@ func (tx LegacyTx) Validate() error {
 		if err := types.ValidateAddress(tx.To); err != nil {
 			return errorsmod.Wrap(err, "invalid to address")
 		}
+	}
+
+	if tx.GetChainID() == nil {
+		return errorsmod.Wrap(
+			errortypes.ErrInvalidChainID,
+			"chain ID must be derived from LegacyTx txs",
+		)
 	}
 
 	return nil

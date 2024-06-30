@@ -4,20 +4,22 @@
 package types
 
 import (
-	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
-	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	cosmossdk_io_math "cosmossdk.io/math"
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math.Inf
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math.Inf
+)
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
@@ -40,10 +42,10 @@ type Params struct {
 	// base_fee for EIP-1559 blocks.
 	BaseFee cosmossdk_io_math.Int `protobuf:"bytes,6,opt,name=base_fee,json=baseFee,proto3,customtype=cosmossdk.io/math.Int" json:"base_fee"`
 	// min_gas_price defines the minimum gas price value for cosmos and eth transactions
-	MinGasPrice github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,7,opt,name=min_gas_price,json=minGasPrice,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_gas_price"`
+	MinGasPrice cosmossdk_io_math.LegacyDec `protobuf:"bytes,7,opt,name=min_gas_price,json=minGasPrice,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_gas_price"`
 	// min_gas_multiplier bounds the minimum gas used to be charged
 	// to senders based on gas limit
-	MinGasMultiplier github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,8,opt,name=min_gas_multiplier,json=minGasMultiplier,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"min_gas_multiplier"`
+	MinGasMultiplier cosmossdk_io_math.LegacyDec `protobuf:"bytes,8,opt,name=min_gas_multiplier,json=minGasMultiplier,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"min_gas_multiplier"`
 }
 
 func (m *Params) Reset()         { *m = Params{} }
@@ -52,9 +54,11 @@ func (*Params) ProtoMessage()    {}
 func (*Params) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4feb8b20cf98e6e1, []int{0}
 }
+
 func (m *Params) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
@@ -67,12 +71,15 @@ func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Params) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Params.Merge(m, src)
 }
+
 func (m *Params) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Params) XXX_DiscardUnknown() {
 	xxx_messageInfo_Params.DiscardUnknown(m)
 }
@@ -233,6 +240,7 @@ func encodeVarintFeemarket(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+
 func (m *Params) Size() (n int) {
 	if m == nil {
 		return 0
@@ -263,9 +271,11 @@ func (m *Params) Size() (n int) {
 func sovFeemarket(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
+
 func sozFeemarket(x uint64) (n int) {
 	return sovFeemarket(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
+
 func (m *Params) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -495,6 +505,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+
 func skipFeemarket(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0

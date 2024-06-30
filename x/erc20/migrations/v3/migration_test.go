@@ -7,15 +7,15 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maalchain/maalchain_l1/app"
 	"github.com/maalchain/maalchain_l1/encoding"
-	v3 "github.com/maalchain/maalchain_l1/x/erc20/migrations/v3"
 
 	v3types "github.com/maalchain/maalchain_l1/x/erc20/migrations/v3/types"
 
-	"github.com/stretchr/testify/require"
 	"github.com/maalchain/maalchain_l1/x/erc20/types"
+	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v3 "github.com/maalchain/maalchain_l1/x/erc20/migrations/v3"
 )
 
 type mockSubspace struct {

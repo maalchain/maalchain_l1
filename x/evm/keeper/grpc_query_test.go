@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/maalchain/maalchain_l1/x/evm/keeper/testdata"
+
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -13,18 +16,21 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	ethlogger "github.com/ethereum/go-ethereum/eth/tracers/logger"
 	ethparams "github.com/ethereum/go-ethereum/params"
-	"github.com/maalchain/maalchain_l1/tests"
-	"github.com/maalchain/maalchain_l1/x/evm/statedb"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maalchain/maalchain_l1/server/config"
-	ethermint "github.com/maalchain/maalchain_l1/types"
+	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // Not valid Ethereum address
 const invalidAddress = "0x0000"
+
+// expGasConsumed is the gas consumed in traceTx setup (GetProposerAddr + CalculateBaseFee)
+const expGasConsumed = 7442
+
+// expGasConsumedWithFeeMkt is the gas consumed in traceTx setup (GetProposerAddr + CalculateBaseFee) with enabled feemarket
+const expGasConsumedWithFeeMkt = 7436
 
 func (suite *KeeperTestSuite) TestQueryAccount() {
 	var (
@@ -54,7 +60,7 @@ func (suite *KeeperTestSuite) TestQueryAccount() {
 		{
 			"success",
 			func() {
-				amt := sdk.Coins{ethermint.NewPhotonCoinInt64(100)}
+				amt := sdk.Coins{sdk.NewInt64Coin(types.DefaultEVMDenom, 100)}
 				err := suite.app.BankKeeper.MintCoins(suite.ctx, types.ModuleName, amt)
 				suite.Require().NoError(err)
 				err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, types.ModuleName, suite.address.Bytes(), amt)
@@ -195,7 +201,7 @@ func (suite *KeeperTestSuite) TestQueryBalance() {
 		{
 			"success",
 			func() {
-				amt := sdk.Coins{ethermint.NewPhotonCoinInt64(100)}
+				amt := sdk.Coins{sdk.NewInt64Coin(types.DefaultEVMDenom, 100)}
 				err := suite.app.BankKeeper.MintCoins(suite.ctx, types.ModuleName, amt)
 				suite.Require().NoError(err)
 				err = suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, types.ModuleName, suite.address.Bytes(), amt)
@@ -494,6 +500,9 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 	higherGas := hexutil.Uint64(25000)
 	hexBigInt := hexutil.Big(*big.NewInt(1))
 
+	erc20Contract, err := testdata.LoadERC20Contract()
+	suite.Require().NoError(err, "failed to load erc20 contract")
+
 	var (
 		args   interface{}
 		gasCap uint64
@@ -567,9 +576,11 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 		{
 			"contract deployment",
 			func() {
-				ctorArgs, err := types.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
+				ctorArgs, err := erc20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Require().NoError(err)
-				data := append(types.ERC20Contract.Bin, ctorArgs...)
+
+				data := erc20Contract.Bin
+				data = append(data, ctorArgs...)
 				args = types.TransactionArgs{
 					From: &suite.address,
 					Data: (*hexutil.Bytes)(&data),
@@ -585,7 +596,7 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 			func() {
 				contractAddr := suite.DeployTestContract(suite.T(), suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Commit()
-				transferData, err := types.ERC20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
+				transferData, err := erc20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
 				suite.Require().NoError(err)
 				args = types.TransactionArgs{To: &contractAddr, From: &suite.address, Data: (*hexutil.Bytes)(&transferData)}
 			},
@@ -643,9 +654,10 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 		{
 			"contract deployment w/ enableFeemarket",
 			func() {
-				ctorArgs, err := types.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
+				ctorArgs, err := erc20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Require().NoError(err)
-				data := append(types.ERC20Contract.Bin, ctorArgs...)
+				data := erc20Contract.Bin
+				data = append(data, ctorArgs...)
 				args = types.TransactionArgs{
 					From: &suite.address,
 					Data: (*hexutil.Bytes)(&data),
@@ -660,7 +672,7 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 			func() {
 				contractAddr := suite.DeployTestContract(suite.T(), suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Commit()
-				transferData, err := types.ERC20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
+				transferData, err := erc20Contract.ABI.Pack("transfer", common.HexToAddress("0x378c50D9264C63F3F92B806d4ee56E9D86FfB3Ec"), big.NewInt(1000))
 				suite.Require().NoError(err)
 				args = types.TransactionArgs{To: &contractAddr, From: &suite.address, Data: (*hexutil.Bytes)(&transferData)}
 			},
@@ -671,16 +683,22 @@ func (suite *KeeperTestSuite) TestEstimateGas() {
 		{
 			"contract creation but 'create' param disabled",
 			func() {
-				ctorArgs, err := types.ERC20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
+				ctorArgs, err := erc20Contract.ABI.Pack("", &suite.address, sdkmath.NewIntWithDecimal(1000, 18).BigInt())
 				suite.Require().NoError(err)
-				data := append(types.ERC20Contract.Bin, ctorArgs...)
+				data := erc20Contract.Bin
+				data = append(data, ctorArgs...)
 				args = types.TransactionArgs{
 					From: &suite.address,
 					Data: (*hexutil.Bytes)(&data),
 				}
 				params := suite.app.EvmKeeper.GetParams(suite.ctx)
-				params.EnableCreate = false
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				params.AccessControl = types.AccessControl{
+					Create: types.AccessControlType{
+						AccessType: types.AccessTypeRestricted,
+					},
+				}
+				err = suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 			},
 			false,
 			0,
@@ -762,12 +780,16 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 		chainID      *sdkmath.Int
 	)
 
+	erc20Contract, err := testdata.LoadERC20Contract()
+	suite.Require().NoError(err, "failed to load erc20 contract")
+
 	testCases := []struct {
 		msg             string
 		malleate        func()
 		expPass         bool
 		traceResponse   string
 		enableFeemarket bool
+		expFinalGas     uint64
 	}{
 		{
 			msg: "default trace",
@@ -777,6 +799,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			},
 			expPass:       true,
 			traceResponse: "{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PUSH1\",\"gas\":",
+			expFinalGas:   expGasConsumed,
 		},
 		{
 			msg: "default trace with filtered response",
@@ -791,6 +814,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			expPass:         true,
 			traceResponse:   "{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PUSH1\",\"gas\":",
 			enableFeemarket: false,
+			expFinalGas:     expGasConsumed,
 		},
 		{
 			msg: "javascript tracer",
@@ -802,6 +826,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			},
 			expPass:       true,
 			traceResponse: "[]",
+			expFinalGas:   expGasConsumed,
 		},
 		{
 			msg: "default trace with enableFeemarket",
@@ -816,6 +841,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			expPass:         true,
 			traceResponse:   "{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PUSH1\",\"gas\":",
 			enableFeemarket: true,
+			expFinalGas:     expGasConsumedWithFeeMkt,
 		},
 		{
 			msg: "javascript tracer with enableFeemarket",
@@ -828,6 +854,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			expPass:         true,
 			traceResponse:   "[]",
 			enableFeemarket: true,
+			expFinalGas:     expGasConsumedWithFeeMkt,
 		},
 		{
 			msg: "default tracer with predecessors",
@@ -851,6 +878,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			expPass:         true,
 			traceResponse:   "{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PUSH1\",\"gas\":",
 			enableFeemarket: false,
+			expFinalGas:     expGasConsumed,
 		},
 		{
 			msg: "invalid trace config - Negative Limit",
@@ -862,7 +890,8 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 					Limit:          -1,
 				}
 			},
-			expPass: false,
+			expPass:     false,
+			expFinalGas: 0,
 		},
 		{
 			msg: "invalid trace config - Invalid Tracer",
@@ -874,7 +903,8 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 					Tracer:         "invalid_tracer",
 				}
 			},
-			expPass: false,
+			expPass:     false,
+			expFinalGas: expGasConsumed,
 		},
 		{
 			msg: "invalid trace config - Invalid Timeout",
@@ -886,7 +916,8 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 					Timeout:        "wrong_time",
 				}
 			},
-			expPass: false,
+			expPass:     false,
+			expFinalGas: expGasConsumed,
 		},
 		{
 			msg: "default tracer with contract creation tx as predecessor but 'create' param disabled",
@@ -900,7 +931,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 
 				chainID := suite.app.EvmKeeper.ChainID()
 				nonce := suite.app.EvmKeeper.GetNonce(suite.ctx, suite.address)
-				data := types.ERC20Contract.Bin
+				data := erc20Contract.Bin
 				ethTxParams := &types.EvmTxArgs{
 					ChainID:  chainID,
 					Nonce:    nonce,
@@ -913,11 +944,17 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 				suite.Commit()
 
 				params := suite.app.EvmKeeper.GetParams(suite.ctx)
-				params.EnableCreate = false
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				params.AccessControl = types.AccessControl{
+					Create: types.AccessControlType{
+						AccessType: types.AccessTypeRestricted,
+					},
+				}
+				err := suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 			},
 			expPass:       true,
 			traceResponse: "{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PUSH1\",\"gas\":",
+			expFinalGas:   26744, // gas consumed in traceTx setup (GetProposerAddr + CalculateBaseFee) + gas consumed in malleate func
 		},
 		{
 			msg: "invalid chain id",
@@ -927,7 +964,8 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 				tmp := sdkmath.NewInt(1)
 				chainID = &tmp
 			},
-			expPass: false,
+			expPass:     false,
+			expFinalGas: expGasConsumed,
 		},
 	}
 
@@ -956,7 +994,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				// if data is to big, slice the result
+				// if data is too big, slice the result
 				if len(res.Data) > 150 {
 					suite.Require().Equal(tc.traceResponse, string(res.Data[:150]))
 				} else {
@@ -970,6 +1008,7 @@ func (suite *KeeperTestSuite) TestTraceTx() {
 			} else {
 				suite.Require().Error(err)
 			}
+			suite.Require().Equal(int(tc.expFinalGas), int(suite.ctx.GasMeter().GasConsumed()), "expected different gas consumption")
 			// Reset for next test case
 			chainID = nil
 		})
@@ -991,6 +1030,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 		expPass         bool
 		traceResponse   string
 		enableFeemarket bool
+		expFinalGas     uint64
 	}{
 		{
 			msg: "default trace",
@@ -999,6 +1039,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			},
 			expPass:       true,
 			traceResponse: "[{\"result\":{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PU",
+			expFinalGas:   expGasConsumed,
 		},
 		{
 			msg: "filtered trace",
@@ -1011,6 +1052,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			},
 			expPass:       true,
 			traceResponse: "[{\"result\":{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PU",
+			expFinalGas:   expGasConsumed,
 		},
 		{
 			msg: "javascript tracer",
@@ -1021,6 +1063,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			},
 			expPass:       true,
 			traceResponse: "[{\"result\":[]}]",
+			expFinalGas:   expGasConsumed,
 		},
 		{
 			msg: "default trace with enableFeemarket and filtered return",
@@ -1034,6 +1077,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			expPass:         true,
 			traceResponse:   "[{\"result\":{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PU",
 			enableFeemarket: true,
+			expFinalGas:     expGasConsumedWithFeeMkt,
 		},
 		{
 			msg: "javascript tracer with enableFeemarket",
@@ -1045,6 +1089,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			expPass:         true,
 			traceResponse:   "[{\"result\":[]}]",
 			enableFeemarket: true,
+			expFinalGas:     expGasConsumedWithFeeMkt,
 		},
 		{
 			msg: "tracer with multiple transactions",
@@ -1068,6 +1113,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			expPass:         true,
 			traceResponse:   "[{\"result\":{\"gas\":34828,\"failed\":false,\"returnValue\":\"0000000000000000000000000000000000000000000000000000000000000001\",\"structLogs\":[{\"pc\":0,\"op\":\"PU",
 			enableFeemarket: false,
+			expFinalGas:     expGasConsumed,
 		},
 		{
 			msg: "invalid trace config - Negative Limit",
@@ -1079,7 +1125,8 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 					Limit:          -1,
 				}
 			},
-			expPass: false,
+			expPass:     false,
+			expFinalGas: 0,
 		},
 		{
 			msg: "invalid trace config - Invalid Tracer",
@@ -1093,6 +1140,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			},
 			expPass:       true,
 			traceResponse: "[{\"error\":\"rpc error: code = Internal desc = tracer not found\"}]",
+			expFinalGas:   expGasConsumed,
 		},
 		{
 			msg: "invalid chain id",
@@ -1103,6 +1151,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			},
 			expPass:       true,
 			traceResponse: "[{\"error\":\"rpc error: code = Internal desc = invalid chain id for signer\"}]",
+			expFinalGas:   expGasConsumed,
 		},
 	}
 
@@ -1134,7 +1183,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 
 			if tc.expPass {
 				suite.Require().NoError(err)
-				// if data is to big, slice the result
+				// if data is too big, slice the result
 				if len(res.Data) > 150 {
 					suite.Require().Equal(tc.traceResponse, string(res.Data[:150]))
 				} else {
@@ -1143,6 +1192,7 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 			} else {
 				suite.Require().Error(err)
 			}
+			suite.Require().Equal(int64(tc.expFinalGas), int64(suite.ctx.GasMeter().GasConsumed()), "expected different gas consumption")
 			// Reset for next case
 			chainID = nil
 		})
@@ -1152,18 +1202,22 @@ func (suite *KeeperTestSuite) TestTraceBlock() {
 }
 
 func (suite *KeeperTestSuite) TestNonceInQuery() {
-	address := tests.GenerateAddress()
+	address := utiltx.GenerateAddress()
 	suite.Require().Equal(uint64(0), suite.app.EvmKeeper.GetNonce(suite.ctx, address))
 	supply := sdkmath.NewIntWithDecimal(1000, 18).BigInt()
 
-	// accupy nonce 0
+	// occupy nonce 0
 	_ = suite.DeployTestContract(suite.T(), address, supply)
 
+	erc20Contract, err := testdata.LoadERC20Contract()
+	suite.Require().NoError(err, "failed to load erc20 contract")
+
 	// do an EthCall/EstimateGas with nonce 0
-	ctorArgs, err := types.ERC20Contract.ABI.Pack("", address, supply)
+	ctorArgs, err := erc20Contract.ABI.Pack("", address, supply)
 	suite.Require().NoError(err)
 
-	data := append(types.ERC20Contract.Bin, ctorArgs...)
+	data := erc20Contract.Bin
+	data = append(data, ctorArgs...)
 	args, err := json.Marshal(&types.TransactionArgs{
 		From: &address,
 		Data: (*hexutil.Bytes)(&data),
@@ -1172,14 +1226,14 @@ func (suite *KeeperTestSuite) TestNonceInQuery() {
 	proposerAddress := suite.ctx.BlockHeader().ProposerAddress
 	_, err = suite.queryClient.EstimateGas(sdk.WrapSDKContext(suite.ctx), &types.EthCallRequest{
 		Args:            args,
-		GasCap:          uint64(config.DefaultGasCap),
+		GasCap:          config.DefaultGasCap,
 		ProposerAddress: proposerAddress,
 	})
 	suite.Require().NoError(err)
 
 	_, err = suite.queryClient.EthCall(sdk.WrapSDKContext(suite.ctx), &types.EthCallRequest{
 		Args:            args,
-		GasCap:          uint64(config.DefaultGasCap),
+		GasCap:          config.DefaultGasCap,
 		ProposerAddress: proposerAddress,
 	})
 	suite.Require().NoError(err)
@@ -1209,7 +1263,7 @@ func (suite *KeeperTestSuite) TestQueryBaseFee() {
 		{
 			"pass - non-nil Base Fee",
 			func() {
-				baseFee := sdk.OneInt().BigInt()
+				baseFee := sdkmath.OneInt().BigInt()
 				suite.app.FeeMarketKeeper.SetBaseFee(suite.ctx, baseFee)
 
 				aux = sdkmath.NewIntFromBigInt(baseFee)
@@ -1218,9 +1272,9 @@ func (suite *KeeperTestSuite) TestQueryBaseFee() {
 			true, true, true,
 		},
 		{
-			"pass - nil Base Fee when london hardfork not activated",
+			"pass - nil Base Fee when london hard-fork not activated",
 			func() {
-				baseFee := sdk.OneInt().BigInt()
+				baseFee := sdkmath.OneInt().BigInt()
 				suite.app.FeeMarketKeeper.SetBaseFee(suite.ctx, baseFee)
 
 				expRes = &types.QueryBaseFeeResponse{}
@@ -1230,7 +1284,7 @@ func (suite *KeeperTestSuite) TestQueryBaseFee() {
 		{
 			"pass - zero Base Fee when feemarket not activated",
 			func() {
-				baseFee := sdk.ZeroInt()
+				baseFee := sdkmath.ZeroInt()
 				expRes = &types.QueryBaseFeeResponse{BaseFee: &baseFee}
 			},
 			true, false, true,
@@ -1261,25 +1315,30 @@ func (suite *KeeperTestSuite) TestQueryBaseFee() {
 func (suite *KeeperTestSuite) TestEthCall() {
 	var req *types.EthCallRequest
 
-	address := tests.GenerateAddress()
+	address := utiltx.GenerateAddress()
 	suite.Require().Equal(uint64(0), suite.app.EvmKeeper.GetNonce(suite.ctx, address))
 	supply := sdkmath.NewIntWithDecimal(1000, 18).BigInt()
 
 	hexBigInt := hexutil.Big(*big.NewInt(1))
-	ctorArgs, err := types.ERC20Contract.ABI.Pack("", address, supply)
+
+	erc20Contract, err := testdata.LoadERC20Contract()
+	suite.Require().NoError(err, "failed to load erc20 contract")
+
+	ctorArgs, err := erc20Contract.ABI.Pack("", address, supply)
 	suite.Require().NoError(err)
 
-	data := append(types.ERC20Contract.Bin, ctorArgs...)
+	data := erc20Contract.Bin
+	data = append(data, ctorArgs...)
 
 	testCases := []struct {
-		name     string
-		malleate func()
-		expPass  bool
+		name       string
+		malleate   func()
+		expVMError bool
 	}{
 		{
 			"invalid args",
 			func() {
-				req = &types.EthCallRequest{Args: []byte("invalid args"), GasCap: uint64(config.DefaultGasCap)}
+				req = &types.EthCallRequest{Args: []byte("invalid args"), GasCap: config.DefaultGasCap}
 			},
 			false,
 		},
@@ -1294,12 +1353,12 @@ func (suite *KeeperTestSuite) TestEthCall() {
 				})
 
 				suite.Require().NoError(err)
-				req = &types.EthCallRequest{Args: args, GasCap: uint64(config.DefaultGasCap)}
+				req = &types.EthCallRequest{Args: args, GasCap: config.DefaultGasCap}
 			},
 			false,
 		},
 		{
-			"set param EnableCreate = false",
+			"set param AccessControl - no Access",
 			func() {
 				args, err := json.Marshal(&types.TransactionArgs{
 					From: &address,
@@ -1307,13 +1366,40 @@ func (suite *KeeperTestSuite) TestEthCall() {
 				})
 
 				suite.Require().NoError(err)
-				req = &types.EthCallRequest{Args: args, GasCap: uint64(config.DefaultGasCap)}
+				req = &types.EthCallRequest{Args: args, GasCap: config.DefaultGasCap}
 
 				params := suite.app.EvmKeeper.GetParams(suite.ctx)
-				params.EnableCreate = false
-				suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				params.AccessControl = types.AccessControl{
+					Create: types.AccessControlType{
+						AccessType: types.AccessTypeRestricted,
+					},
+				}
+				err = suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
 			},
-			false,
+			true,
+		},
+		{
+			"set param AccessControl = non whitelist",
+			func() {
+				args, err := json.Marshal(&types.TransactionArgs{
+					From: &address,
+					Data: (*hexutil.Bytes)(&data),
+				})
+
+				suite.Require().NoError(err)
+				req = &types.EthCallRequest{Args: args, GasCap: config.DefaultGasCap}
+
+				params := suite.app.EvmKeeper.GetParams(suite.ctx)
+				params.AccessControl = types.AccessControl{
+					Create: types.AccessControlType{
+						AccessType: types.AccessTypePermissioned,
+					},
+				}
+				err = suite.app.EvmKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
+			},
+			true,
 		},
 	}
 	for _, tc := range testCases {
@@ -1322,9 +1408,9 @@ func (suite *KeeperTestSuite) TestEthCall() {
 			tc.malleate()
 
 			res, err := suite.queryClient.EthCall(suite.ctx, req)
-			if tc.expPass {
+			if tc.expVMError {
 				suite.Require().NotNil(res)
-				suite.Require().NoError(err)
+				suite.Require().Contains(res.VmError, "does not have permission to deploy contracts")
 			} else {
 				suite.Require().Error(err)
 			}

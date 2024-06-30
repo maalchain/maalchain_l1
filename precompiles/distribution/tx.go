@@ -6,10 +6,10 @@ package distribution
 import (
 	"fmt"
 
-	"github.com/evmos/evmos/v18/utils"
-	"github.com/evmos/evmos/v18/x/evm/statedb"
+	"github.com/maalchain/maalchain_l1/utils"
+	"github.com/maalchain/maalchain_l1/x/evm/statedb"
 
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
 
 	"github.com/ethereum/go-ethereum/common"
 

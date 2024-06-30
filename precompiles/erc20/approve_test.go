@@ -10,10 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/evmos/evmos/v18/precompiles/authorization"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
-	"github.com/evmos/evmos/v18/precompiles/erc20"
-	"github.com/evmos/evmos/v18/precompiles/testutil"
+	"github.com/maalchain/maalchain_l1/precompiles/authorization"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
+	"github.com/maalchain/maalchain_l1/precompiles/erc20"
+	"github.com/maalchain/maalchain_l1/precompiles/testutil"
 )
 
 //nolint:dupl // tests are not duplicate between the functions

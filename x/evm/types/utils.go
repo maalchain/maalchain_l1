@@ -1,40 +1,36 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
+
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 
-	"github.com/cosmos/gogoproto/proto"
-
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// DefaultPriorityReduction is the default amount of price values required for 1 unit of priority.
-// Because priority is `int64` while price is `big.Int`, it's necessary to scale down the range to keep it more pratical.
-// The default value is the same as the `sdk.DefaultPowerReduction`.
-var DefaultPriorityReduction = sdk.DefaultPowerReduction
+var (
+	// DefaultPriorityReduction is the default amount of price values required for 1 unit of priority.
+	// Because priority is `int64` while price is `big.Int`, it's necessary to scale down the range to keep it more pratical.
+	// The default value is the same as the `sdk.DefaultPowerReduction`.
+	DefaultPriorityReduction = sdk.DefaultPowerReduction
 
-var EmptyCodeHash = crypto.Keccak256(nil)
+	// EmptyCodeHash is keccak256 hash of nil to represent empty code.
+	EmptyCodeHash = crypto.Keccak256(nil)
+)
+
+// IsEmptyCodeHash checks if the given byte slice represents an empty code hash.
+func IsEmptyCodeHash(bz []byte) bool {
+	return bytes.Equal(bz, EmptyCodeHash)
+}
 
 // DecodeTxResponse decodes an protobuf-encoded byte slice into TxResponse
 func DecodeTxResponse(in []byte) (*MsgEthereumTxResponse, error) {
@@ -70,7 +66,7 @@ func DecodeTransactionLogs(data []byte) (TransactionLogs, error) {
 	return logs, nil
 }
 
-// UnwrapEthereumMsg extract MsgEthereumTx from wrapping sdk.Tx
+// UnwrapEthereumMsg extracts MsgEthereumTx from wrapping sdk.Tx
 func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) {
 	if tx == nil {
 		return nil, fmt.Errorf("invalid tx: nil")
@@ -91,7 +87,29 @@ func UnwrapEthereumMsg(tx *sdk.Tx, ethHash common.Hash) (*MsgEthereumTx, error) 
 	return nil, fmt.Errorf("eth tx not found: %s", ethHash)
 }
 
-// BinSearch execute the binary search and hone in on an executable gas limit
+// UnpackEthMsg unpacks an Ethereum message from a Cosmos SDK message
+func UnpackEthMsg(msg sdk.Msg) (
+	ethMsg *MsgEthereumTx,
+	txData TxData,
+	from sdk.AccAddress,
+	err error,
+) {
+	msgEthTx, ok := msg.(*MsgEthereumTx)
+	if !ok {
+		return nil, nil, nil, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*MsgEthereumTx)(nil))
+	}
+
+	txData, err = UnpackTxData(msgEthTx.Data)
+	if err != nil {
+		return nil, nil, nil, errorsmod.Wrap(err, "failed to unpack tx data any for tx")
+	}
+
+	// sender address should be in the tx cache from the previous AnteHandle call
+	from = msgEthTx.GetFrom()
+	return msgEthTx, txData, from, nil
+}
+
+// BinSearch executes the binary search and hone in on an executable gas limit
 func BinSearch(lo, hi uint64, executable func(uint64) (bool, *MsgEthereumTxResponse, error)) (uint64, error) {
 	for lo+1 < hi {
 		mid := (hi + lo) / 2
@@ -111,8 +129,8 @@ func BinSearch(lo, hi uint64, executable func(uint64) (bool, *MsgEthereumTxRespo
 	return hi, nil
 }
 
-// EffectiveGasPrice compute the effective gas price based on eip-1159 rules
+// EffectiveGasPrice computes the effective gas price based on eip-1559 rules
 // `effectiveGasPrice = min(baseFee + tipCap, feeCap)`
-func EffectiveGasPrice(baseFee *big.Int, feeCap *big.Int, tipCap *big.Int) *big.Int {
+func EffectiveGasPrice(baseFee, feeCap, tipCap *big.Int) *big.Int {
 	return math.BigMin(new(big.Int).Add(tipCap, baseFee), feeCap)
 }

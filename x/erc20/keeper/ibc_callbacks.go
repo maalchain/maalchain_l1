@@ -1,18 +1,5 @@
-// Copyright 2022 Evmos Foundation
-// This file is part of the Ethermint Network packages.
-//
-// Ethermint is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint packages are distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 
 package keeper
 
@@ -36,7 +23,7 @@ import (
 // OnRecvPacket performs the ICS20 middleware receive callback for automatically
 // converting an IBC Coin to their ERC20 representation.
 // For the conversion to succeed, the IBC denomination must have previously been
-// registered via governance. Note that the native staking denomination (e.g. "aphton"),
+// registered via governance. Note that the native staking denomination (e.g. "aevmos"),
 // is excluded from the conversion.
 //
 // CONTRACT: This middleware MUST be executed transfer after the ICS20 OnRecvPacket
@@ -67,14 +54,16 @@ func (k Keeper) OnRecvPacket(
 		return ack
 	}
 
-	// Get addresses in `ethm1` and the original bech32 format
-	sender, recipient, _, _, err := ibc.GetTransferSenderRecipient(packet)
+	// Get addresses in `evmos1` and the original bech32 format
+	sender, recipient, _, _, err := ibc.GetTransferSenderRecipient(data)
 	if err != nil {
 		return channeltypes.NewErrorAcknowledgement(err)
 	}
 
-	// if sender == recipient recovery was executed
-	if sender.Equals(recipient) {
+	evmParams := k.evmKeeper.GetParams(ctx)
+
+	// if sender == recipient, and is not from an EVM Channel recovery was executed
+	if sender.Equals(recipient) && !evmParams.IsEVMChannel(packet.DestinationChannel) {
 		// Continue to the next IBC middleware by returning the original ACK.
 		return ack
 	}
@@ -143,7 +132,7 @@ func (k Keeper) OnRecvPacket(
 	return ack
 }
 
-// OnAcknowledgementPacket responds to the the success or failure of a packet
+// OnAcknowledgementPacket responds to the success or failure of a packet
 // acknowledgement written on the receiving chain. If the acknowledgement was a
 // success then nothing occurs. If the acknowledgement failed, then the sender
 // is refunded and then the IBC Coins are converted to ERC20.
@@ -181,7 +170,7 @@ func (k Keeper) ConvertCoinToERC20FromPacket(ctx sdk.Context, data transfertypes
 		WithKVGasConfig(storetypes.GasConfig{}).
 		WithTransientKVGasConfig(storetypes.GasConfig{})
 
-	// assume that all module accounts on Ethermint need to have their tokens in the
+	// assume that all module accounts on Evmos need to have their tokens in the
 	// IBC representation as opposed to ERC20
 	senderAcc := k.accountKeeper.GetAccount(ctx, sender)
 	if types.IsModuleAccount(senderAcc) {

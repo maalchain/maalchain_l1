@@ -1,3 +1,5 @@
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package v4
 
 import (
@@ -38,14 +40,5 @@ func MigrateStore(
 	if params.AllowUnprotectedTxs {
 		store.Set(types.ParamStoreKeyAllowUnprotectedTxs, []byte{0x01})
 	}
-
-	if params.EnableCall {
-		store.Set(types.ParamStoreKeyEnableCall, []byte{0x01})
-	}
-
-	if params.EnableCreate {
-		store.Set(types.ParamStoreKeyEnableCreate, []byte{0x01})
-	}
-
 	return nil
 }

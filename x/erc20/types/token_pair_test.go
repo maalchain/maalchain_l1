@@ -6,9 +6,9 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
 	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
 	"github.com/maalchain/maalchain_l1/x/erc20/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type TokenPairTestSuite struct {

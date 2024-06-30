@@ -1,3 +1,5 @@
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package v5
 
 import (
@@ -31,8 +33,8 @@ func MigrateStore(
 	extraEIPsBz := store.Get(types.ParamStoreKeyExtraEIPs)
 	cdc.MustUnmarshal(extraEIPsBz, &extraEIPs)
 
-	// revert ExtraEIP change for Ethermint testnet
-	if ctx.ChainID() == "maalchain_7862-4" {
+	// revert ExtraEIP change for Evmos testnet
+	if ctx.ChainID() == "evmos_9000-4" {
 		extraEIPs.EIPs = []int64{}
 	}
 
@@ -42,8 +44,6 @@ func MigrateStore(
 	params.EvmDenom = denom
 	params.ExtraEIPs = extraEIPs.EIPs
 	params.ChainConfig = chainConfig
-	params.EnableCreate = store.Has(types.ParamStoreKeyEnableCreate)
-	params.EnableCall = store.Has(types.ParamStoreKeyEnableCall)
 	params.AllowUnprotectedTxs = store.Has(types.ParamStoreKeyAllowUnprotectedTxs)
 
 	store.Delete(types.ParamStoreKeyChainConfig)

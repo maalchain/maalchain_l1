@@ -1,18 +1,5 @@
-// Copyright 2022 Evmos Foundation
-// This file is part of the Ethermint Network packages.
-//
-// Ethermint is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint packages are distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint packages. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 
 package erc20
 
@@ -38,8 +25,6 @@ func NewErc20ProposalHandler(k *keeper.Keeper) govv1beta1.Handler {
 		}
 
 		switch c := content.(type) {
-		case *types.RegisterCoinProposal:
-			return handleRegisterCoinProposal(ctx, k, c)
 		case *types.RegisterERC20Proposal:
 			return handleRegisterERC20Proposal(ctx, k, c)
 		case *types.ToggleTokenConversionProposal:
@@ -49,31 +34,6 @@ func NewErc20ProposalHandler(k *keeper.Keeper) govv1beta1.Handler {
 			return errorsmod.Wrapf(errortypes.ErrUnknownRequest, "unrecognized %s proposal content type: %T", types.ModuleName, c)
 		}
 	}
-}
-
-// handleRegisterCoinProposal handles the registration proposal for multiple
-// native Cosmos coins
-func handleRegisterCoinProposal(
-	ctx sdk.Context,
-	k *keeper.Keeper,
-	p *types.RegisterCoinProposal,
-) error {
-	for _, metadata := range p.Metadata {
-		pair, err := k.RegisterCoin(ctx, metadata)
-		if err != nil {
-			return err
-		}
-
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeRegisterCoin,
-				sdk.NewAttribute(types.AttributeKeyCosmosCoin, pair.Denom),
-				sdk.NewAttribute(types.AttributeKeyERC20Token, pair.Erc20Address),
-			),
-		)
-	}
-
-	return nil
 }
 
 // handleRegisterERC20Proposal handles the registration proposal for multiple

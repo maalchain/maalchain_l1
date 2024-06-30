@@ -1,3 +1,18 @@
+// Copyright 2022 Evmos Foundation
+// This file is part of the Evmos Network packages.
+//
+// Evmos is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The Evmos packages are distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the Evmos packages. If not, see https://github.com/evmos/evmos/blob/main/LICENSE
 package v4_test
 
 import (
@@ -23,7 +38,7 @@ func newMockSubspace(ps types.Params) mockSubspace {
 	return mockSubspace{ps: ps}
 }
 
-func (ms mockSubspace) GetParamSetIfExists(ctx sdk.Context, ps types.LegacyParams) {
+func (ms mockSubspace) GetParamSetIfExists(_ sdk.Context, ps types.LegacyParams) {
 	*ps.(*types.Params) = ms.ps
 }
 
@@ -55,7 +70,7 @@ func TestMigrate(t *testing.T) {
 	var extraEIPs v4types.ExtraEIPs
 	bz = kvStore.Get(types.ParamStoreKeyExtraEIPs)
 	cdc.MustUnmarshal(bz, &extraEIPs)
-	require.Equal(t, []int64(nil), extraEIPs.EIPs)
+	require.Equal(t, types.DefaultExtraEIPs, extraEIPs.EIPs)
 
 	params := v4types.V4Params{
 		EvmDenom:            evmDenom,
@@ -66,8 +81,6 @@ func TestMigrate(t *testing.T) {
 		ExtraEIPs:           extraEIPs,
 	}
 
-	require.Equal(t, legacySubspace.ps.EnableCall, params.EnableCall)
-	require.Equal(t, legacySubspace.ps.EnableCreate, params.EnableCreate)
 	require.Equal(t, legacySubspace.ps.AllowUnprotectedTxs, params.AllowUnprotectedTxs)
 	require.Equal(t, legacySubspace.ps.ExtraEIPs, params.ExtraEIPs.EIPs)
 	require.EqualValues(t, legacySubspace.ps.ChainConfig, params.V4ChainConfig)

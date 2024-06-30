@@ -1,23 +1,11 @@
-// Copyright 2021 Evmos Foundation
-// This file is part of Evmos' Ethermint library.
-//
-// The Ethermint library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The Ethermint library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// Copyright Tharsis Labs Ltd.(Evmos)
+// SPDX-License-Identifier:ENCL-1.0(https://github.com/evmos/evmos/blob/main/LICENSE)
 package keeper
 
 import (
 	"math/big"
 
+	"cosmossdk.io/math"
 	"github.com/maalchain/maalchain_l1/x/feemarket/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,13 +16,21 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.ParamsKey)
 	if len(bz) == 0 {
-		var p types.Params
-		k.ss.GetParamSetIfExists(ctx, &p)
-		return p
+		k.ss.GetParamSetIfExists(ctx, &params)
+	} else {
+		k.cdc.MustUnmarshal(bz, &params)
 	}
 
-	k.cdc.MustUnmarshal(bz, &params)
-	return params
+	// zero the nil params for legacy blocks
+	if params.MinGasPrice.IsNil() {
+		params.MinGasPrice = math.LegacyZeroDec()
+	}
+
+	if params.MinGasMultiplier.IsNil() {
+		params.MinGasMultiplier = math.LegacyZeroDec()
+	}
+
+	return
 }
 
 // SetParams sets the fee market params in a single key
@@ -79,7 +75,7 @@ func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 // SetBaseFee set's the base fee in the store
 func (k Keeper) SetBaseFee(ctx sdk.Context, baseFee *big.Int) {
 	params := k.GetParams(ctx)
-	params.BaseFee = sdk.NewIntFromBigInt(baseFee)
+	params.BaseFee = math.NewIntFromBigInt(baseFee)
 	err := k.SetParams(ctx, params)
 	if err != nil {
 		return

@@ -7,17 +7,17 @@ import (
 
 	"cosmossdk.io/math"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	evmosutiltx "github.com/evmos/evmos/v18/testutil/tx"
+	evmosutiltx "github.com/maalchain/maalchain_l1/testutil/tx"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkauthz "github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/evmos/evmos/v18/precompiles/authorization"
-	cmn "github.com/evmos/evmos/v18/precompiles/common"
-	"github.com/evmos/evmos/v18/precompiles/staking"
-	"github.com/evmos/evmos/v18/precompiles/testutil"
-	evmosutil "github.com/evmos/evmos/v18/testutil"
+	"github.com/maalchain/maalchain_l1/precompiles/authorization"
+	cmn "github.com/maalchain/maalchain_l1/precompiles/common"
+	"github.com/maalchain/maalchain_l1/precompiles/staking"
+	"github.com/maalchain/maalchain_l1/precompiles/testutil"
+	evmosutil "github.com/maalchain/maalchain_l1/testutil"
 )
 
 func (s *PrecompileTestSuite) TestApprove() {

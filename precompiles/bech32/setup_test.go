@@ -3,10 +3,10 @@ package bech32_test
 import (
 	"testing"
 
-	"github.com/evmos/evmos/v18/precompiles/bech32"
+	"github.com/maalchain/maalchain_l1/precompiles/bech32"
 
-	testkeyring "github.com/evmos/evmos/v18/testutil/integration/evmos/keyring"
-	"github.com/evmos/evmos/v18/testutil/integration/evmos/network"
+	testkeyring "github.com/maalchain/maalchain_l1/testutil/integration/evmos/keyring"
+	"github.com/maalchain/maalchain_l1/testutil/integration/evmos/network"
 	"github.com/stretchr/testify/suite"
 )
 

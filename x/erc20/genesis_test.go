@@ -13,7 +13,10 @@ import (
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
 
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+
 	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	"github.com/maalchain/maalchain_l1/utils"
 	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
 
 	"github.com/maalchain/maalchain_l1/app"
@@ -24,8 +27,15 @@ import (
 type GenesisTestSuite struct {
 	suite.Suite
 	ctx     sdk.Context
-	app     *app.EthermintApp
+	app     *app.Evmos
 	genesis types.GenesisState
+}
+
+const osmoERC20ContractAddr = "0x5dCA2483280D9727c80b5518faC4556617fb19ZZ"
+
+var osmoDenomTrace = transfertypes.DenomTrace{
+	BaseDenom: "uosmo",
+	Path:      "transfer/channel-0",
 }
 
 func TestGenesisTestSuite(t *testing.T) {
@@ -35,11 +45,12 @@ func TestGenesisTestSuite(t *testing.T) {
 func (suite *GenesisTestSuite) SetupTest() {
 	// consensus key
 	consAddress := sdk.ConsAddress(utiltx.GenerateAddress().Bytes())
-	feemarketGenesis := feemarkettypes.DefaultGenesisState()
-	suite.app = app.Setup(false, feemarketGenesis)
+
+	chainID := utils.TestnetChainID + "-1"
+	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState(), chainID)
 	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{
 		Height:          1,
-		ChainID:         "maalchain_7862-1",
+		ChainID:         chainID,
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -71,33 +82,34 @@ func (suite *GenesisTestSuite) TestERC20InitGenesis() {
 		genesisState types.GenesisState
 	}{
 		{
-			"empty genesis",
-			types.GenesisState{},
+			name:         "empty genesis",
+			genesisState: types.GenesisState{},
 		},
 		{
-			"default genesis",
-			*types.DefaultGenesisState(),
+			name:         "default genesis",
+			genesisState: *types.DefaultGenesisState(),
 		},
 		{
-			"custom genesis",
-			types.NewGenesisState(
+			name: "custom genesis",
+			genesisState: types.NewGenesisState(
 				types.DefaultParams(),
 				[]types.TokenPair{
 					{
-						Erc20Address:  "0x5dCA2483280D9727c80b5518faC4556617fb19ZZ",
-						Denom:         "coin",
+						Erc20Address:  osmoERC20ContractAddr,
+						Denom:         osmoDenomTrace.IBCDenom(),
 						Enabled:       true,
 						ContractOwner: types.OWNER_MODULE,
 					},
-				}),
+				},
+			),
 		},
 	}
 
 	for _, tc := range testCases {
-
 		suite.Require().NotPanics(func() {
-			erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper.AccountKeeper, tc.genesisState)
+			erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper, tc.genesisState)
 		})
+
 		params := suite.app.Erc20Keeper.GetParams(suite.ctx)
 
 		tokenPairs := suite.app.Erc20Keeper.GetTokenPairs(suite.ctx)
@@ -116,30 +128,31 @@ func (suite *GenesisTestSuite) TestErc20ExportGenesis() {
 		genesisState types.GenesisState
 	}{
 		{
-			"empty genesis",
-			types.GenesisState{},
+			name:         "empty genesis",
+			genesisState: types.GenesisState{},
 		},
 		{
-			"default genesis",
-			*types.DefaultGenesisState(),
+			name:         "default genesis",
+			genesisState: *types.DefaultGenesisState(),
 		},
 		{
-			"custom genesis",
-			types.NewGenesisState(
+			name: "custom genesis",
+			genesisState: types.NewGenesisState(
 				types.DefaultParams(),
 				[]types.TokenPair{
 					{
-						Erc20Address:  "0x5dCA2483280D9727c80b5518faC4556617fb19ZZ",
-						Denom:         "coin",
+						Erc20Address:  osmoERC20ContractAddr,
+						Denom:         osmoDenomTrace.IBCDenom(),
 						Enabled:       true,
 						ContractOwner: types.OWNER_MODULE,
 					},
-				}),
+				},
+			),
 		},
 	}
 
 	for _, tc := range testGenCases {
-		erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper.AccountKeeper, tc.genesisState)
+		erc20.InitGenesis(suite.ctx, suite.app.Erc20Keeper, suite.app.AccountKeeper, tc.genesisState)
 		suite.Require().NotPanics(func() {
 			genesisExported := erc20.ExportGenesis(suite.ctx, suite.app.Erc20Keeper)
 			params := suite.app.Erc20Keeper.GetParams(suite.ctx)
@@ -152,6 +165,5 @@ func (suite *GenesisTestSuite) TestErc20ExportGenesis() {
 				suite.Require().Len(genesisExported.TokenPairs, 0)
 			}
 		})
-		// }
 	}
 }
