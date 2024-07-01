@@ -93,7 +93,7 @@ jobs:
       TESTS_TO_RUN: ${{ matrix.tests }}
     steps:
       - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v23
+      - uses: cachix/install-nix-action@V27
         with:
           nix_path: nixpkgs=channel:nixos-22.11
           extra_nix_config: |
@@ -132,7 +132,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v20
+      - uses: cachix/install-nix-action@V27
       - uses: cachix/cachix-action@v14
         with:
           name: crypto-ethermint
