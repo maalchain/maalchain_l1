@@ -84,7 +84,7 @@ func SetupWithOpts(
 	return SetupWithDBAndOpts(isCheckTx, patch, dbm.NewMemDB(), appOptions)
 }
 
-const ChainID = "ethermint_9000-1"
+const ChainID = "maalchain_7862-1"
 
 func SetupWithDB(isCheckTx bool, patch func(*EthermintApp, GenesisState) GenesisState, db dbm.DB) *EthermintApp {
 	return SetupWithDBAndOpts(isCheckTx, patch, db, nil)
