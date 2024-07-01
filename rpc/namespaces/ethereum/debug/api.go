@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package debug
 
 import (
@@ -29,7 +29,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	stderrors "github.com/pkg/errors"
 
@@ -40,8 +40,8 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/maalchain/maalchain_l1/rpc/backend"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
+	"github.com/evmos/ethermint/rpc/backend"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
 )
 
 // HandlerT keeps track of the cpu profiler and trace execution
@@ -76,14 +76,14 @@ func NewAPI(
 
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
-func (a *API) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfig) (interface{}, error) {
+func (a *API) TraceTransaction(hash common.Hash, config *rpctypes.TraceConfig) (interface{}, error) {
 	a.logger.Debug("debug_traceTransaction", "hash", hash)
 	return a.backend.TraceTransaction(hash, config)
 }
 
 // TraceBlockByNumber returns the structured logs created during the execution of
 // EVM and returns them as a JSON object.
-func (a *API) TraceBlockByNumber(height rpctypes.BlockNumber, config *evmtypes.TraceConfig) ([]*evmtypes.TxTraceResult, error) {
+func (a *API) TraceBlockByNumber(height rpctypes.BlockNumber, config *rpctypes.TraceConfig) ([]*evmtypes.TxTraceResult, error) {
 	a.logger.Debug("debug_traceBlockByNumber", "height", height)
 	if height == 0 {
 		return nil, errors.New("genesis is not traceable")
@@ -100,7 +100,7 @@ func (a *API) TraceBlockByNumber(height rpctypes.BlockNumber, config *evmtypes.T
 
 // TraceBlockByHash returns the structured logs created during the execution of
 // EVM and returns them as a JSON object.
-func (a *API) TraceBlockByHash(hash common.Hash, config *evmtypes.TraceConfig) ([]*evmtypes.TxTraceResult, error) {
+func (a *API) TraceBlockByHash(hash common.Hash, config *rpctypes.TraceConfig) ([]*evmtypes.TxTraceResult, error) {
 	a.logger.Debug("debug_traceBlockByHash", "hash", hash)
 	// Get Tendermint Block
 	resBlock, err := a.backend.TendermintBlockByHash(hash)
@@ -115,6 +115,17 @@ func (a *API) TraceBlockByHash(hash common.Hash, config *evmtypes.TraceConfig) (
 	}
 
 	return a.backend.TraceBlock(rpctypes.BlockNumber(resBlock.Block.Height), config, resBlock)
+}
+
+// TraceCall returns the structured logs created during the execution of EVM call
+// and returns them as a JSON object.
+func (a *API) TraceCall(
+	args evmtypes.TransactionArgs,
+	blockNrOrHash rpctypes.BlockNumberOrHash,
+	config *rpctypes.TraceConfig,
+) (interface{}, error) {
+	a.logger.Debug("debug_traceCall", "args", args.String(), "block number or hash", blockNrOrHash)
+	return a.backend.TraceCall(args, blockNrOrHash, config)
 }
 
 // BlockProfile turns on goroutine profiling for nsec seconds and writes profile data to

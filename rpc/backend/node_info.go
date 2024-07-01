@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package backend
 
 import (
@@ -34,11 +34,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/server/config"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	"github.com/evmos/ethermint/server/config"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 // Accounts returns the list of accounts available to this node.
@@ -338,17 +338,17 @@ func (b *Backend) RPCBlockRangeCap() int32 {
 // RPCMinGasPrice returns the minimum gas price for a transaction obtained from
 // the node config. If set value is 0, it will default to 20.
 
-func (b *Backend) RPCMinGasPrice() int64 {
+func (b *Backend) RPCMinGasPrice() *big.Int {
 	evmParams, err := b.queryClient.Params(b.ctx, &evmtypes.QueryParamsRequest{})
 	if err != nil {
-		return ethermint.DefaultGasPrice
+		return new(big.Int).SetInt64(ethermint.DefaultGasPrice)
 	}
 
 	minGasPrice := b.cfg.GetMinGasPrices()
-	amt := minGasPrice.AmountOf(evmParams.Params.EvmDenom).TruncateInt64()
-	if amt == 0 {
-		return ethermint.DefaultGasPrice
+	amt := minGasPrice.AmountOf(evmParams.Params.EvmDenom).TruncateInt()
+	if amt.IsZero() {
+		return new(big.Int).SetInt64(ethermint.DefaultGasPrice)
 	}
 
-	return amt
+	return amt.BigInt()
 }

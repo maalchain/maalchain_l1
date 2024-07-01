@@ -1,4 +1,5 @@
 import json
+import subprocess
 import tempfile
 
 import requests
@@ -13,10 +14,10 @@ class ChainCommand:
     def __init__(self, cmd):
         self.cmd = cmd
 
-    def __call__(self, cmd, *args, stdin=None, **kwargs):
+    def __call__(self, cmd, *args, stdin=None, stderr=subprocess.STDOUT, **kwargs):
         "execute chain-maind"
         args = " ".join(build_cli_args_safe(cmd, *args, **kwargs))
-        return interact(f"{self.cmd} {args}", input=stdin)
+        return interact(f"{self.cmd} {args}", input=stdin, stderr=stderr)
 
 
 class CosmosCLI:
@@ -140,7 +141,7 @@ class CosmosCLI:
             self.raw("query", "bank", "balances", addr, home=self.data_dir)
         )["balances"]
 
-    def balance(self, addr, denom="maal"):
+    def balance(self, addr, denom="aphoton"):
         denoms = {coin["denom"]: int(coin["amount"]) for coin in self.balances(addr)}
         return denoms.get(denom, 0)
 
@@ -273,9 +274,11 @@ class CosmosCLI:
             )
         )["validators"]
 
-    def staking_params(self):
+    def get_params(self, module, **kwargs):
+        kwargs.setdefault("node", self.node_rpc)
+        kwargs.setdefault("output", "json")
         return json.loads(
-            self.raw("query", "staking", "params", output="json", node=self.node_rpc)
+            self.raw("query", module, "params", **kwargs)
         )
 
     def staking_pool(self, bonded=True):
@@ -519,7 +522,7 @@ class CosmosCLI:
         return r.decode("utf-8")
 
     def broadcast_tx(self, tx_file, **kwargs):
-        kwargs.setdefault("broadcast_mode", "block")
+        kwargs.setdefault("broadcast_mode", "sync")
         kwargs.setdefault("output", "json")
         return json.loads(
             self.raw("tx", "broadcast", tx_file, node=self.node_rpc, **kwargs)
@@ -700,6 +703,7 @@ class CosmosCLI:
 
     def gov_vote(self, voter, proposal_id, option, **kwargs):
         kwargs.setdefault("gas_prices", DEFAULT_GAS_PRICE)
+        kwargs.setdefault("broadcast_mode", "sync")
         return json.loads(
             self.raw(
                 "tx",
@@ -839,3 +843,38 @@ class CosmosCLI:
 
     def migrate_keystore(self):
         return self.raw("keys", "migrate", home=self.data_dir)
+
+    def get_default_kwargs(self):
+        return {
+            "gas_prices": DEFAULT_GAS_PRICE,
+            "gas": "auto",
+            "gas_adjustment": "1.5",
+        }
+
+    def event_query_tx_for(self, hash):
+        return json.loads(
+            self.raw(
+                "query",
+                "event-query-tx-for",
+                hash,
+                "-y",
+                home=self.data_dir,
+                stderr=subprocess.DEVNULL,
+            )
+        )
+
+    def submit_gov_proposal(self, proposal, **kwargs):
+        default_kwargs = self.get_default_kwargs()
+        kwargs.setdefault("broadcast_mode", "sync")
+        return json.loads(
+            self.raw(
+                "tx",
+                "gov",
+                "submit-proposal",
+                proposal,
+                "-y",
+                home=self.data_dir,
+                stderr=subprocess.DEVNULL,
+                **(default_kwargs | kwargs),
+            )
+        )

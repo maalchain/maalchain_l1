@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -14,10 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/maalchain/maalchain_l1/encoding"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/encoding"
+	ethermint "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 var _ DynamicFeeEVMKeeper = MockEVMKeeper{}
@@ -53,7 +52,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 	//      without extension option
 	//      london hardfork enableness
 	encodingConfig := encoding.MakeConfig(module.NewBasicManager())
-	minGasPrices := sdk.NewDecCoins(sdk.NewDecCoin("maal", sdkmath.NewInt(10)))
+	minGasPrices := sdk.NewDecCoins(sdk.NewDecCoin("aphoton", sdk.NewInt(10)))
 
 	genesisCtx := sdk.NewContext(nil, tmproto.Header{}, false, log.NewNopLogger())
 	checkTxCtx := sdk.NewContext(nil, tmproto.Header{Height: 1}, true, log.NewNopLogger()).WithMinGasPrices(minGasPrices)
@@ -97,7 +96,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 			func() sdk.Tx {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 				txBuilder.SetGasLimit(1)
-				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("maal", sdkmath.NewInt(10))))
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("aphoton", sdk.NewInt(10))))
 				return txBuilder.GetTx()
 			},
 			"10aphoton",
@@ -139,7 +138,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 			func() sdk.Tx {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 				txBuilder.SetGasLimit(1)
-				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("maal", sdkmath.NewInt(10))))
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("aphoton", sdk.NewInt(10))))
 				return txBuilder.GetTx()
 			},
 			"10aphoton",
@@ -155,7 +154,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 			func() sdk.Tx {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 				txBuilder.SetGasLimit(1)
-				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("maal", sdkmath.NewInt(10).Mul(types.DefaultPriorityReduction).Add(sdkmath.NewInt(10)))))
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("aphoton", sdk.NewInt(10).Mul(types.DefaultPriorityReduction).Add(sdk.NewInt(10)))))
 				return txBuilder.GetTx()
 			},
 			"10000010aphoton",
@@ -171,7 +170,7 @@ func TestSDKTxFeeChecker(t *testing.T) {
 			func() sdk.Tx {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 				txBuilder.SetGasLimit(1)
-				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("maal", sdkmath.NewInt(10).Mul(types.DefaultPriorityReduction))))
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("aphoton", sdk.NewInt(10).Mul(types.DefaultPriorityReduction))))
 
 				option, err := codectypes.NewAnyWithValue(&ethermint.ExtensionOptionDynamicFeeTx{})
 				require.NoError(t, err)
@@ -191,10 +190,10 @@ func TestSDKTxFeeChecker(t *testing.T) {
 			func() sdk.Tx {
 				txBuilder := encodingConfig.TxConfig.NewTxBuilder().(authtx.ExtensionOptionsTxBuilder)
 				txBuilder.SetGasLimit(1)
-				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("maal", sdkmath.NewInt(10).Mul(types.DefaultPriorityReduction).Add(sdkmath.NewInt(10)))))
+				txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("aphoton", sdk.NewInt(10).Mul(types.DefaultPriorityReduction).Add(sdk.NewInt(10)))))
 
 				option, err := codectypes.NewAnyWithValue(&ethermint.ExtensionOptionDynamicFeeTx{
-					MaxPriorityPrice: sdkmath.NewInt(5).Mul(types.DefaultPriorityReduction),
+					MaxPriorityPrice: sdk.NewInt(5).Mul(types.DefaultPriorityReduction),
 				})
 				require.NoError(t, err)
 				txBuilder.SetExtensionOptions(option)

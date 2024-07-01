@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/evmos/ethermint/tests"
 
 	"github.com/ethereum/go-ethereum/common"
 )

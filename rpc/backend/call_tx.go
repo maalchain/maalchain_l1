@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package backend
 
 import (
@@ -29,10 +29,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/pkg/errors"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -131,7 +131,7 @@ func (b *Backend) SendRawTransaction(data hexutil.Bytes) (common.Hash, error) {
 	}
 
 	ethereumTx := &evmtypes.MsgEthereumTx{}
-	if err := ethereumTx.FromEthereumTx(tx); err != nil {
+	if err := ethereumTx.FromSignedEthereumTx(tx, b.chainID); err != nil {
 		b.logger.Error("transaction converting failed", "error", err.Error())
 		return common.Hash{}, err
 	}
@@ -304,6 +304,20 @@ func (b *Backend) SetTxDefaults(args evmtypes.TransactionArgs) (evmtypes.Transac
 	return args, nil
 }
 
+// handleRevertError returns revert related error.
+func (b *Backend) handleRevertError(vmError string, ret []byte) error {
+	if len(vmError) > 0 {
+		if vmError != vm.ErrExecutionReverted.Error() {
+			return status.Error(codes.Internal, vmError)
+		}
+		if len(ret) == 0 {
+			return errors.New(vmError)
+		}
+		return evmtypes.NewExecErrorWithReason(ret)
+	}
+	return nil
+}
+
 // EstimateGas returns an estimate of gas usage for the given smart contract call.
 func (b *Backend) EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *rpctypes.BlockNumber) (hexutil.Uint64, error) {
 	blockNr := rpctypes.EthPendingBlockNumber
@@ -336,6 +350,9 @@ func (b *Backend) EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *rp
 	if err != nil {
 		return 0, err
 	}
+	if err = b.handleRevertError(res.VmError, res.Ret); err != nil {
+		return 0, err
+	}
 	return hexutil.Uint64(res.Gas), nil
 }
 
@@ -343,6 +360,7 @@ func (b *Backend) EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *rp
 // estimated gas used on the operation or an error if fails.
 func (b *Backend) DoCall(
 	args evmtypes.TransactionArgs, blockNr rpctypes.BlockNumber,
+	overrides *json.RawMessage,
 ) (*evmtypes.MsgEthereumTxResponse, error) {
 	bz, err := json.Marshal(&args)
 	if err != nil {
@@ -354,11 +372,17 @@ func (b *Backend) DoCall(
 		return nil, errors.New("header not found")
 	}
 
+	var bzOverrides []byte
+	if overrides != nil {
+		bzOverrides = *overrides
+	}
+
 	req := evmtypes.EthCallRequest{
 		Args:            bz,
 		GasCap:          b.RPCGasCap(),
 		ProposerAddress: sdk.ConsAddress(header.Block.ProposerAddress),
 		ChainId:         b.chainID.Int64(),
+		Overrides:       bzOverrides,
 	}
 
 	// From ContextWithHeight: if the provided height is 0,
@@ -384,14 +408,14 @@ func (b *Backend) DoCall(
 	if err != nil {
 		return nil, err
 	}
-
-	if res.Failed() {
-		if res.VmError != vm.ErrExecutionReverted.Error() {
-			return nil, status.Error(codes.Internal, res.VmError)
-		}
-		return nil, evmtypes.NewExecErrorWithReason(res.Ret)
+	length := len(res.Ret)
+	if length > int(b.cfg.JSONRPC.ReturnDataLimit) && b.cfg.JSONRPC.ReturnDataLimit != 0 {
+		return nil, fmt.Errorf("call retuned result on length %d exceeding limit %d", length, b.cfg.JSONRPC.ReturnDataLimit)
 	}
 
+	if err = b.handleRevertError(res.VmError, res.Ret); err != nil {
+		return nil, err
+	}
 	return res, nil
 }
 
@@ -408,7 +432,7 @@ func (b *Backend) GasPrice() (*hexutil.Big, error) {
 		}
 		result = result.Add(result, head.BaseFee)
 	} else {
-		result = big.NewInt(b.RPCMinGasPrice())
+		result = b.RPCMinGasPrice()
 	}
 
 	// return at least GlobalMinGasPrice from FeeMarket module

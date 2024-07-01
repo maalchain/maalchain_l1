@@ -1,7 +1,7 @@
 // This is a test utility for Ethermint's Web3 JSON-RPC services.
 //
-// To run these tests please first ensure you have the maalchaind running
-// and have started the RPC service with `maalchaind rest-server`.
+// To run these tests please first ensure you have the ethermintd running
+// and have started the RPC service with `ethermintd rest-server`.
 //
 // You can configure the desired HOST and MODE as well
 package rpc
@@ -17,9 +17,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

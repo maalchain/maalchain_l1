@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package config
 
 import (
@@ -75,6 +75,9 @@ const (
 
 	// DefaultMaxOpenConnections represents the amount of open connections (unlimited = 0)
 	DefaultMaxOpenConnections = 0
+
+	// DefaultReturnDataLimit is maximum number of bytes returned from eth_call or similar invocations
+	DefaultReturnDataLimit = 100000
 )
 
 var evmTracers = []string{"json", "markdown", "struct", "access_list"}
@@ -134,10 +137,14 @@ type JSONRPCConfig struct {
 	MaxOpenConnections int `mapstructure:"max-open-connections"`
 	// EnableIndexer defines if enable the custom indexer service.
 	EnableIndexer bool `mapstructure:"enable-indexer"`
+	// AllowIndexerGap defines if allow block gap for the custom indexer service.
+	AllowIndexerGap bool `mapstructure:"allow-indexer-gap"`
 	// MetricsAddress defines the metrics server to listen on
 	MetricsAddress string `mapstructure:"metrics-address"`
 	// FixRevertGasRefundHeight defines the upgrade height for fix of revert gas refund logic when transaction reverted
 	FixRevertGasRefundHeight int64 `mapstructure:"fix-revert-gas-refund-height"`
+	// ReturnDataLimit defines maximum number of bytes returned from `eth_call` or similar invocations
+	ReturnDataLimit int64 `mapstructure:"return-data-limit"`
 }
 
 // TLSConfig defines the certificate and matching private key for the server.
@@ -239,8 +246,10 @@ func DefaultJSONRPCConfig() *JSONRPCConfig {
 		AllowUnprotectedTxs:      DefaultAllowUnprotectedTxs,
 		MaxOpenConnections:       DefaultMaxOpenConnections,
 		EnableIndexer:            false,
+		AllowIndexerGap:          true,
 		MetricsAddress:           DefaultJSONRPCMetricsAddress,
 		FixRevertGasRefundHeight: DefaultFixRevertGasRefundHeight,
+		ReturnDataLimit:          DefaultReturnDataLimit,
 	}
 }
 
@@ -349,8 +358,10 @@ func GetConfig(v *viper.Viper) (Config, error) {
 			HTTPIdleTimeout:          v.GetDuration("json-rpc.http-idle-timeout"),
 			MaxOpenConnections:       v.GetInt("json-rpc.max-open-connections"),
 			EnableIndexer:            v.GetBool("json-rpc.enable-indexer"),
+			AllowIndexerGap:          v.GetBool("json-rpc.allow-indexer-gap"),
 			MetricsAddress:           v.GetString("json-rpc.metrics-address"),
 			FixRevertGasRefundHeight: v.GetInt64("json-rpc.fix-revert-gas-refund-height"),
+			ReturnDataLimit:          v.GetInt64("json-rpc.return-data-limit"),
 		},
 		TLS: TLSConfig{
 			CertificatePath: v.GetString("tls.certificate-path"),

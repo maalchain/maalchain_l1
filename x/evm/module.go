@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package evm
 
 import (
@@ -33,9 +33,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/maalchain/maalchain_l1/x/evm/client/cli"
-	"github.com/maalchain/maalchain_l1/x/evm/keeper"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/x/evm/client/cli"
+	"github.com/evmos/ethermint/x/evm/keeper"
+	"github.com/evmos/ethermint/x/evm/simulation"
+	"github.com/evmos/ethermint/x/evm/types"
 )
 
 var (
@@ -58,7 +59,7 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 
 // ConsensusVersion returns the consensus state-breaking version for the module.
 func (AppModuleBasic) ConsensusVersion() uint64 {
-	return 5
+	return 6
 }
 
 // DefaultGenesis returns default genesis state as raw bytes for the evm
@@ -149,6 +150,9 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	if err := cfg.RegisterMigration(types.ModuleName, 4, m.Migrate4to5); err != nil {
 		panic(err)
 	}
+	if err := cfg.RegisterMigration(types.ModuleName, 5, m.Migrate5to6); err != nil {
+		panic(err)
+	}
 }
 
 // BeginBlock returns the begin block for the evm module.
@@ -179,14 +183,18 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // RegisterStoreDecoder registers a decoder for evm module's types
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(sdr sdk.StoreDecoderRegistry) {
+	sdr[types.StoreKey] = simulation.NewDecodeStore()
 }
 
 // GenerateGenesisState creates a randomized GenState of the evm module.
-func (AppModule) GenerateGenesisState(_ *module.SimulationState) {
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
 }
 
 // WeightedOperations returns the all the evm module operations with their respective weights.
-func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
-	return nil
+func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
+	return simulation.WeightedOperations(
+		simState.AppParams, simState.Cdc, am.ak, am.keeper,
+	)
 }

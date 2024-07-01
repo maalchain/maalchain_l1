@@ -1,7 +1,7 @@
 local config = import 'default.jsonnet';
 
 config {
-  'maalchain_7862-1'+: {
+  'ethermint_9000-1'+: {
     config+: {
       tx_index+: {
         indexer: 'null',

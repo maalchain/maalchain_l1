@@ -12,21 +12,20 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package eip712
 
 import (
 	"errors"
 	"fmt"
 
-	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txTypes "github.com/cosmos/cosmos-sdk/types/tx"
 
 	apitypes "github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/maalchain/maalchain_l1/types"
+	"github.com/evmos/ethermint/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -40,7 +39,7 @@ var (
 // The process of unmarshaling SignDoc bytes into a SignDoc object requires having a codec
 // populated with all relevant message types. As a result, we must call this method on app
 // initialization with the app's encoding config.
-func SetEncodingConfig(cfg params.EncodingConfig) {
+func SetEncodingConfig(cfg types.EncodingConfig) {
 	aminoCodec = cfg.Amino
 	protoCodec = codec.NewProtoCodec(cfg.InterfaceRegistry)
 }

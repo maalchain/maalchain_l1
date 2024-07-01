@@ -12,11 +12,12 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package eth
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
@@ -26,17 +27,18 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/maalchain/maalchain_l1/rpc/backend"
+	"github.com/evmos/ethermint/rpc/backend"
 
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
-// The Ethereum API allows applications to connect to an Ethermint node that is
-// part of the Ethermint blockchain. Developers can interact with on-chain EVM data
+// The Ethereum API allows applications to connect to an Evmos node that is
+// part of the Evmos blockchain. Developers can interact with on-chain EVM data
 // and send different types of transactions to the network by utilizing the
 // endpoints provided by the API. The API follows a JSON-RPC standard. If not
 // otherwise specified, the interface is derived from the Alchemy Ethereum API:
@@ -84,7 +86,7 @@ type EthereumAPI interface {
 	//
 	// Allows developers to read data from the blockchain which includes executing
 	// smart contracts. However, no data is published to the Ethereum network.
-	Call(args evmtypes.TransactionArgs, blockNrOrHash rpctypes.BlockNumberOrHash, _ *rpctypes.StateOverride) (hexutil.Bytes, error)
+	Call(args evmtypes.TransactionArgs, blockNrOrHash rpctypes.BlockNumberOrHash, overrides *json.RawMessage) (hexutil.Bytes, error)
 
 	// Chain Information
 	//
@@ -92,7 +94,7 @@ type EthereumAPI interface {
 	ProtocolVersion() hexutil.Uint
 	GasPrice() (*hexutil.Big, error)
 	EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *rpctypes.BlockNumber) (hexutil.Uint64, error)
-	FeeHistory(blockCount rpc.DecimalOrHex, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
+	FeeHistory(blockCount math.HexOrDecimal64, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
 	MaxPriorityFeePerGas() (*hexutil.Big, error)
 	ChainId() (*hexutil.Big, error)
 
@@ -280,7 +282,7 @@ func (e *PublicAPI) GetProof(address common.Address,
 // Call performs a raw contract call.
 func (e *PublicAPI) Call(args evmtypes.TransactionArgs,
 	blockNrOrHash rpctypes.BlockNumberOrHash,
-	_ *rpctypes.StateOverride,
+	overrides *json.RawMessage,
 ) (hexutil.Bytes, error) {
 	e.logger.Debug("eth_call", "args", args.String(), "block number or hash", blockNrOrHash)
 
@@ -288,7 +290,7 @@ func (e *PublicAPI) Call(args evmtypes.TransactionArgs,
 	if err != nil {
 		return nil, err
 	}
-	data, err := e.backend.DoCall(args, blockNum)
+	data, err := e.backend.DoCall(args, blockNum, overrides)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -323,7 +325,7 @@ func (e *PublicAPI) EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *
 	return e.backend.EstimateGas(args, blockNrOptional)
 }
 
-func (e *PublicAPI) FeeHistory(blockCount rpc.DecimalOrHex,
+func (e *PublicAPI) FeeHistory(blockCount math.HexOrDecimal64,
 	lastBlock rpc.BlockNumber,
 	rewardPercentiles []float64,
 ) (*rpctypes.FeeHistoryResult, error) {
@@ -445,7 +447,18 @@ func (e *PublicAPI) GetTransactionLogs(txHash common.Hash) ([]*ethtypes.Log, err
 	}
 
 	// parse tx logs from events
-	return backend.TxLogsFromEvents(resBlockResult.TxsResults[res.TxIndex].Events, int(res.MsgIndex))
+	logs, err := evmtypes.DecodeMsgLogsFromEvents(
+		resBlockResult.TxsResults[res.TxIndex].Data,
+		resBlockResult.TxsResults[res.TxIndex].Events,
+		int(res.MsgIndex),
+		uint64(resBlockResult.Height),
+	)
+	if err != nil {
+		e.logger.Debug("failed to parse tx logs", "error", err.Error())
+		return nil, nil
+	}
+
+	return logs, nil
 }
 
 // SignTypedData signs EIP-712 conformant typed data

@@ -9,18 +9,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/maalchain/maalchain_l1/app"
+	"github.com/evmos/ethermint/app"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	evmkeeper "github.com/maalchain/maalchain_l1/x/evm/keeper"
-	"github.com/maalchain/maalchain_l1/x/evm/statedb"
+	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
+	"github.com/evmos/ethermint/x/evm/statedb"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"github.com/ethereum/go-ethereum/core"
 	ethcore "github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	ethvm "github.com/ethereum/go-ethereum/core/vm"
@@ -33,7 +34,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 )
 
 var (
@@ -66,7 +67,7 @@ func (suite *ImporterTestSuite) DoSetupTest(t require.TestingT) {
 	consAddress := sdk.ConsAddress(priv.PubKey().Address())
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:          1,
-		ChainID:         "maalchain_7862-1",
+		ChainID:         "ethermint_9000-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 		Version: tmversion.Consensus{
@@ -229,7 +230,7 @@ func applyTransaction(
 	gp *ethcore.GasPool, evmKeeper *evmkeeper.Keeper, vmdb *statedb.StateDB, header *ethtypes.Header,
 	tx *ethtypes.Transaction, usedGas *uint64, cfg ethvm.Config,
 ) (*ethtypes.Receipt, uint64, error) {
-	msg, err := tx.AsMessage(ethtypes.MakeSigner(config, header.Number), sdk.ZeroInt().BigInt())
+	msg, err := core.TransactionToMessage(tx, ethtypes.MakeSigner(config, header.Number), sdk.ZeroInt().BigInt())
 	if err != nil {
 		return nil, 0, err
 	}
@@ -259,7 +260,7 @@ func applyTransaction(
 	receipt.GasUsed = execResult.UsedGas
 
 	// if the transaction created a contract, store the creation address in the receipt.
-	if msg.To() == nil {
+	if msg.To == nil {
 		receipt.ContractAddress = crypto.CreateAddress(vmenv.TxContext.Origin, tx.Nonce())
 	}
 

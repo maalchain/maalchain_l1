@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package ante
 
 import (
@@ -23,7 +23,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 // MinGasPriceDecorator will check if the transaction's fee is at least as large
@@ -33,7 +33,7 @@ import (
 // CONTRACT: Tx must implement FeeTx to use MinGasPriceDecorator
 type MinGasPriceDecorator struct {
 	feesKeeper FeeMarketKeeper
-	evmKeeper  EVMKeeper
+	evmDenom   string
 }
 
 // EthMinGasPriceDecorator will check if the transaction's fee is at least as large
@@ -43,7 +43,7 @@ type MinGasPriceDecorator struct {
 // If fee is high enough, then call next AnteHandler
 type EthMinGasPriceDecorator struct {
 	feesKeeper FeeMarketKeeper
-	evmKeeper  EVMKeeper
+	baseFee    *big.Int
 }
 
 // EthMempoolFeeDecorator will check if the transaction's effective fee is at least as large
@@ -53,26 +53,28 @@ type EthMinGasPriceDecorator struct {
 // If fee is high enough or not CheckTx, then call next AnteHandler
 // CONTRACT: Tx must implement FeeTx to use MempoolFeeDecorator
 type EthMempoolFeeDecorator struct {
-	evmKeeper EVMKeeper
+	evmDenom string
+	baseFee  *big.Int
 }
 
 // NewMinGasPriceDecorator creates a new MinGasPriceDecorator instance used only for
 // Cosmos transactions.
-func NewMinGasPriceDecorator(fk FeeMarketKeeper, ek EVMKeeper) MinGasPriceDecorator {
-	return MinGasPriceDecorator{feesKeeper: fk, evmKeeper: ek}
+func NewMinGasPriceDecorator(fk FeeMarketKeeper, evmDenom string) MinGasPriceDecorator {
+	return MinGasPriceDecorator{feesKeeper: fk, evmDenom: evmDenom}
 }
 
 // NewEthMinGasPriceDecorator creates a new MinGasPriceDecorator instance used only for
 // Ethereum transactions.
-func NewEthMinGasPriceDecorator(fk FeeMarketKeeper, ek EVMKeeper) EthMinGasPriceDecorator {
-	return EthMinGasPriceDecorator{feesKeeper: fk, evmKeeper: ek}
+func NewEthMinGasPriceDecorator(fk FeeMarketKeeper, baseFee *big.Int) EthMinGasPriceDecorator {
+	return EthMinGasPriceDecorator{feesKeeper: fk, baseFee: baseFee}
 }
 
 // NewEthMempoolFeeDecorator creates a new NewEthMempoolFeeDecorator instance used only for
 // Ethereum transactions.
-func NewEthMempoolFeeDecorator(ek EVMKeeper) EthMempoolFeeDecorator {
+func NewEthMempoolFeeDecorator(evmDenom string, baseFee *big.Int) EthMempoolFeeDecorator {
 	return EthMempoolFeeDecorator{
-		evmKeeper: ek,
+		evmDenom: evmDenom,
+		baseFee:  baseFee,
 	}
 }
 
@@ -88,11 +90,9 @@ func (mpd MinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 	if minGasPrice.IsZero() || simulate {
 		return next(ctx, tx, simulate)
 	}
-	evmParams := mpd.evmKeeper.GetParams(ctx)
-	evmDenom := evmParams.GetEvmDenom()
 	minGasPrices := sdk.DecCoins{
 		{
-			Denom:  evmDenom,
+			Denom:  mpd.evmDenom,
 			Amount: minGasPrice,
 		},
 	}
@@ -133,11 +133,6 @@ func (empd EthMinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 		return next(ctx, tx, simulate)
 	}
 
-	evmParams := empd.evmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(empd.evmKeeper.ChainID())
-	baseFee := empd.evmKeeper.GetBaseFee(ctx, ethCfg)
-
 	for _, msg := range tx.GetMsgs() {
 		ethMsg, ok := msg.(*evmtypes.MsgEthereumTx)
 		if !ok {
@@ -165,7 +160,7 @@ func (empd EthMinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 		}
 
 		if txData.TxType() != ethtypes.LegacyTxType {
-			feeAmt = ethMsg.GetEffectiveFee(baseFee)
+			feeAmt = ethMsg.GetEffectiveFee(empd.baseFee)
 		}
 
 		gasLimit := sdk.NewDecFromBigInt(new(big.Int).SetUint64(ethMsg.GetGas()))
@@ -176,8 +171,8 @@ func (empd EthMinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 		if fee.LT(requiredFee) {
 			return ctx, errorsmod.Wrapf(
 				errortypes.ErrInsufficientFee,
-				"provided fee < minimum global fee (%d < %d). Please increase the priority tip (for EIP-1559 txs) or the gas prices (for access list or legacy txs)", //nolint:lll
-				fee.TruncateInt().Int64(), requiredFee.TruncateInt().Int64(),
+				"provided fee < minimum global fee (%s < %s). Please increase the priority tip (for EIP-1559 txs) or the gas prices (for access list or legacy txs)", //nolint:lll
+				fee, requiredFee,
 			)
 		}
 	}
@@ -192,18 +187,12 @@ func (mfd EthMempoolFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 	if !ctx.IsCheckTx() || simulate {
 		return next(ctx, tx, simulate)
 	}
-	evmParams := mfd.evmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	ethCfg := chainCfg.EthereumConfig(mfd.evmKeeper.ChainID())
-
-	baseFee := mfd.evmKeeper.GetBaseFee(ctx, ethCfg)
 	// skip check as the London hard fork and EIP-1559 are enabled
-	if baseFee != nil {
+	if mfd.baseFee != nil {
 		return next(ctx, tx, simulate)
 	}
 
-	evmDenom := evmParams.GetEvmDenom()
-	minGasPrice := ctx.MinGasPrices().AmountOf(evmDenom)
+	minGasPrice := ctx.MinGasPrices().AmountOf(mfd.evmDenom)
 
 	for _, msg := range tx.GetMsgs() {
 		ethMsg, ok := msg.(*evmtypes.MsgEthereumTx)

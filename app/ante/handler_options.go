@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package ante
 
 import (
@@ -27,7 +27,7 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 // HandlerOptions extend the SDK's AnteHandler options by requiring the IBC
@@ -45,6 +45,8 @@ type HandlerOptions struct {
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	TxFeeChecker           ante.TxFeeChecker
 	DisabledAuthzMsgs      []string
+	ExtraDecorators        []sdk.AnteDecorator
+	PendingTxListener      PendingTxListener
 }
 
 func (options HandlerOptions) validate() error {
@@ -66,24 +68,38 @@ func (options HandlerOptions) validate() error {
 	return nil
 }
 
-func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
-	return sdk.ChainAnteDecorators(
-		NewEthSetUpContextDecorator(options.EvmKeeper),                         // outermost AnteDecorator. SetUpContext must be called first
-		NewEthMempoolFeeDecorator(options.EvmKeeper),                           // Check eth effective gas price against minimal-gas-prices
-		NewEthMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper), // Check eth effective gas price against the global MinGasPrice
-		NewEthValidateBasicDecorator(options.EvmKeeper),
-		NewEthSigVerificationDecorator(options.EvmKeeper),
-		NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper),
-		NewCanTransferDecorator(options.EvmKeeper),
-		NewEthGasConsumeDecorator(options.EvmKeeper, options.MaxTxGasWanted),
+func newEthAnteHandler(ctx sdk.Context, options HandlerOptions, extra ...sdk.AnteDecorator) sdk.AnteHandler {
+	evmParams := options.EvmKeeper.GetParams(ctx)
+	evmDenom := evmParams.EvmDenom
+	chainID := options.EvmKeeper.ChainID()
+	chainCfg := evmParams.GetChainConfig()
+	ethCfg := chainCfg.EthereumConfig(chainID)
+	baseFee := options.EvmKeeper.GetBaseFee(ctx, ethCfg)
+	decorators := []sdk.AnteDecorator{
+		NewEthSetUpContextDecorator(options.EvmKeeper),               // outermost AnteDecorator. SetUpContext must be called first
+		NewEthMempoolFeeDecorator(evmDenom, baseFee),                 // Check eth effective gas price against minimal-gas-prices
+		NewEthMinGasPriceDecorator(options.FeeMarketKeeper, baseFee), // Check eth effective gas price against the global MinGasPrice
+		NewEthValidateBasicDecorator(&evmParams, baseFee),
+		NewEthSigVerificationDecorator(chainID),
+		NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper, evmDenom),
+		NewCanTransferDecorator(options.EvmKeeper, baseFee, &evmParams, ethCfg),
+		NewEthGasConsumeDecorator(options.EvmKeeper, options.MaxTxGasWanted, ethCfg, evmDenom, baseFee),
 		NewEthIncrementSenderSequenceDecorator(options.AccountKeeper), // innermost AnteDecorator.
-		NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
+		NewGasWantedDecorator(options.FeeMarketKeeper, ethCfg),
 		NewEthEmitEventDecorator(options.EvmKeeper), // emit eth tx hash and index at the very last ante handler.
-	)
+	}
+	decorators = append(decorators, extra...)
+	decorators = append(decorators, newTxListenerDecorator(options.PendingTxListener))
+	return sdk.ChainAnteDecorators(decorators...)
 }
 
-func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
-	return sdk.ChainAnteDecorators(
+func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions, extra ...sdk.AnteDecorator) sdk.AnteHandler {
+	evmParams := options.EvmKeeper.GetParams(ctx)
+	evmDenom := evmParams.EvmDenom
+	chainID := options.EvmKeeper.ChainID()
+	chainCfg := evmParams.GetChainConfig()
+	ethCfg := chainCfg.EthereumConfig(chainID)
+	decorators := []sdk.AnteDecorator{
 		RejectMessagesDecorator{}, // reject MsgEthereumTxs
 		// disable the Msg types that cannot be included on an authz.MsgExec msgs field
 		NewAuthzLimiterDecorator(options.DisabledAuthzMsgs),
@@ -91,7 +107,7 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
-		NewMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper),
+		NewMinGasPriceDecorator(options.FeeMarketKeeper, evmDenom),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
 		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
@@ -102,6 +118,8 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
-		NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
-	)
+		NewGasWantedDecorator(options.FeeMarketKeeper, ethCfg),
+	}
+	decorators = append(decorators, extra...)
+	return sdk.ChainAnteDecorators(decorators...)
 }

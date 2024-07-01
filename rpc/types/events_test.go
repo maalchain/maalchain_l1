@@ -6,8 +6,8 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/ethereum/go-ethereum/common"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/stretchr/testify/require"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func TestParseTxResult(t *testing.T) {
@@ -56,7 +56,6 @@ func TestParseTxResult(t *testing.T) {
 						{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
 						{Key: "ethereumTxFailed", Value: "contract reverted"},
 					}},
-					{Type: evmtypes.EventTypeTxLog, Attributes: []abci.EventAttribute{}},
 				},
 			},
 			[]*ParsedTx{
@@ -141,7 +140,6 @@ func TestParseTxResult(t *testing.T) {
 						{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
 						{Key: "ethereumTxFailed", Value: "contract reverted"},
 					}},
-					{Type: evmtypes.EventTypeTxLog, Attributes: []abci.EventAttribute{}},
 				},
 			},
 			nil,
@@ -168,7 +166,6 @@ func TestParseTxResult(t *testing.T) {
 						{Key: "recipient", Value: "0x775b87ef5D82ca211811C1a02CE0fE0CA3a455d7"},
 						{Key: "ethereumTxFailed", Value: "contract reverted"},
 					}},
-					{Type: evmtypes.EventTypeTxLog, Attributes: []abci.EventAttribute{}},
 				},
 			},
 			nil,

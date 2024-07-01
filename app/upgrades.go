@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package app
 
 import (
@@ -36,12 +36,15 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
+	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
-	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
+	v0evmtypes "github.com/evmos/ethermint/x/evm/migrations/v0/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 )
 
-func (app *EthermintApp) RegisterUpgradeHandlers(cdc codec.BinaryCodec, clientKeeper ibctmmigrations.ClientKeeper) {
+func (app *EthermintApp) RegisterUpgradeHandlers(cdc codec.BinaryCodec, clientKeeper clientkeeper.Keeper) {
 	planName := "integration-test-upgrade"
 	// Set param key table for params module migration
 	for _, subspace := range app.ParamsKeeper.GetSubspaces() {
@@ -66,7 +69,7 @@ func (app *EthermintApp) RegisterUpgradeHandlers(cdc codec.BinaryCodec, clientKe
 		case ibctransfertypes.ModuleName:
 			keyTable = ibctransfertypes.ParamKeyTable()
 		case evmtypes.ModuleName:
-			keyTable = evmtypes.ParamKeyTable() //nolint:staticcheck
+			keyTable = v0evmtypes.ParamKeyTable() //nolint:staticcheck
 		case feemarkettypes.ModuleName:
 			keyTable = feemarkettypes.ParamKeyTable()
 		default:
@@ -78,15 +81,17 @@ func (app *EthermintApp) RegisterUpgradeHandlers(cdc codec.BinaryCodec, clientKe
 	}
 
 	baseAppLegacySS := app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-	app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 		// OPTIONAL: prune expired tendermint consensus states to save storage space
 		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
 			return nil, err
 		}
+		// explicitly update the IBC 02-client params, adding the localhost client type
+		params := clientKeeper.GetParams(ctx)
+		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
+		clientKeeper.SetParams(ctx, params)
 		// Migrate Tendermint consensus parameters from x/params module to a dedicated x/consensus module.
 		baseapp.MigrateParams(ctx, baseAppLegacySS, &app.ConsensusParamsKeeper)
-		c := app.GetConsensusParams(ctx)
-		ctx = ctx.WithConsensusParams(c)
 		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
 	})
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()

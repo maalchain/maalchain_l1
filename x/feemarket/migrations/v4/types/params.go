@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/maalchain/maalchain_l1/x/feemarket/types"
+	"github.com/evmos/ethermint/x/feemarket/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,8 +77,8 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		NoBaseFee:                DefaultNoBaseFee,
-		BaseFeeChangeDenominator: params.BaseFeeChangeDenominator,
-		ElasticityMultiplier:     params.ElasticityMultiplier,
+		BaseFeeChangeDenominator: params.DefaultBaseFeeChangeDenominator,
+		ElasticityMultiplier:     params.DefaultElasticityMultiplier,
 		BaseFee:                  sdkmath.NewIntFromUint64(params.InitialBaseFee),
 		EnableHeight:             DefaultEnableHeight,
 		MinGasPrice:              DefaultMinGasPrice,
@@ -102,6 +102,10 @@ func (p Params) Validate() error {
 
 	if err := validateMinGasMultiplier(p.MinGasMultiplier); err != nil {
 		return err
+	}
+
+	if p.ElasticityMultiplier == 0 {
+		return fmt.Errorf("elasticity multiplier cannot be 0")
 	}
 
 	return validateMinGasPrice(p.MinGasPrice)
@@ -129,9 +133,12 @@ func validateBaseFeeChangeDenominator(i interface{}) error {
 }
 
 func validateElasticityMultiplier(i interface{}) error {
-	_, ok := i.(uint32)
+	value, ok := i.(uint32)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if value == 0 {
+		return fmt.Errorf("elasticity multiplier cannot be 0")
 	}
 	return nil
 }

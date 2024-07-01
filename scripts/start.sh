@@ -15,10 +15,10 @@ IP_ADDR="127.0.0.1"
 MODE="rpc"
 
 KEY="mykey"
-CHAINID="maalchain_7862-1"
+CHAINID="ethermint_9000-1"
 MONIKER="mymoniker"
 
-## default port prefixes for maalchaind
+## default port prefixes for ethermintd
 NODE_P2P_PORT="2660"
 NODE_PORT="2663"
 NODE_RPC_PORT="2666"
@@ -47,14 +47,14 @@ done
 
 set -euxo pipefail
 
-DATA_DIR=$(mktemp -d -t maalchain_7862-datadir.XXXXX)
+DATA_DIR=$(mktemp -d -t ethermint_9000-datadir.XXXXX)
 
 if [[ ! "$DATA_DIR" ]]; then
     echo "Could not create $DATA_DIR"
     exit 1
 fi
 
-DATA_CLI_DIR=$(mktemp -d -t maalchain_7862-cli-datadir.XXXXX)
+DATA_CLI_DIR=$(mktemp -d -t ethermint_9000-cli-datadir.XXXXX)
 
 if [[ ! "$DATA_CLI_DIR" ]]; then
     echo "Could not create $DATA_CLI_DIR"
@@ -73,24 +73,24 @@ arrcli=()
 
 init_func() {
     echo "create and add new keys"
-    "$PWD"/build/maalchaind keys add $KEY"$i" --home "$DATA_DIR$i" --no-backup --chain-id $CHAINID --algo "eth_secp256k1" --keyring-backend test
+    "$PWD"/build/ethermintd keys add $KEY"$i" --home "$DATA_DIR$i" --no-backup --chain-id $CHAINID --algo "eth_secp256k1" --keyring-backend test
     echo "init Ethermint with moniker=$MONIKER and chain-id=$CHAINID"
-    "$PWD"/build/maalchaind init $MONIKER --chain-id $CHAINID --home "$DATA_DIR$i"
+    "$PWD"/build/ethermintd init $MONIKER --chain-id $CHAINID --home "$DATA_DIR$i"
     echo "prepare genesis: Allocate genesis accounts"
-    "$PWD"/build/maalchaind add-genesis-account \
-    "$("$PWD"/build/maalchaind keys show "$KEY$i" -a --home "$DATA_DIR$i" --keyring-backend test)" 1000000000000000000aphoton,1000000000000000000stake \
+    "$PWD"/build/ethermintd add-genesis-account \
+    "$("$PWD"/build/ethermintd keys show "$KEY$i" -a --home "$DATA_DIR$i" --keyring-backend test)" 1000000000000000000aphoton,1000000000000000000stake \
     --home "$DATA_DIR$i" --keyring-backend test
     echo "prepare genesis: Sign genesis transaction"
-    "$PWD"/build/maalchaind gentx $KEY"$i" 1000000000000000000stake --keyring-backend test --home "$DATA_DIR$i" --keyring-backend test --chain-id $CHAINID
+    "$PWD"/build/ethermintd gentx $KEY"$i" 1000000000000000000stake --keyring-backend test --home "$DATA_DIR$i" --keyring-backend test --chain-id $CHAINID
     echo "prepare genesis: Collect genesis tx"
-    "$PWD"/build/maalchaind collect-gentxs --home "$DATA_DIR$i"
+    "$PWD"/build/ethermintd collect-gentxs --home "$DATA_DIR$i"
     echo "prepare genesis: Run validate-genesis to ensure everything worked and that the genesis file is setup correctly"
-    "$PWD"/build/maalchaind validate-genesis --home "$DATA_DIR$i"
+    "$PWD"/build/ethermintd validate-genesis --home "$DATA_DIR$i"
 }
 
 start_func() {
     echo "starting ethermint node $i in background ..."
-    "$PWD"/build/maalchaind start --pruning=nothing --rpc.unsafe \
+    "$PWD"/build/ethermintd start --pruning=nothing --rpc.unsafe \
     --p2p.laddr tcp://$IP_ADDR:$NODE_P2P_PORT"$i" --address tcp://$IP_ADDR:$NODE_PORT"$i" --rpc.laddr tcp://$IP_ADDR:$NODE_RPC_PORT"$i" \
     --json-rpc.address=$IP_ADDR:$RPC_PORT"$i" \
     --keyring-backend test --home "$DATA_DIR$i" \

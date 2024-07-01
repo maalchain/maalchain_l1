@@ -1,8 +1,8 @@
 { pkgs ? import ../../../nix { } }:
-let maalchaind = (pkgs.callPackage ../../../. { });
+let ethermintd = (pkgs.callPackage ../../../. { });
 in
-maalchaind.overrideAttrs (oldAttrs: {
+ethermintd.overrideAttrs (oldAttrs: {
   patches = oldAttrs.patches or [ ] ++ [
-    ./broken-maalchaind.patch
+    ./broken-ethermintd.patch
   ];
 })

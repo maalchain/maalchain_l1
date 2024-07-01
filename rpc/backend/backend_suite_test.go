@@ -18,29 +18,30 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/maalchain/maalchain_l1/app"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	"github.com/maalchain/maalchain_l1/crypto/hd"
-	"github.com/maalchain/maalchain_l1/encoding"
-	"github.com/maalchain/maalchain_l1/indexer"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/crypto/hd"
+	"github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/indexer"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 type BackendTestSuite struct {
 	suite.Suite
-	backend *Backend
-	acc     sdk.AccAddress
-	signer  keyring.Signer
+	backend       *Backend
+	acc           sdk.AccAddress
+	signer        keyring.Signer
+	signerAddress sdk.AccAddress
 }
 
 func TestBackendTestSuite(t *testing.T) {
 	suite.Run(t, new(BackendTestSuite))
 }
 
-const ChainID = "maalchain_7862-1"
+const ChainID = "ethermint_9000-1"
 
 // SetupTest is executed before every BackendTestSuite test
 func (suite *BackendTestSuite) SetupTest() {
@@ -49,7 +50,7 @@ func (suite *BackendTestSuite) SetupTest() {
 
 	baseDir := suite.T().TempDir()
 	nodeDirName := "node"
-	clientDir := filepath.Join(baseDir, nodeDirName, "ethermintcli")
+	clientDir := filepath.Join(baseDir, nodeDirName, "evmoscli")
 	keyRing, err := suite.generateTestKeyring(clientDir)
 	if err != nil {
 		panic(err)
@@ -67,6 +68,7 @@ func (suite *BackendTestSuite) SetupTest() {
 	priv, err := ethsecp256k1.GenerateKey()
 	suite.signer = tests.NewSigner(priv)
 	suite.Require().NoError(err)
+	suite.signerAddress = sdk.AccAddress(priv.PubKey().Address().Bytes())
 
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	clientCtx := client.Context{}.WithChainID(ChainID).
@@ -92,21 +94,24 @@ func (suite *BackendTestSuite) SetupTest() {
 
 // buildEthereumTx returns an example legacy Ethereum transaction
 func (suite *BackendTestSuite) buildEthereumTx() (*evmtypes.MsgEthereumTx, []byte) {
-	ethTxParams := evmtypes.EvmTxArgs{
-		ChainID:  suite.backend.chainID,
-		Nonce:    uint64(0),
-		To:       &common.Address{},
-		Amount:   big.NewInt(0),
-		GasLimit: 100000,
-		GasPrice: big.NewInt(1),
-	}
-	msgEthereumTx := evmtypes.NewTx(&ethTxParams)
-
-	// A valid msg should have empty `From`
-	msgEthereumTx.From = ""
+	msgEthereumTx := evmtypes.NewTx(
+		suite.backend.chainID,
+		uint64(0),
+		&common.Address{},
+		big.NewInt(0),
+		100000,
+		big.NewInt(1),
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+	msgEthereumTx.From = suite.signerAddress
+	err := msgEthereumTx.Sign(ethtypes.LatestSignerForChainID(suite.backend.chainID), suite.signer)
+	suite.Require().NoError(err)
 
 	txBuilder := suite.backend.clientCtx.TxConfig.NewTxBuilder()
-	err := txBuilder.SetMsgs(msgEthereumTx)
+	err = txBuilder.SetMsgs(msgEthereumTx)
 	suite.Require().NoError(err)
 
 	bz, err := suite.backend.clientCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
@@ -175,11 +180,11 @@ func (suite *BackendTestSuite) signAndEncodeEthTx(msgEthereumTx *evmtypes.MsgEth
 	RegisterParamsWithoutHeader(queryClient, 1)
 
 	ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 	err := msgEthereumTx.Sign(ethSigner, signer)
 	suite.Require().NoError(err)
 
-	tx, err := msgEthereumTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "maal")
+	tx, err := msgEthereumTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 	suite.Require().NoError(err)
 
 	txEncoder := suite.backend.clientCtx.TxConfig.TxEncoder()

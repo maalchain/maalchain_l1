@@ -10,11 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	proto "github.com/cosmos/gogoproto/proto"
-	"github.com/maalchain/maalchain_l1/app"
-	"github.com/maalchain/maalchain_l1/encoding"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app"
+	"github.com/evmos/ethermint/encoding"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
-	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/evmos/ethermint/tests"
 
 	"github.com/stretchr/testify/require"
 
@@ -60,16 +60,7 @@ func TestUnwrapEthererumMsg(t *testing.T) {
 	_, err = evmtypes.UnwrapEthereumMsg(&tx, common.Hash{})
 	require.NotNil(t, err)
 
-	evmTxParams := &evmtypes.EvmTxArgs{
-		ChainID:  big.NewInt(1),
-		Nonce:    0,
-		To:       &common.Address{},
-		Amount:   big.NewInt(0),
-		GasLimit: 0,
-		GasPrice: big.NewInt(0),
-		Input:    []byte{},
-	}
-	msg := evmtypes.NewTx(evmTxParams)
+	msg := evmtypes.NewTx(big.NewInt(1), 0, &common.Address{}, big.NewInt(0), 0, big.NewInt(0), nil, nil, []byte{}, nil)
 	err = builder.SetMsgs(msg)
 
 	tx = builder.GetTx().(sdk.Tx)

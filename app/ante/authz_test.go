@@ -2,10 +2,7 @@ package ante_test
 
 import (
 	"fmt"
-	"math/big"
 	"time"
-
-	sdkmath "cosmossdk.io/math"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
@@ -15,14 +12,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	utiltx "github.com/evmos/ethermint/testutil/tx"
 
-	"github.com/maalchain/maalchain_l1/app/ante"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	"github.com/maalchain/maalchain_l1/tests"
+	"github.com/evmos/ethermint/app/ante"
+
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 func (suite *AnteTestSuite) TestAuthzLimiterDecorator() {
@@ -229,9 +226,7 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 	_, testAddresses, err := generatePrivKeyAddressPairs(10)
 	suite.Require().NoError(err)
 
-	from, _ := tests.NewAddrKey()
-	to := tests.GenerateAddress()
-	ethMsg := suite.BuildTestEthTx(from, to, nil, make([]byte, 0), big.NewInt(0), nil, nil, nil)
+	fromAddr := []byte{0, 0}
 
 	testcases := []struct {
 		name         string
@@ -244,7 +239,7 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 			msgs: []sdk.Msg{
 				newGenericMsgGrant(
 					testAddresses,
-					sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
+					sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{From: fromAddr}),
 				),
 			},
 			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
@@ -264,7 +259,7 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 			msgs: []sdk.Msg{
 				newGenericMsgGrant(
 					testAddresses,
-					sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
+					sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{From: fromAddr}),
 				),
 			},
 			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
@@ -277,11 +272,11 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 					testAddresses[1],
 					[]sdk.Msg{
 						createMsgSend(testAddresses),
-						ethMsg,
+						&evmtypes.MsgEthereumTx{From: fromAddr},
 					},
 				),
 			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+			expectedCode: sdkerrors.ErrUnpackAny.ABCICode(),
 		},
 		{
 			name: "a MsgExec with nested MsgExec messages that has invalid messages is blocked",
@@ -290,11 +285,11 @@ func (suite *AnteTestSuite) TestRejectDeliverMsgsInAuthz() {
 					testAddresses[1],
 					2,
 					[]sdk.Msg{
-						ethMsg,
+						&evmtypes.MsgEthereumTx{From: fromAddr},
 					},
 				),
 			},
-			expectedCode: sdkerrors.ErrUnauthorized.ABCICode(),
+			expectedCode: sdkerrors.ErrUnpackAny.ABCICode(),
 		},
 		{
 			name: "a MsgExec with more nested MsgExec messages than allowed and with valid messages is blocked",
@@ -430,7 +425,7 @@ func (suite *AnteTestSuite) createTx(priv cryptotypes.PrivKey, msgs ...sdk.Msg) 
 }
 
 func (suite *AnteTestSuite) createEIP712Tx(priv cryptotypes.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
-	coinAmount := sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20))
+	coinAmount := sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20))
 	fees := sdk.NewCoins(coinAmount)
 	cosmosTxArgs := utiltx.CosmosTxArgs{
 		TxCfg:   suite.clientCtx.TxConfig,

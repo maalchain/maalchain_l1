@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package config
 
 // DefaultConfigTemplate defines the configuration template for the EVM RPC configuration
@@ -88,12 +88,18 @@ max-open-connections = {{ .JSONRPC.MaxOpenConnections }}
 # EnableIndexer enables the custom transaction indexer for the EVM (ethereum transactions).
 enable-indexer = {{ .JSONRPC.EnableIndexer }}
 
+# AllowIndexerGap allow block gap for the custom transaction indexer for the EVM (ethereum transactions).
+allow-indexer-gap = {{ .JSONRPC.AllowIndexerGap }}
+
 # MetricsAddress defines the EVM Metrics server address to bind to. Pass --metrics in CLI to enable
 # Prometheus metrics path: /debug/metrics/prometheus
 metrics-address = "{{ .JSONRPC.MetricsAddress }}"
 
 # Upgrade height for fix of revert gas refund logic when transaction reverted.
 fix-revert-gas-refund-height = {{ .JSONRPC.FixRevertGasRefundHeight }}
+
+# Maximum number of bytes returned from eth_call or similar invocations.
+return-data-limit = {{ .JSONRPC.ReturnDataLimit }}
 
 ###############################################################################
 ###                             TLS Configuration                           ###

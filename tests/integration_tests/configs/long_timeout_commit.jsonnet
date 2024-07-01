@@ -1,7 +1,7 @@
 local default = import 'default.jsonnet';
 
 default {
-  'maalchain_7862-1'+: {
+  'ethermint_9000-1'+: {
     config+: {
       consensus+: {
         timeout_commit: '5s',

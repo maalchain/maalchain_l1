@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package tx
 
 import (
@@ -25,8 +25,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/maalchain/maalchain_l1/app"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 var (
@@ -40,7 +40,7 @@ type CosmosTxArgs struct {
 	TxCfg client.TxConfig
 	// Priv is the private key that will be used to sign the tx
 	Priv cryptotypes.PrivKey
-	// ChainID is the chain's id on cosmos format, e.g. 'maalchain_7862-1'
+	// ChainID is the chain's id on cosmos format, e.g. 'ethermint_9000-1'
 	ChainID string
 	// Gas to be used on the tx
 	Gas uint64

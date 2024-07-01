@@ -21,5 +21,9 @@ done
 # TODO: command to generate docs using protoc-gen-doc was deleted here
 
 # move proto files to the right places
-cp -r github.com/maalchain/maalchain_l1/* ./
+cp -r github.com/evmos/ethermint/* ./
 rm -rf github.com
+mv x/evm/types/params_v0.pb.go x/evm/migrations/v0/types/params_v0.pb.go
+mv x/evm/types/chain_config_v0.pb.go x/evm/migrations/v0/types/chain_config_v0.pb.go
+mv x/evm/types/params_v4.pb.go x/evm/migrations/v4/types/params_v4.pb.go
+mv x/evm/types/trace_config_v0.pb.go x/evm/migrations/v0/types/trace_config_v0.pb.go

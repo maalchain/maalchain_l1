@@ -12,15 +12,11 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package statedb
 
 import (
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // TxConfig encapulates the readonly information of current tx for `StateDB`.
@@ -50,13 +46,4 @@ func NewEmptyTxConfig(bhash common.Hash) TxConfig {
 		TxIndex:   0,
 		LogIndex:  0,
 	}
-}
-
-// EVMConfig encapsulates common parameters needed to create an EVM to execute a message
-// It's mainly to reduce the number of method parameters
-type EVMConfig struct {
-	Params      types.Params
-	ChainConfig *params.ChainConfig
-	CoinBase    common.Address
-	BaseFee     *big.Int
 }

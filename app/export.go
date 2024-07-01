@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package app
 
 import (
@@ -21,18 +21,18 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"cosmossdk.io/simapp"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/maalchain/maalchain_l1/encoding"
+	"github.com/evmos/ethermint/encoding"
 )
 
 // NewDefaultGenesisState generates the default state for the application.
-func NewDefaultGenesisState() simapp.GenesisState {
+func NewDefaultGenesisState() GenesisState {
 	encCfg := encoding.MakeConfig(ModuleBasics)
 	return ModuleBasics.DefaultGenesis(encCfg.Codec)
 }

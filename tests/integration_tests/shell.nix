@@ -2,10 +2,11 @@
 pkgs.mkShell {
   buildInputs = [
     pkgs.jq
-    (pkgs.callPackage ../../. { }) # maalchaind
+    (pkgs.callPackage ../../. { }) # ethermintd
     pkgs.start-scripts
     pkgs.go-ethereum
     pkgs.cosmovisor
+    pkgs.poetry
     pkgs.nodejs
     pkgs.test-env
   ];

@@ -4,23 +4,26 @@ import (
 	"fmt"
 	"math/big"
 
+	"cosmossdk.io/math"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	ethermint "github.com/evmos/ethermint/types"
 	"github.com/spf13/viper"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	ethermint "github.com/maalchain/maalchain_l1/types"
 	"google.golang.org/grpc/metadata"
 )
 
 func (suite *BackendTestSuite) TestRPCMinGasPrice() {
+	defaultPrice := new(big.Int).SetInt64(ethermint.DefaultGasPrice)
+	bigPrice, _ := new(big.Int).SetString("18446744073709551616", 10)
 	testCases := []struct {
 		name           string
 		registerMock   func()
-		expMinGasPrice int64
+		expMinGasPrice *big.Int
 		expPass        bool
 	}{
 		{
@@ -29,7 +32,7 @@ func (suite *BackendTestSuite) TestRPCMinGasPrice() {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterParamsWithoutHeaderError(queryClient, 1)
 			},
-			ethermint.DefaultGasPrice,
+			defaultPrice,
 			true,
 		},
 		{
@@ -38,7 +41,18 @@ func (suite *BackendTestSuite) TestRPCMinGasPrice() {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterParamsWithoutHeader(queryClient, 1)
 			},
-			ethermint.DefaultGasPrice,
+			defaultPrice,
+			true,
+		},
+		{
+			"pass - min gas price exceeds math.MaxUint64",
+			func() {
+				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
+				RegisterParamsWithoutHeader(queryClient, 1)
+				amt, _ := math.NewIntFromString("18446744073709551616")
+				suite.backend.cfg.SetMinGasPrices([]sdk.DecCoin{sdk.NewDecCoin(ethermint.AttoPhoton, amt)})
+			},
+			bigPrice,
 			true,
 		},
 	}
@@ -254,7 +268,7 @@ func (suite *BackendTestSuite) TestSetEtherbase() {
 				RegisterStatus(client)
 				RegisterValidatorAccount(queryClient, suite.acc)
 				RegisterParams(queryClient, &header, 1)
-				c := sdk.NewDecCoin("maal", sdk.NewIntFromBigInt(big.NewInt(1)))
+				c := sdk.NewDecCoin("aphoton", sdk.NewIntFromBigInt(big.NewInt(1)))
 				suite.backend.cfg.SetMinGasPrices(sdk.DecCoins{c})
 				delAddr, _ := suite.backend.GetCoinbase()
 				// account, _ := suite.backend.clientCtx.AccountRetriever.GetAccount(suite.backend.clientCtx, delAddr)
@@ -279,7 +293,7 @@ func (suite *BackendTestSuite) TestSetEtherbase() {
 		//		queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 		//		RegisterStatus(client)
 		//		RegisterValidatorAccount(queryClient, suite.acc)
-		//		c := sdk.NewDecCoin("maal", sdk.NewIntFromBigInt(big.NewInt(1)))
+		//		c := sdk.NewDecCoin("aphoton", sdk.NewIntFromBigInt(big.NewInt(1)))
 		//		suite.backend.cfg.SetMinGasPrices(sdk.DecCoins{c})
 		//		delAddr, _ := suite.backend.GetCoinbase()
 		//		account, _ := suite.backend.clientCtx.AccountRetriever.GetAccount(suite.backend.clientCtx, delAddr)

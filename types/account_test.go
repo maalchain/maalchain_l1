@@ -12,10 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	cryptocodec "github.com/maalchain/maalchain_l1/crypto/codec"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	ethermintcodec "github.com/maalchain/maalchain_l1/encoding/codec"
-	"github.com/maalchain/maalchain_l1/types"
+	cryptocodec "github.com/evmos/ethermint/crypto/codec"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	ethermintcodec "github.com/evmos/ethermint/encoding/codec"
+	"github.com/evmos/ethermint/types"
 )
 
 func init() {

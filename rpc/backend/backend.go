@@ -12,11 +12,12 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package backend
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 	"time"
 
@@ -28,14 +29,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/server/config"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	"github.com/evmos/ethermint/server/config"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 // BackendI implements the Cosmos and EVM backend.
@@ -69,7 +71,7 @@ type EVMBackend interface {
 	RPCGasCap() uint64            // global gas cap for eth_call over rpc: DoS protection
 	RPCEVMTimeout() time.Duration // global timeout for eth_call over rpc: DoS protection
 	RPCTxFeeCap() float64         // RPCTxFeeCap is the global transaction fee(price * gaslimit) cap for send-transaction variants. The unit is ether.
-	RPCMinGasPrice() int64
+	RPCMinGasPrice() *big.Int
 
 	// Sign Tx
 	Sign(address common.Address, data hexutil.Bytes) (hexutil.Bytes, error)
@@ -110,7 +112,7 @@ type EVMBackend interface {
 	CurrentHeader() *ethtypes.Header
 	PendingTransactions() ([]*sdk.Tx, error)
 	GetCoinbase() (sdk.AccAddress, error)
-	FeeHistory(blockCount rpc.DecimalOrHex, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
+	FeeHistory(blockCount math.HexOrDecimal64, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*rpctypes.FeeHistoryResult, error)
 	SuggestGasTipCap(baseFee *big.Int) (*big.Int, error)
 
 	// Tx Info
@@ -127,7 +129,7 @@ type EVMBackend interface {
 	SendRawTransaction(data hexutil.Bytes) (common.Hash, error)
 	SetTxDefaults(args evmtypes.TransactionArgs) (evmtypes.TransactionArgs, error)
 	EstimateGas(args evmtypes.TransactionArgs, blockNrOptional *rpctypes.BlockNumber) (hexutil.Uint64, error)
-	DoCall(args evmtypes.TransactionArgs, blockNr rpctypes.BlockNumber) (*evmtypes.MsgEthereumTxResponse, error)
+	DoCall(args evmtypes.TransactionArgs, blockNr rpctypes.BlockNumber, overrides *json.RawMessage) (*evmtypes.MsgEthereumTxResponse, error)
 	GasPrice() (*hexutil.Big, error)
 
 	// Filter API
@@ -136,13 +138,22 @@ type EVMBackend interface {
 	BloomStatus() (uint64, uint64)
 
 	// Tracing
-	TraceTransaction(hash common.Hash, config *evmtypes.TraceConfig) (interface{}, error)
-	TraceBlock(height rpctypes.BlockNumber, config *evmtypes.TraceConfig, block *tmrpctypes.ResultBlock) ([]*evmtypes.TxTraceResult, error)
+	TraceTransaction(hash common.Hash, config *rpctypes.TraceConfig) (interface{}, error)
+	TraceBlock(height rpctypes.BlockNumber, config *rpctypes.TraceConfig, block *tmrpctypes.ResultBlock) ([]*evmtypes.TxTraceResult, error)
+	TraceCall(args evmtypes.TransactionArgs, blockNr rpctypes.BlockNumberOrHash, config *rpctypes.TraceConfig) (interface{}, error)
 }
 
 var _ BackendI = (*Backend)(nil)
 
 var bAttributeKeyEthereumBloom = []byte(evmtypes.AttributeKeyEthereumBloom)
+
+type ProcessBlocker func(
+	tendermintBlock *tmrpctypes.ResultBlock,
+	ethBlock *map[string]interface{},
+	rewardPercentiles []float64,
+	tendermintBlockResult *tmrpctypes.ResultBlockResults,
+	targetOneFeeHistory *rpctypes.OneFeeHistory,
+) error
 
 // Backend implements the BackendI interface
 type Backend struct {
@@ -154,6 +165,7 @@ type Backend struct {
 	cfg                 config.Config
 	allowUnprotectedTxs bool
 	indexer             ethermint.EVMTxIndexer
+	processBlocker      ProcessBlocker
 }
 
 // NewBackend creates a new Backend instance for cosmos and ethereum namespaces
@@ -174,7 +186,7 @@ func NewBackend(
 		panic(err)
 	}
 
-	return &Backend{
+	b := &Backend{
 		ctx:                 context.Background(),
 		clientCtx:           clientCtx,
 		queryClient:         rpctypes.NewQueryClient(clientCtx),
@@ -184,4 +196,6 @@ func NewBackend(
 		allowUnprotectedTxs: allowUnprotectedTxs,
 		indexer:             indexer,
 	}
+	b.processBlocker = b.processBlock
+	return b
 }

@@ -12,11 +12,12 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package ante
 
 import (
 	"errors"
+	"math/big"
 	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
@@ -26,7 +27,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 // EthSetupContextDecorator is adapted from SetUpContextDecorator from cosmos-sdk, it ignores gas consumption
@@ -94,14 +95,13 @@ func (eeed EthEmitEventDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 
 // EthValidateBasicDecorator is adapted from ValidateBasicDecorator from cosmos-sdk, it ignores ErrNoSignatures
 type EthValidateBasicDecorator struct {
-	evmKeeper EVMKeeper
+	evmParams *evmtypes.Params
+	baseFee   *big.Int
 }
 
 // NewEthValidateBasicDecorator creates a new EthValidateBasicDecorator
-func NewEthValidateBasicDecorator(ek EVMKeeper) EthValidateBasicDecorator {
-	return EthValidateBasicDecorator{
-		evmKeeper: ek,
-	}
+func NewEthValidateBasicDecorator(evmParams *evmtypes.Params, baseFee *big.Int) EthValidateBasicDecorator {
+	return EthValidateBasicDecorator{evmParams, baseFee}
 }
 
 // AnteHandle handles basic validation of tx
@@ -152,24 +152,15 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	txFee := sdk.Coins{}
 	txGasLimit := uint64(0)
 
-	evmParams := vbd.evmKeeper.GetParams(ctx)
-	chainCfg := evmParams.GetChainConfig()
-	chainID := vbd.evmKeeper.ChainID()
-	ethCfg := chainCfg.EthereumConfig(chainID)
-	baseFee := vbd.evmKeeper.GetBaseFee(ctx, ethCfg)
-	enableCreate := evmParams.GetEnableCreate()
-	enableCall := evmParams.GetEnableCall()
-	evmDenom := evmParams.GetEvmDenom()
+	enableCreate := vbd.evmParams.GetEnableCreate()
+	enableCall := vbd.evmParams.GetEnableCall()
+	evmDenom := vbd.evmParams.GetEvmDenom()
+	allowUnprotectedTxs := vbd.evmParams.GetAllowUnprotectedTxs()
 
 	for _, msg := range protoTx.GetMsgs() {
 		msgEthTx, ok := msg.(*evmtypes.MsgEthereumTx)
 		if !ok {
 			return ctx, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid message type %T, expected %T", msg, (*evmtypes.MsgEthereumTx)(nil))
-		}
-
-		// Validate `From` field
-		if msgEthTx.From != "" {
-			return ctx, errorsmod.Wrapf(errortypes.ErrInvalidRequest, "invalid From %s, expect empty string", msgEthTx.From)
 		}
 
 		txGasLimit += msgEthTx.GetGas()
@@ -186,8 +177,15 @@ func (vbd EthValidateBasicDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 			return ctx, errorsmod.Wrap(evmtypes.ErrCallDisabled, "failed to call contract")
 		}
 
-		if baseFee == nil && txData.TxType() == ethtypes.DynamicFeeTxType {
+		if vbd.baseFee == nil && txData.TxType() == ethtypes.DynamicFeeTxType {
 			return ctx, errorsmod.Wrap(ethtypes.ErrTxTypeNotSupported, "dynamic fee tx not supported")
+		}
+
+		ethTx := ethtypes.NewTx(txData.AsEthereumData())
+		if !allowUnprotectedTxs && !ethTx.Protected() {
+			return ctx, errorsmod.Wrapf(
+				errortypes.ErrNotSupported,
+				"rejected unprotected Ethereum transaction. Please EIP155 sign your transaction to protect it against replay-attacks")
 		}
 
 		txFee = txFee.Add(sdk.Coin{Denom: evmDenom, Amount: sdkmath.NewIntFromBigInt(txData.Fee())})

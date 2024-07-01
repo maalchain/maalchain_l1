@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package evm
 
 import (
@@ -25,9 +25,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	"github.com/maalchain/maalchain_l1/x/evm/keeper"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
+	ethermint "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/evm/keeper"
+	"github.com/evmos/ethermint/x/evm/types"
 )
 
 // InitGenesis initializes genesis state based on exported genesis

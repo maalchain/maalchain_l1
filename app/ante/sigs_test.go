@@ -3,12 +3,12 @@ package ante_test
 import (
 	"math/big"
 
-	"github.com/maalchain/maalchain_l1/tests"
-	"github.com/maalchain/maalchain_l1/x/evm/statedb"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/tests"
+	"github.com/evmos/ethermint/x/evm/statedb"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
-func (suite AnteTestSuite) TestSignatures() {
+func (suite *AnteTestSuite) TestSignatures() {
 	suite.enableFeemarket = false
 	suite.SetupTest() // reset
 
@@ -17,19 +17,12 @@ func (suite AnteTestSuite) TestSignatures() {
 
 	acc := statedb.NewEmptyAccount()
 	acc.Nonce = 1
-	acc.Balance = big.NewInt(10000000000)
+	balance := big.NewInt(10000000000)
 
 	suite.app.EvmKeeper.SetAccount(suite.ctx, addr, *acc)
-	ethTxParams := &evmtypes.EvmTxArgs{
-		ChainID:  suite.app.EvmKeeper.ChainID(),
-		Nonce:    1,
-		To:       &to,
-		Amount:   big.NewInt(10),
-		GasLimit: 100000,
-		GasPrice: big.NewInt(1),
-	}
-	msgEthereumTx := evmtypes.NewTx(ethTxParams)
-	msgEthereumTx.From = addr.Hex()
+	suite.app.EvmKeeper.SetBalance(suite.ctx, addr, balance)
+	msgEthereumTx := evmtypes.NewTx(suite.app.EvmKeeper.ChainID(), 1, &to, big.NewInt(10), 100000, big.NewInt(1), nil, nil, nil, nil)
+	msgEthereumTx.From = addr.Bytes()
 
 	// CreateTestTx will sign the msgEthereumTx but not sign the cosmos tx since we have signCosmosTx as false
 	tx := suite.CreateTestTx(msgEthereumTx, privKey, 1, false)

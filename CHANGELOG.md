@@ -35,7 +35,47 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## Unreleased
+## v0.22.x-cronos
+
+### State Machine Breaking
+
+* (rpc) [#449](https://github.com/crypto-org-chain/ethermint/pull/449) Remove forkEnabled callback to keep zero random as default.
+
+### Bug Fixes
+
+* (rpc) [#457](https://github.com/crypto-org-chain/ethermint/pull/457) Add param keytable in evm for old upgrade.
+* (rpc) [#473](https://github.com/crypto-org-chain/ethermint/pull/473) Avoid panic on invalid elasticity_multiplier.
+* (rpc) [#480](https://github.com/crypto-org-chain/ethermint/pull/480) Fix parsed logs from old events.
+* (rpc) [#488](https://github.com/crypto-org-chain/ethermint/pull/488) Fix handling of pending transactions related APIs.
+
+### Improvements
+
+* (app) [#483](https://github.com/crypto-org-chain/ethermint/pull/483) Make keyring-backend client config accessible in app.
+* (rpc) [#491](https://github.com/crypto-org-chain/ethermint/pull/491) Avoid unnecessary tx decode in tx listener.
+
+## v0.21.x-cronos
+
+### Bug Fixes
+
+* (rpc) [#434](https://github.com/crypto-org-chain/ethermint/pull/434) No need gasPrice when patch gasUsed for `eth_getTransactionReceipt`.
+* (feemarket) [#433](https://github.com/crypto-org-chain/ethermint/pull/433) Fix sdk int conversion panic with baseFee.
+* (rpc) [#439](https://github.com/crypto-org-chain/ethermint/pull/439), [#441](https://github.com/crypto-org-chain/ethermint/pull/441) Align trace response for failed tx with go-ethereum.
+
+### State Machine Breaking
+
+* (rpc) [#443](https://github.com/crypto-org-chain/ethermint/pull/443) Keep behavior of random opcode as before.
+
+## v0.21.x-cronos
+
+### Features
+
+* (rpc) [#1682](https://github.com/evmos/ethermint/pull/1682) Add config for maximum number of bytes returned from eth_call.
+* (ante) [#310](https://github.com/crypto-org-chain/ethermint/pull/310) Support blocking list of addresses in mempool.
+* (evm) [#328](https://github.com/crypto-org-chain/ethermint/pull/328) Support precompile interface.
+* (statedb) [#333](https://github.com/crypto-org-chain/ethermint/pull/333) Support native action in statedb, prepare for precompiles.
+* (rpc) [#369](https://github.com/crypto-org-chain/ethermint/pull/369) Support state overrides in eth_call.
+* (precompile) [#371](https://github.com/crypto-org-chain/ethermint/pull/371) Add StateDB itself into native context for precompiles to emit evm logs directly.
+* (rpc) [#392](https://github.com/crypto-org-chain/ethermint/pull/392) Support block overrides in debug_traceCall.
 
 ### State Machine Breaking
 
@@ -43,14 +83,50 @@ Ref: https://keepachangelog.com/en/1.0.0/
 - (app) [#1739](https://github.com/evmos/ethermint/pull/1739) Remove distribution module perms
 - (ante) [#1741](https://github.com/evmos/ethermint/pull/1741) Add authz ante handler
 - (eip712) [#1746](https://github.com/evmos/ethermint/pull/1746) Add EIP712 support for multiple messages and schemas
+- (feemarket) [#1790](https://github.com/evmos/ethermint/pull/1790) Raise error when get invalid consensus params
+- (deps) [#1782](https://github.com/evmos/ethermint/pull/1782) Bump Cosmos-SDK to v0.47.3 and ibc-go to v7.1.0.
+- (ante) [#358](https://github.com/crypto-org-chain/ethermint/pull/358) enforce user setting the From address in MsgEthereumTx
+- (geth) [#377](https://github.com/crypto-org-chain/ethermint/pull/377) Update go-ethereum version to [`v1.11.2`](https://github.com/ethereum/go-ethereum/releases/tag/v1.11.2).
 
 ### Bug Fixes
 
 - (rpc) [#1688](https://github.com/evmos/ethermint/pull/1688) Align filter rule for `debug_traceBlockByNumber`
+- (rpc) [#1722](https://github.com/evmos/ethermint/pull/1722) Align revert response for `eth_estimateGas` and `eth_call` as Ethereum.
+- (rpc) [#1720](https://github.com/evmos/ethermint/pull/1720) Fix next block fee for historical block and calculate base fee by params.
+- (rpc) [#1685](https://github.com/evmos/ethermint/pull/1685) Fix parse for websocket connID.
+- (rpc) [#1773](https://github.com/evmos/ethermint/pull/1773) Avoid channel get changed when concurrent subscribe happens.
+* (mempool) [#310](https://github.com/crypto-org-chain/ethermint/pull/310) disable vesting messages in check tx mode.
+* (rpc) [#364](https://github.com/crypto-org-chain/ethermint/pull/364) Only use NextBaseFee as last item to avoid concurrent write in `eth_feeHistory`.
+* (config) [#365](https://github.com/crypto-org-chain/ethermint/pull/365) Avoid redundant parse chainID from gensis when start server.
+* (rpc) [#382](https://github.com/crypto-org-chain/ethermint/pull/382) Align tracer config with go-ethereum.
+* (rpc) [#386](https://github.com/crypto-org-chain/ethermint/pull/386) Cleanup unused cancel function in filter.
+* (rpc) [#388](https://github.com/crypto-org-chain/ethermint/pull/388) Avoid out of bound panic when error message.
+* (rpc) [#391](https://github.com/crypto-org-chain/ethermint/pull/391) Align block param with go-ethereum in debug_traceCall.
+- (evm) [#396](https://github.com/crypto-org-chain/ethermint/pull/396) Align evm tx type with go-ethereum.
+* (rpc) [#398](https://github.com/crypto-org-chain/ethermint/pull/398) Avoid infinite failed to fetch block error when lastBlock is smaller than earliest on prune node.
+- (rpc) [#401](https://github.com/crypto-org-chain/ethermint/pull/401) Align max nextBaseFee with minGasPrice in eth_feeHistory.
+- (ante) [#404](https://github.com/crypto-org-chain/ethermint/pull/404) Correct priority under recheck mode.
+- (evm) [#405](https://github.com/crypto-org-chain/ethermint/pull/405) Avoid duplicate cache events emitted from evm hooks.
+- (rpc) [#406](https://github.com/crypto-org-chain/ethermint/pull/406) Align filter rule for eth_getLogs when toBlock is newer than latest or extract error occurs.
+- (rpc) [#409](https://github.com/crypto-org-chain/ethermint/pull/409) Fix nextBaseFee in eth_feeHistory before fee market param change.
+- (rpc) [#425](https://github.com/crypto-org-chain/ethermint/pull/425) Avoid Int64() out of bound error in gas related api.
 
 ### Improvements
 
 - (ante) [#1717](https://github.com/evmos/ethermint/pull/1717) Reuse sender recovery result.
+- (cli) [#242](https://github.com/crypto-org-chain/ethermint/pull/242) Integrate tendermint bootstrap cmd.
+- (cli) [#246](https://github.com/crypto-org-chain/ethermint/pull/246) Call app.Close to cleanup resource on graceful shutdown.
+* (cli) [#288](https://github.com/crypto-org-chain/ethermint/pull/288) make abci handshake shutdown gracefully.
+- (evm) [#343](https://github.com/crypto-org-chain/ethermint/pull/343) Add native event converter APIs.
+- (ante) [#353](https://github.com/crypto-org-chain/ethermint/pull/353) Remove blocked address decorator and support custom decorators instead.
+- (statedb) [#359](https://github.com/crypto-org-chain/ethermint/pull/359) Add `CacheContext` method to StateDB, to support efficient read-only native actions.
+- (rpc) [#375](https://github.com/crypto-org-chain/ethermint/pull/375) Refactor websocket/subscription system to improve performance and stability.
+- (deps) [#381](https://github.com/crypto-org-chain/ethermint/pull/381) Upgrade Go-Ethereum version to [`v1.11.6`](https://github.com/ethereum/go-ethereum/releases/tag/v1.11.6).
+- (precompile) [#380](https://github.com/crypto-org-chain/ethermint/pull/380) Allow init precompiled contract with rules when new evm.
+- (precompile) [#383](https://github.com/crypto-org-chain/ethermint/pull/383) Allow init precompiled contract with ctx.
+- (evm) [#393](https://github.com/crypto-org-chain/ethermint/pull/393) Cleanup ApplyMessageWithConfig interface.
+- (cmd) [#399](https://github.com/crypto-org-chain/ethermint/pull/399) Add pruning and snapshot cmd.
+- (statedb) [#410](https://github.com/crypto-org-chain/ethermint/pull/410) Only set account when it's actually changed.
 
 ## [v0.21.0] - 2023-01-26
 
@@ -775,7 +851,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### API Breaking
 
-- (types) [tharsis#503](https://github.com/cosmos/ethermint/pull/503) The `types.DenomDefault` constant for `"maal"` has been renamed to `types.AttoPhoton`.
+- (types) [tharsis#503](https://github.com/cosmos/ethermint/pull/503) The `types.DenomDefault` constant for `"aphoton"` has been renamed to `types.AttoPhoton`.
 
 ### Improvements
 

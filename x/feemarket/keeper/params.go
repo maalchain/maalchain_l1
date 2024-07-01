@@ -12,13 +12,14 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package keeper
 
 import (
 	"math/big"
 
-	"github.com/maalchain/maalchain_l1/x/feemarket/types"
+	ethermint "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/feemarket/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -79,7 +80,7 @@ func (k Keeper) GetBaseFee(ctx sdk.Context) *big.Int {
 // SetBaseFee set's the base fee in the store
 func (k Keeper) SetBaseFee(ctx sdk.Context, baseFee *big.Int) {
 	params := k.GetParams(ctx)
-	params.BaseFee = sdk.NewIntFromBigInt(baseFee)
+	params.BaseFee = ethermint.SaturatedNewInt(baseFee)
 	err := k.SetParams(ctx, params)
 	if err != nil {
 		return

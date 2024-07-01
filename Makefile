@@ -7,11 +7,11 @@ TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
-ETHERMINT_BINARY = maalchaind
+ETHERMINT_BINARY = ethermintd
 ETHERMINT_DIR = ethermint
 BUILDDIR ?= $(CURDIR)/build
 SIMAPP = ./app
-HTTPS_GIT := https://github.com/maalchain/maalchain_l1.git
+HTTPS_GIT := https://github.com/evmos/ethermint.git
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 DOCKER := $(shell which docker)
 NAMESPACE := tharsis
@@ -72,7 +72,7 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=ethermint \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
 			-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)" \
-			-X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION)
+			-X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TMVERSION)
 
 ifeq ($(ENABLE_ROCKSDB),true)
   BUILD_TAGS += rocksdb_build
@@ -152,7 +152,7 @@ docker-build:
 	docker create --name ethermint -t -i tharsis/ethermint:latest ethermint
 	# move the binaries to the ./build directory
 	mkdir -p ./build/
-	docker cp ethermint:/usr/bin/maalchaind ./build/
+	docker cp ethermint:/usr/bin/ethermintd ./build/
 
 $(MOCKS_DIR):
 	mkdir -p $(MOCKS_DIR)
@@ -175,7 +175,7 @@ build-all: tools build lint test vulncheck
 ###                                Releasing                                ###
 ###############################################################################
 
-PACKAGE_NAME:=github.com/maalchain/maalchain_l1
+PACKAGE_NAME:=github.com/evmos/ethermint
 GOLANG_CROSS_VERSION = v1.19
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
@@ -304,7 +304,7 @@ update-swagger-docs: statik
 .PHONY: update-swagger-docs
 
 godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/maalchain/maalchain_l1/types"
+	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/evmos/ethermint/types"
 	godoc -http=:6060
 
 ###############################################################################
@@ -338,10 +338,16 @@ else
 endif
 
 test-import:
-	go test -run TestImporterTestSuite -v --vet=off github.com/maalchain/maalchain_l1/tests/importer
+	go test -run TestImporterTestSuite -v --vet=off github.com/evmos/ethermint/tests/importer
 
 test-rpc:
-	./scripts/integration-test-all.sh -t "rpc" -q 1 -z 1 -s 2 -m "rpc" -r "true"
+	./scripts/integration-test-all.sh -t "rpc" -q 1 -z 1 -s 5 -m "rpc" -r "true"
+
+# possible values:
+# - all: run all integration tests
+# - unmarked: run integration tests that are not marked
+# - marker1,marker2: markers separated by comma, run integration tests that are marked with any of the markers
+TESTS_TO_RUN ?= all
 
 run-integration-tests:
 	@nix-shell ./tests/integration_tests/shell.nix --run ./scripts/run-integration-tests.sh
@@ -359,6 +365,51 @@ test-solidity:
 
 .PHONY: run-tests test test-all test-import test-rpc test-contract test-solidity $(TEST_TARGETS)
 
+test-sim-nondeterminism:
+	@echo "Running non-determinism test..."
+	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
+		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
+
+test-sim-random-genesis-fast:
+	@echo "Running random genesis simulation..."
+	@go test -mod=readonly $(SIMAPP) -run TestFullAppSimulation \
+		-Enabled=true -NumBlocks=100 -BlockSize=200 -Commit=true -Seed=99 -Period=5 -v -timeout 24h
+
+test-sim-import-export: runsim
+	@echo "Running application import/export simulation. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 5 TestAppImportExport
+
+test-sim-after-import: runsim
+	@echo "Running application simulation-after-import. This may take several minutes..."
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 5 TestAppSimulationAfterImport
+
+test-sim-random-genesis-multi-seed: runsim
+	@echo "Running multi-seed custom genesis simulation..."
+	@$(BINDIR)/runsim -SimAppPkg=$(SIMAPP) -ExitOnFail 400 5 TestFullAppSimulation
+
+test-sim-multi-seed-long: runsim
+	@echo "Running long multi-seed application simulation. This may take awhile!"
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 500 50 TestFullAppSimulation
+
+test-sim-multi-seed-short: runsim
+	@echo "Running short multi-seed application simulation. This may take awhile!"
+	@$(BINDIR)/runsim -Jobs=4 -SimAppPkg=$(SIMAPP) -ExitOnFail 50 10 TestFullAppSimulation
+
+test-sim-benchmark-invariants:
+	@echo "Running simulation invariant benchmarks..."
+	@go test -mod=readonly $(SIMAPP) -benchmem -bench=BenchmarkInvariants -run=^$ \
+	-Enabled=true -NumBlocks=1000 -BlockSize=200 \
+	-Period=1 -Commit=true -Seed=57 -v -timeout 24h
+
+.PHONY: \
+test-sim-nondeterminism \
+test-sim-custom-genesis-fast \
+test-sim-import-export \
+test-sim-after-import \
+test-sim-custom-genesis-multi-seed \
+test-sim-multi-seed-short \
+test-sim-multi-seed-long \
+test-sim-benchmark-invariants
 
 benchmark:
 	@go test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
@@ -414,6 +465,10 @@ proto-check-breaking:
 	@echo "Checking Protobuf files for breaking changes"
 	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
 
+# TODO: Rethink API docs generation
+proto-swagger-gen:
+	@echo "Generating Protobuf Swagger"
+	$(protoImage) sh ./scripts/protoc-swagger-gen.sh
 
 proto-format:
 	@echo "Formatting Protobuf files"
@@ -435,13 +490,13 @@ ifeq ($(OS),Windows_NT)
 	mkdir localnet-setup &
 	@$(MAKE) localnet-build
 
-	IF not exist "build/node0/$(ETHERMINT_BINARY)/config/genesis.json" docker run --rm -v $(CURDIR)/build\ethermint\Z maalchaind/node "./maalchaind testnet --v 4 -o /ethermint --keyring-backend=test --ip-addresses maalchaindnode0,maalchaindnode1,maalchaindnode2,maalchaindnode3"
+	IF not exist "build/node0/$(ETHERMINT_BINARY)/config/genesis.json" docker run --rm -v $(CURDIR)/build\ethermint\Z ethermintd/node "./ethermintd testnet --v 4 -o /ethermint --keyring-backend=test --ip-addresses ethermintdnode0,ethermintdnode1,ethermintdnode2,ethermintdnode3"
 	docker-compose up -d
 else
 	mkdir -p localnet-setup
 	@$(MAKE) localnet-build
 
-	if ! [ -f localnet-setup/node0/$(ETHERMINT_BINARY)/config/genesis.json ]; then docker run --rm -v $(CURDIR)/localnet-setup:/ethermint:Z maalchaind/node "./maalchaind testnet --v 4 -o /ethermint --keyring-backend=test --ip-addresses maalchaindnode0,maalchaindnode1,maalchaindnode2,maalchaindnode3"; fi
+	if ! [ -f localnet-setup/node0/$(ETHERMINT_BINARY)/config/genesis.json ]; then docker run --rm -v $(CURDIR)/localnet-setup:/ethermint:Z ethermintd/node "./ethermintd testnet --v 4 -o /ethermint --keyring-backend=test --ip-addresses ethermintdnode0,ethermintdnode1,ethermintdnode2,ethermintdnode3"; fi
 	docker-compose up -d
 endif
 
@@ -458,15 +513,15 @@ localnet-clean:
 localnet-unsafe-reset:
 	docker-compose down
 ifeq ($(OS),Windows_NT)
-	@docker run --rm -v $(CURDIR)\localnet-setup\node0\ethermitd:ethermint\Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
-	@docker run --rm -v $(CURDIR)\localnet-setup\node1\ethermitd:ethermint\Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
-	@docker run --rm -v $(CURDIR)\localnet-setup\node2\ethermitd:ethermint\Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
-	@docker run --rm -v $(CURDIR)\localnet-setup\node3\ethermitd:ethermint\Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)\localnet-setup\node0\ethermitd:ethermint\Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)\localnet-setup\node1\ethermitd:ethermint\Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)\localnet-setup\node2\ethermitd:ethermint\Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)\localnet-setup\node3\ethermitd:ethermint\Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
 else
-	@docker run --rm -v $(CURDIR)/localnet-setup/node0/ethermitd:/ethermint:Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
-	@docker run --rm -v $(CURDIR)/localnet-setup/node1/ethermitd:/ethermint:Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
-	@docker run --rm -v $(CURDIR)/localnet-setup/node2/ethermitd:/ethermint:Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
-	@docker run --rm -v $(CURDIR)/localnet-setup/node3/ethermitd:/ethermint:Z maalchaind/node "./maalchaind unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)/localnet-setup/node0/ethermitd:/ethermint:Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)/localnet-setup/node1/ethermitd:/ethermint:Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)/localnet-setup/node2/ethermitd:/ethermint:Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
+	@docker run --rm -v $(CURDIR)/localnet-setup/node3/ethermitd:/ethermint:Z ethermintd/node "./ethermintd unsafe-reset-all --home=/ethermint"
 endif
 
 # Clean testnet

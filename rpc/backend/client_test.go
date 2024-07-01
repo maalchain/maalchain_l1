@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -15,11 +16,12 @@ import (
 	"github.com/cometbft/cometbft/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	rpc "github.com/evmos/ethermint/rpc/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/gogo/protobuf/proto"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	rpc "github.com/maalchain/maalchain_l1/rpc/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // Client defines a mocked object that implements the Tendermint JSON-RPC Client
@@ -138,6 +140,14 @@ func RegisterBlockNotFound(
 	return &tmrpctypes.ResultBlock{Block: nil}, nil
 }
 
+// Block panic
+func RegisterBlockPanic(client *mocks.Client, height int64) {
+	client.On("Block", rpc.ContextWithHeight(height), mock.AnythingOfType("*int64")).
+		Return(func(context.Context, *int64) *tmrpctypes.ResultBlock {
+			panic("Block call panic")
+		}, nil)
+}
+
 func TestRegisterBlock(t *testing.T) {
 	client := mocks.NewClient(t)
 	height := rpc.BlockNumber(1).Int64()
@@ -178,19 +188,26 @@ func TestRegisterConsensusParams(t *testing.T) {
 // BlockResults
 
 func RegisterBlockResultsWithEventLog(client *mocks.Client, height int64) (*tmrpctypes.ResultBlockResults, error) {
+	any, err := codectypes.NewAnyWithValue(&evmtypes.MsgEthereumTxResponse{
+		Logs: []*evmtypes.Log{
+			{Data: []byte("data")},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	data, err := proto.Marshal(&sdk.TxMsgData{MsgResponses: []*codectypes.Any{any}})
+	if err != nil {
+		return nil, err
+	}
+
 	res := &tmrpctypes.ResultBlockResults{
 		Height: height,
 		TxsResults: []*abci.ResponseDeliverTx{
-			{Code: 0, GasUsed: 0, Events: []abci.Event{{
-				Type: evmtypes.EventTypeTxLog,
-				Attributes: []abci.EventAttribute{{
-					Key:   evmtypes.AttributeKeyTxLog,
-					Value: "{\"test\": \"hello\"}",
-					Index: true,
-				}},
-			}}},
+			{Code: 0, GasUsed: 0, Data: data},
 		},
 	}
+
 	client.On("BlockResults", rpc.ContextWithHeight(height), mock.AnythingOfType("*int64")).
 		Return(res, nil)
 	return res, nil

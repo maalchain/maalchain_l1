@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"testing"
 
-	"cosmossdk.io/simapp/params"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
@@ -12,13 +11,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/evmos/ethermint/app"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	evmenc "github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/indexer"
+	"github.com/evmos/ethermint/tests"
+	"github.com/evmos/ethermint/x/evm/types"
 	"github.com/stretchr/testify/require"
-	"github.com/maalchain/maalchain_l1/app"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	evmenc "github.com/maalchain/maalchain_l1/encoding"
-	"github.com/maalchain/maalchain_l1/indexer"
-	"github.com/maalchain/maalchain_l1/tests"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 func TestKVIndexer(t *testing.T) {
@@ -29,22 +28,18 @@ func TestKVIndexer(t *testing.T) {
 	ethSigner := ethtypes.LatestSignerForChainID(nil)
 
 	to := common.BigToAddress(big.NewInt(1))
-	ethTxParams := types.EvmTxArgs{
-		Nonce:    0,
-		To:       &to,
-		Amount:   big.NewInt(1000),
-		GasLimit: 21000,
-	}
-	tx := types.NewTx(&ethTxParams)
-	tx.From = from.Hex()
+	tx := types.NewTx(
+		nil, 0, &to, big.NewInt(1000), 21000, nil, nil, nil, nil, nil,
+	)
+	tx.From = from.Bytes()
 	require.NoError(t, tx.Sign(ethSigner, signer))
 	txHash := tx.AsTransaction().Hash()
 
-	encodingConfig := MakeEncodingConfig()
+	encodingConfig := evmenc.MakeConfig(app.ModuleBasics)
 	clientCtx := client.Context{}.WithTxConfig(encodingConfig.TxConfig).WithCodec(encodingConfig.Codec)
 
 	// build cosmos-sdk wrapper tx
-	tmTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), "maal")
+	tmTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 	require.NoError(t, err)
 	txBz, err := clientCtx.TxConfig.TxEncoder()(tmTx)
 	require.NoError(t, err)
@@ -185,9 +180,4 @@ func TestKVIndexer(t *testing.T) {
 			}
 		})
 	}
-}
-
-// MakeEncodingConfig creates the EncodingConfig
-func MakeEncodingConfig() params.EncodingConfig {
-	return evmenc.MakeConfig(app.ModuleBasics)
 }

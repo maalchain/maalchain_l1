@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package backend
 
 import (
@@ -23,14 +23,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/pkg/errors"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
-func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfig) (interface{}, error) {
+func (b *Backend) TraceTransaction(hash common.Hash, config *rpctypes.TraceConfig) (interface{}, error) {
 	// Get transaction by hash
 	transaction, err := b.GetTxByEthHash(hash)
 	if err != nil {
@@ -104,7 +104,7 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 	}
 
 	if config != nil {
-		traceTxRequest.TraceConfig = config
+		traceTxRequest.TraceConfig = b.convertConfig(config)
 	}
 
 	// minus one to get the context of block beginning
@@ -129,11 +129,22 @@ func (b *Backend) TraceTransaction(hash common.Hash, config *evmtypes.TraceConfi
 	return decodedResult, nil
 }
 
+func (b *Backend) convertConfig(config *rpctypes.TraceConfig) *evmtypes.TraceConfig {
+	if config == nil {
+		return &evmtypes.TraceConfig{}
+	}
+	cfg := config.TraceConfig
+	cfg.TracerJsonConfig = string(config.TracerConfig)
+	cfg.StateOverrides = []byte(config.StateOverrides)
+	cfg.BlockOverrides = []byte(config.BlockOverrides)
+	return &cfg
+}
+
 // TraceBlock configures a new tracer according to the provided configuration, and
 // executes all the transactions contained within. The return value will be one item
 // per transaction, dependent on the requested tracer.
 func (b *Backend) TraceBlock(height rpctypes.BlockNumber,
-	config *evmtypes.TraceConfig,
+	config *rpctypes.TraceConfig,
 	block *tmrpctypes.ResultBlock,
 ) ([]*evmtypes.TxTraceResult, error) {
 	txs := block.Block.Txs
@@ -182,7 +193,7 @@ func (b *Backend) TraceBlock(height rpctypes.BlockNumber,
 
 	traceBlockRequest := &evmtypes.QueryTraceBlockRequest{
 		Txs:             txsMessages,
-		TraceConfig:     config,
+		TraceConfig:     b.convertConfig(config),
 		BlockNumber:     block.Block.Height,
 		BlockTime:       block.Block.Time,
 		BlockHash:       common.Bytes2Hex(block.BlockID.Hash),
@@ -201,4 +212,59 @@ func (b *Backend) TraceBlock(height rpctypes.BlockNumber,
 	}
 
 	return decodedResults, nil
+}
+
+// TraceCall returns the structured logs created during the execution of EVM call
+// and returns them as a JSON object.
+func (b *Backend) TraceCall(
+	args evmtypes.TransactionArgs, blockNrOrHash rpctypes.BlockNumberOrHash, config *rpctypes.TraceConfig,
+) (interface{}, error) {
+	bz, err := json.Marshal(&args)
+	if err != nil {
+		return nil, err
+	}
+	blockNr, err := b.BlockNumberFromTendermint(blockNrOrHash)
+	if err != nil {
+		return nil, err
+	}
+	blk, err := b.TendermintBlockByNumber(blockNr)
+	if err != nil {
+		// the error message imitates geth behavior
+		return nil, errors.New("header not found")
+	}
+
+	traceCallRequest := evmtypes.QueryTraceCallRequest{
+		Args:            bz,
+		GasCap:          b.RPCGasCap(),
+		ProposerAddress: sdk.ConsAddress(blk.Block.ProposerAddress),
+		BlockNumber:     blk.Block.Height,
+		BlockHash:       common.Bytes2Hex(blk.BlockID.Hash),
+		BlockTime:       blk.Block.Time,
+		ChainId:         b.chainID.Int64(),
+	}
+
+	if config != nil {
+		traceCallRequest.TraceConfig = b.convertConfig(config)
+	}
+
+	// get the context of provided block
+	contextHeight := blk.Block.Height
+	if contextHeight < 1 {
+		// 0 is a special value in `ContextWithHeight`
+		contextHeight = 1
+	}
+	traceResult, err := b.queryClient.TraceCall(rpctypes.ContextWithHeight(contextHeight), &traceCallRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// Response format is unknown due to custom tracer config param
+	// More information can be found here https://geth.ethereum.org/docs/dapp/tracing-filtered
+	var decodedResult interface{}
+	err = json.Unmarshal(traceResult.Data, &decodedResult)
+	if err != nil {
+		return nil, err
+	}
+
+	return decodedResult, nil
 }

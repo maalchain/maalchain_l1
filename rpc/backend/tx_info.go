@@ -12,12 +12,11 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package backend
 
 import (
 	"fmt"
-	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
@@ -27,10 +26,10 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"github.com/pkg/errors"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 )
 
 // GetTransactionByHash returns the Ethereum format transaction identified by Ethereum transaction hash
@@ -134,12 +133,12 @@ func (b *Backend) getTransactionByHashPending(txHash common.Hash) (*rpctypes.RPC
 }
 
 // GetGasUsed returns gasUsed from transaction
-func (b *Backend) GetGasUsed(res *ethermint.TxResult, price *big.Int, gas uint64) uint64 {
+func (b *Backend) GetGasUsed(res *ethermint.TxResult, gas uint64) uint64 {
 	// patch gasUsed if tx is reverted and happened before height on which fixed was introduced
 	// to return real gas charged
 	// more info at https://github.com/evmos/ethermint/pull/1557
 	if res.Failed && res.Height < b.cfg.JSONRPC.FixRevertGasRefundHeight {
-		return new(big.Int).Mul(price, new(big.Int).SetUint64(gas)).Uint64()
+		return gas
 	}
 	return res.GasUsed
 }
@@ -194,13 +193,18 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		return nil, err
 	}
 
-	from, err := ethMsg.GetSender(chainID.ToInt())
+	from, err := ethMsg.GetSenderLegacy(chainID.ToInt())
 	if err != nil {
 		return nil, err
 	}
 
 	// parse tx logs from events
-	logs, err := TxLogsFromEvents(blockRes.TxsResults[res.TxIndex].Events, int(res.MsgIndex))
+	logs, err := evmtypes.DecodeMsgLogsFromEvents(
+		blockRes.TxsResults[res.TxIndex].Data,
+		blockRes.TxsResults[res.TxIndex].Events,
+		int(res.MsgIndex),
+		uint64(blockRes.Height),
+	)
 	if err != nil {
 		b.logger.Debug("failed to parse logs", "hash", hexTx, "error", err.Error())
 	}
@@ -231,7 +235,7 @@ func (b *Backend) GetTransactionReceipt(hash common.Hash) (map[string]interface{
 		// They are stored in the chain database.
 		"transactionHash": hash,
 		"contractAddress": nil,
-		"gasUsed":         hexutil.Uint64(b.GetGasUsed(res, txData.GetGasPrice(), txData.GetGas())),
+		"gasUsed":         hexutil.Uint64(b.GetGasUsed(res, txData.GetGas())),
 
 		// Inclusion information: These fields provide information about the inclusion of the
 		// transaction corresponding to this receipt.

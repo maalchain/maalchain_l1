@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package keeper
 
 import (
@@ -29,7 +29,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/x/evm/types"
 )
 
 // GetCoinbaseAddress returns the block proposer's validator operator address.
@@ -83,7 +83,7 @@ func VerifyFee(
 	txData types.TxData,
 	denom string,
 	baseFee *big.Int,
-	homestead, istanbul, isCheckTx bool,
+	homestead, istanbul, shanghai, isCheckTx bool,
 ) (sdk.Coins, error) {
 	isContractCreation := txData.GetTo() == nil
 
@@ -94,12 +94,12 @@ func VerifyFee(
 		accessList = txData.GetAccessList()
 	}
 
-	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, homestead, istanbul)
+	intrinsicGas, err := core.IntrinsicGas(txData.GetData(), accessList, isContractCreation, homestead, istanbul, shanghai)
 	if err != nil {
 		return nil, errorsmod.Wrapf(
 			err,
-			"failed to retrieve intrinsic gas, contract creation = %t; homestead = %t, istanbul = %t",
-			isContractCreation, homestead, istanbul,
+			"failed to retrieve intrinsic gas, contract creation = %t; homestead = %t, istanbul = %t, shanghai = %t",
+			isContractCreation, homestead, istanbul, shanghai,
 		)
 	}
 

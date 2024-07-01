@@ -7,18 +7,16 @@ import (
 	"strconv"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	rpc "github.com/evmos/ethermint/rpc/types"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	rpc "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -159,7 +157,7 @@ func RegisterEstimateGas(queryClient *mocks.EVMQueryClient, args evmtypes.Transa
 }
 
 // BaseFee
-func RegisterBaseFee(queryClient *mocks.EVMQueryClient, baseFee sdkmath.Int) {
+func RegisterBaseFee(queryClient *mocks.EVMQueryClient, baseFee sdk.Int) {
 	queryClient.On("BaseFee", rpc.ContextWithHeight(1), &evmtypes.QueryBaseFeeRequest{}).
 		Return(&evmtypes.QueryBaseFeeResponse{BaseFee: &baseFee}, nil)
 }
@@ -177,7 +175,7 @@ func RegisterBaseFeeDisabled(queryClient *mocks.EVMQueryClient) {
 }
 
 func TestRegisterBaseFee(t *testing.T) {
-	baseFee := sdkmath.NewInt(1)
+	baseFee := sdk.NewInt(1)
 	queryClient := mocks.NewEVMQueryClient(t)
 	RegisterBaseFee(queryClient, baseFee)
 	res, err := queryClient.BaseFee(rpc.ContextWithHeight(1), &evmtypes.QueryBaseFeeRequest{})
@@ -273,5 +271,17 @@ func RegisterBalanceNegative(queryClient *mocks.EVMQueryClient, addr common.Addr
 
 func RegisterBalanceError(queryClient *mocks.EVMQueryClient, addr common.Address, height int64) {
 	queryClient.On("Balance", rpc.ContextWithHeight(height), &evmtypes.QueryBalanceRequest{Address: addr.String()}).
+		Return(nil, errortypes.ErrInvalidRequest)
+}
+
+// TraceCall
+func RegisterTraceCall(queryClient *mocks.EVMQueryClient, request *evmtypes.QueryTraceCallRequest, response *evmtypes.QueryTraceCallResponse) {
+	queryClient.On("TraceCall", rpc.ContextWithHeight(request.BlockNumber), request).
+		Return(response, nil)
+}
+
+func RegisterTraceCallError(queryClient *mocks.EVMQueryClient, request *evmtypes.QueryTraceCallRequest) {
+	ctx, _ := context.WithCancel(rpc.ContextWithHeight(1))
+	queryClient.On("TraceCall", ctx, request).
 		Return(nil, errortypes.ErrInvalidRequest)
 }

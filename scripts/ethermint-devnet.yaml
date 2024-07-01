@@ -1,6 +1,6 @@
 dotenv: .env
-maalchain_7862-1:
-  cmd: maalchaind
+ethermint_9000-1:
+  cmd: ethermintd
   start-flags: "--trace"
   app-config:
     minimum-gas-prices: 0aphoton
@@ -43,7 +43,7 @@ maalchain_7862-1:
         deposit_params:
           max_deposit_period: "10s"
           min_deposit:
-            - denom: "maal"
+            - denom: "aphoton"
               amount: "1"
       transfer:
         params:

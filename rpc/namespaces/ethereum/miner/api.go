@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package miner
 
 import (
@@ -23,7 +23,7 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 
-	"github.com/maalchain/maalchain_l1/rpc/backend"
+	"github.com/evmos/ethermint/rpc/backend"
 )
 
 // API is the private miner prefixed set of APIs in the Miner JSON-RPC spec.

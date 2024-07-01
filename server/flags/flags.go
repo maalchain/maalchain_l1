@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package flags
 
 import (
@@ -65,11 +65,13 @@ const (
 	JSONRPCAllowUnprotectedTxs = "json-rpc.allow-unprotected-txs"
 	JSONRPCMaxOpenConnections  = "json-rpc.max-open-connections"
 	JSONRPCEnableIndexer       = "json-rpc.enable-indexer"
+	JSONRPCAllowIndexerGap     = "json-rpc.allow-indexer-gap"
 	// JSONRPCEnableMetrics enables EVM RPC metrics server.
 	// Set to `metrics` which is hardcoded flag from go-ethereum.
 	// https://github.com/ethereum/go-ethereum/blob/master/metrics/metrics.go#L35-L55
 	JSONRPCEnableMetrics            = "metrics"
 	JSONRPCFixRevertGasRefundHeight = "json-rpc.fix-revert-gas-refund-height"
+	JSONRPCReturnDataLimit          = "json-rpc.return-data-limit"
 )
 
 // EVM flags
@@ -86,7 +88,7 @@ const (
 
 // AddTxFlags adds common flags for commands to post tx
 func AddTxFlags(cmd *cobra.Command) (*cobra.Command, error) {
-	cmd.PersistentFlags().String(flags.FlagChainID, "maalchain_7862-1", "Specify Chain ID for sending Tx")
+	cmd.PersistentFlags().String(flags.FlagChainID, "ethermint_9000-1", "Specify Chain ID for sending Tx")
 	cmd.PersistentFlags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
 	cmd.PersistentFlags().String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10aphoton")
 	cmd.PersistentFlags().String(flags.FlagGasPrices, "", "Gas prices to determine the transaction fee (e.g. 10aphoton)")

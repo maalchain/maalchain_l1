@@ -26,7 +26,7 @@ function checkTestEnv() {
     .describe('network', 'set which network to use: ganache|ethermint')
     .describe('batch', 'set the test batch in parallelized testing. Format: %d-%d')
     .describe('allowTests', 'only run specified tests. Separated by comma.')
-    .boolean('verbose-log').describe('verbose-log', 'print maalchaind output, default false')
+    .boolean('verbose-log').describe('verbose-log', 'print ethermintd output, default false')
     .argv;
 
   if (!fs.existsSync(path.join(__dirname, './node_modules'))) {
@@ -176,29 +176,29 @@ function setupNetwork({ runConfig, timeout }) {
   // Spawn the ethermint process
 
   const spawnPromise = new Promise((resolve, reject) => {
-    const maalchaindProc = spawn('./init-test-node.sh', {
+    const ethermintdProc = spawn('./init-test-node.sh', {
       cwd: __dirname,
       stdio: ['ignore', runConfig.verboseLog ? 'pipe' : 'ignore', 'pipe'],
     });
 
-    logger.info(`Starting maalchaind process... timeout: ${timeout}ms`);
+    logger.info(`Starting Ethermintd process... timeout: ${timeout}ms`);
     if (runConfig.verboseLog) {
-      maalchaindProc.stdout.pipe(process.stdout);
+      ethermintdProc.stdout.pipe(process.stdout);
     }
-    maalchaindProc.stderr.on('data', d => {
+    ethermintdProc.stderr.on('data', d => {
       const oLine = d.toString();
       if (runConfig.verboseLog) {
         process.stdout.write(oLine);
       }
       if (oLine.indexOf('Starting JSON-RPC server') !== -1) {
-        logger.info('maalchaind started');
-        resolve(maalchaindProc);
+        logger.info('Ethermintd started');
+        resolve(ethermintdProc);
       }
     });
   });
 
   const timeoutPromise = new Promise((resolve, reject) => {
-    setTimeout(() => reject(new Error('Start maalchaind timeout!')), timeout);
+    setTimeout(() => reject(new Error('Start ethermintd timeout!')), timeout);
   });
   return Promise.race([spawnPromise, timeoutPromise]);
 }

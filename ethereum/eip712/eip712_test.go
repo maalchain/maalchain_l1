@@ -7,32 +7,32 @@ import (
 
 	"cosmossdk.io/math"
 
-	chainparams "cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/evmos/ethermint/ethereum/eip712"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
-	"github.com/maalchain/maalchain_l1/ethereum/eip712"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/maalchain/maalchain_l1/app"
-	"github.com/maalchain/maalchain_l1/cmd/config"
-	"github.com/maalchain/maalchain_l1/encoding"
-	"github.com/maalchain/maalchain_l1/testutil"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app"
+	"github.com/evmos/ethermint/cmd/config"
+	"github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/testutil"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	ethermint "github.com/evmos/ethermint/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -46,7 +46,7 @@ const (
 type EIP712TestSuite struct {
 	suite.Suite
 
-	config                   chainparams.EncodingConfig
+	config                   ethermint.EncodingConfig
 	clientCtx                client.Context
 	useLegacyEIP712TypedData bool
 	denom                    string

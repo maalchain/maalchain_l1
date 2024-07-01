@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package types
 
 import (
@@ -25,7 +25,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 // TransactionArgs represents the arguments to construct a new transaction
@@ -49,8 +50,8 @@ type TransactionArgs struct {
 	Input *hexutil.Bytes `json:"input"`
 
 	// Introduced by AccessListTxType transaction.
-	AccessList *ethtypes.AccessList `json:"accessList,omitempty"`
-	ChainID    *hexutil.Big         `json:"chainId,omitempty"`
+	AccessList *types.AccessList `json:"accessList,omitempty"`
+	ChainID    *hexutil.Big      `json:"chainId,omitempty"`
 }
 
 // String return the struct in a string format
@@ -73,7 +74,8 @@ func (args *TransactionArgs) ToTransaction() *MsgEthereumTx {
 	var (
 		chainID, value, gasPrice, maxFeePerGas, maxPriorityFeePerGas sdkmath.Int
 		gas, nonce                                                   uint64
-		from, to                                                     string
+		to                                                           string
+		from                                                         []byte
 	)
 
 	// Set sender address or use zero address if none specified.
@@ -156,7 +158,7 @@ func (args *TransactionArgs) ToTransaction() *MsgEthereumTx {
 	}
 
 	if args.From != nil {
-		from = args.From.Hex()
+		from = args.From.Bytes()
 	}
 
 	msg := MsgEthereumTx{
@@ -169,10 +171,10 @@ func (args *TransactionArgs) ToTransaction() *MsgEthereumTx {
 
 // ToMessage converts the arguments to the Message type used by the core evm.
 // This assumes that setTxDefaults has been called.
-func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (ethtypes.Message, error) {
+func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (core.Message, error) {
 	// Reject invalid combinations of pre- and post-1559 fee styles
 	if args.GasPrice != nil && (args.MaxFeePerGas != nil || args.MaxPriorityFeePerGas != nil) {
-		return ethtypes.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
+		return core.Message{}, errors.New("both gasPrice and (maxFeePerGas or maxPriorityFeePerGas) specified")
 	}
 
 	// Set sender address or use zero address if none specified.
@@ -208,7 +210,7 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (e
 			gasPrice = args.GasPrice.ToInt()
 			gasFeeCap, gasTipCap = gasPrice, gasPrice
 		} else {
-			// User specified 1559 gas feilds (or none), use those
+			// User specified 1559 gas fields (or none), use those
 			gasFeeCap = new(big.Int)
 			if args.MaxFeePerGas != nil {
 				gasFeeCap = args.MaxFeePerGas.ToInt()
@@ -229,7 +231,7 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (e
 		value = args.Value.ToInt()
 	}
 	data := args.GetData()
-	var accessList ethtypes.AccessList
+	var accessList types.AccessList
 	if args.AccessList != nil {
 		accessList = *args.AccessList
 	}
@@ -239,7 +241,19 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (e
 		nonce = uint64(*args.Nonce)
 	}
 
-	msg := ethtypes.NewMessage(addr, args.To, nonce, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
+	msg := core.Message{
+		From:              addr,
+		To:                args.To,
+		Nonce:             nonce,
+		Value:             value,
+		GasLimit:          gas,
+		GasPrice:          gasPrice,
+		GasFeeCap:         gasFeeCap,
+		GasTipCap:         gasTipCap,
+		Data:              data,
+		AccessList:        accessList,
+		SkipAccountChecks: true,
+	}
 	return msg, nil
 }
 

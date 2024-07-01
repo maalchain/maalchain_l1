@@ -7,15 +7,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/maalchain/maalchain_l1/app/ante"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app/ante"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
-func (suite AnteTestSuite) TestGasWantedDecorator() {
+func (suite *AnteTestSuite) TestGasWantedDecorator() {
 	suite.enableFeemarket = true
 	suite.SetupTest()
-	dec := ante.NewGasWantedDecorator(suite.app.EvmKeeper, suite.app.FeeMarketKeeper)
+
+	evmParams := suite.app.EvmKeeper.GetParams(suite.ctx)
+	chainID := suite.app.EvmKeeper.ChainID()
+	chainCfg := evmParams.GetChainConfig()
+	ethCfg := chainCfg.EthereumConfig(chainID)
+
+	dec := ante.NewGasWantedDecorator(suite.app.FeeMarketKeeper, ethCfg)
 	from, fromPrivKey := tests.NewAddrKey()
 	to := tests.GenerateAddress()
 
@@ -30,11 +36,11 @@ func (suite AnteTestSuite) TestGasWantedDecorator() {
 			func() sdk.Tx {
 				denom := evmtypes.DefaultEVMDenom
 				testMsg := banktypes.MsgSend{
-					FromAddress: "ethm1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0pjdfspt",
-					ToAddress:   "ethm1dx67l23hz9l0k9hcher8xz04uj7wf3yun4qxae",
+					FromAddress: "evmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
+					ToAddress:   "evmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
 					Amount:      sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
 				}
-				txBuilder := suite.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), "maal", &testMsg)
+				txBuilder := suite.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), "stake", &testMsg)
 				return txBuilder.GetTx()
 			},
 		},

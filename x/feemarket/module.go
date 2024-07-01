@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package feemarket
 
 import (
@@ -33,9 +33,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/maalchain/maalchain_l1/x/feemarket/client/cli"
-	"github.com/maalchain/maalchain_l1/x/feemarket/keeper"
-	"github.com/maalchain/maalchain_l1/x/feemarket/types"
+	"github.com/evmos/ethermint/x/feemarket/client/cli"
+	"github.com/evmos/ethermint/x/feemarket/keeper"
+	"github.com/evmos/ethermint/x/feemarket/simulation"
+	"github.com/evmos/ethermint/x/feemarket/types"
 )
 
 var (
@@ -176,7 +177,8 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 
 // GenerateGenesisState creates a randomized GenState of the fee market module.
-func (AppModule) GenerateGenesisState(_ *module.SimulationState) {
+func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
+	simulation.RandomizedGenState(simState)
 }
 
 // WeightedOperations returns the all the fee market module operations with their respective weights.

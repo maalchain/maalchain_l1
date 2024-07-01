@@ -1,23 +1,18 @@
 package ante_test
 
 import (
-	"encoding/json"
-	"fmt"
 	"math"
 	"math/big"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"cosmossdk.io/simapp"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/maalchain/maalchain_l1/ethereum/eip712"
-	"github.com/maalchain/maalchain_l1/testutil"
-	utiltx "github.com/maalchain/maalchain_l1/testutil/tx"
+	"github.com/evmos/ethermint/ethereum/eip712"
+	"github.com/evmos/ethermint/testutil"
+	utiltx "github.com/evmos/ethermint/testutil/tx"
 
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -30,14 +25,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	sdkante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	authz "github.com/cosmos/cosmos-sdk/x/authz"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
@@ -45,13 +39,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	"github.com/maalchain/maalchain_l1/app"
-	ante "github.com/maalchain/maalchain_l1/app/ante"
-	"github.com/maalchain/maalchain_l1/encoding"
-	"github.com/maalchain/maalchain_l1/tests"
-	"github.com/maalchain/maalchain_l1/x/evm/statedb"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
-	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
+	"github.com/evmos/ethermint/app"
+	ante "github.com/evmos/ethermint/app/ante"
+	"github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/tests"
+	"github.com/evmos/ethermint/x/evm/statedb"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
@@ -84,7 +78,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.Require().NoError(err)
 	suite.priv = priv
 
-	suite.app = app.EthSetup(checkTx, func(app *app.EthermintApp, genesis simapp.GenesisState) simapp.GenesisState {
+	suite.app = app.Setup(checkTx, func(app *app.EthermintApp, genesis app.GenesisState) app.GenesisState {
 		if suite.enableFeemarket {
 			// setup feemarketGenesis params
 			feemarketGenesis := feemarkettypes.DefaultGenesisState()
@@ -103,8 +97,7 @@ func (suite *AnteTestSuite) SetupTest() {
 			evmGenesis.Params.ChainConfig.ArrowGlacierBlock = &maxInt
 			evmGenesis.Params.ChainConfig.GrayGlacierBlock = &maxInt
 			evmGenesis.Params.ChainConfig.MergeNetsplitBlock = &maxInt
-			evmGenesis.Params.ChainConfig.ShanghaiBlock = &maxInt
-			evmGenesis.Params.ChainConfig.CancunBlock = &maxInt
+			evmGenesis.Params.ChainConfig.ShanghaiTime = &maxInt
 		}
 		if suite.evmParamsOption != nil {
 			suite.evmParamsOption(&evmGenesis.Params)
@@ -113,7 +106,11 @@ func (suite *AnteTestSuite) SetupTest() {
 		return genesis
 	})
 
-	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{Height: 2, ChainID: testutil.TestnetChainID + "-1", Time: time.Now().UTC()})
+	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
+		Height:  2,
+		ChainID: testutil.TestnetChainID + "-1",
+		Time:    time.Now().UTC(),
+	})
 	suite.ctx = suite.ctx.WithMinGasPrices(sdk.NewDecCoins(sdk.NewDecCoin(evmtypes.DefaultEVMDenom, sdk.OneInt())))
 	suite.ctx = suite.ctx.WithBlockGasMeter(sdk.NewGasMeter(1000000000000000000))
 	suite.app.EvmKeeper.WithChainID(suite.ctx)
@@ -151,6 +148,20 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.anteHandler = anteHandler
 	suite.ethSigner = ethtypes.LatestSignerForChainID(suite.app.EvmKeeper.ChainID())
 
+	// fund signer acc to pay for tx fees
+	amt := sdk.NewInt(int64(math.Pow10(18) * 2))
+	err = testutil.FundAccount(
+		suite.app.BankKeeper,
+		suite.ctx,
+		suite.priv.PubKey().Address().Bytes(),
+		sdk.NewCoins(sdk.NewCoin(testutil.BaseDenom, amt)),
+	)
+	suite.Require().NoError(err)
+
+	header := suite.ctx.BlockHeader()
+	suite.ctx = suite.ctx.WithBlockHeight(header.Height - 1)
+	suite.ctx, err = testutil.Commit(suite.ctx, suite.app, time.Second*0, nil)
+	suite.Require().NoError(err)
 }
 
 func (s *AnteTestSuite) BuildTestEthTx(
@@ -169,21 +180,19 @@ func (s *AnteTestSuite) BuildTestEthTx(
 		common.BytesToAddress(from.Bytes()),
 	)
 
-	ethTxParams := &evmtypes.EvmTxArgs{
-		ChainID:   chainID,
-		Nonce:     nonce,
-		To:        &to,
-		Amount:    amount,
-		GasLimit:  TestGasLimit,
-		GasPrice:  gasPrice,
-		GasFeeCap: gasFeeCap,
-		GasTipCap: gasTipCap,
-		Input:     input,
-		Accesses:  accesses,
-	}
-
-	msgEthereumTx := evmtypes.NewTx(ethTxParams)
-	msgEthereumTx.From = from.String()
+	msgEthereumTx := evmtypes.NewTx(
+		chainID,
+		nonce,
+		&to,
+		amount,
+		TestGasLimit,
+		gasPrice,
+		gasFeeCap,
+		gasTipCap,
+		input,
+		accesses,
+	)
+	msgEthereumTx.From = from.Bytes()
 	return msgEthereumTx
 }
 
@@ -218,7 +227,6 @@ func (suite *AnteTestSuite) CreateTestTxBuilder(
 	err = msg.Sign(suite.ethSigner, tests.NewSigner(priv))
 	suite.Require().NoError(err)
 
-	msg.From = ""
 	err = builder.SetMsgs(msg)
 	suite.Require().NoError(err)
 
@@ -301,7 +309,7 @@ func (suite *AnteTestSuite) CreateTestEIP712MsgCreateValidator(from sdk.AccAddre
 	msgCreate, err := stakingtypes.NewMsgCreateValidator(
 		valAddr,
 		privEd.PubKey(),
-		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20)),
+		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20)),
 		stakingtypes.NewDescription("moniker", "indentity", "website", "security_contract", "details"),
 		stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
 		sdk.OneInt(),
@@ -317,7 +325,7 @@ func (suite *AnteTestSuite) CreateTestEIP712MsgCreateValidator2(from sdk.AccAddr
 	msgCreate, err := stakingtypes.NewMsgCreateValidator(
 		valAddr,
 		privEd.PubKey(),
-		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20)),
+		sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20)),
 		// Ensure optional fields can be left blank
 		stakingtypes.NewDescription("moniker", "indentity", "", "", ""),
 		stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
@@ -436,44 +444,6 @@ func (suite *AnteTestSuite) CreateTestEIP712MultipleSignerMsgs(from sdk.AccAddre
 	msgSend1 := banktypes.NewMsgSend(from, recipient, sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(1))))
 	msgSend2 := banktypes.NewMsgSend(recipient, from, sdk.NewCoins(sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(1))))
 	return suite.CreateTestEIP712CosmosTxBuilder(priv, chainId, gas, gasAmount, []sdk.Msg{msgSend1, msgSend2})
-}
-
-// StdSignBytes returns the bytes to sign for a transaction.
-func StdSignBytes(cdc *codec.LegacyAmino, chainID string, accnum uint64, sequence uint64, timeout uint64, fee legacytx.StdFee, msgs []sdk.Msg, memo string, tip *txtypes.Tip) []byte {
-	msgsBytes := make([]json.RawMessage, 0, len(msgs))
-	for _, msg := range msgs {
-		legacyMsg, ok := msg.(legacytx.LegacyMsg)
-		if !ok {
-			panic(fmt.Errorf("expected %T when using amino JSON", (*legacytx.LegacyMsg)(nil)))
-		}
-
-		msgsBytes = append(msgsBytes, json.RawMessage(legacyMsg.GetSignBytes()))
-	}
-
-	var stdTip *legacytx.StdTip
-	if tip != nil {
-		if tip.Tipper == "" {
-			panic(fmt.Errorf("tipper cannot be empty"))
-		}
-
-		stdTip = &legacytx.StdTip{Amount: tip.Amount, Tipper: tip.Tipper}
-	}
-
-	bz, err := cdc.MarshalJSON(legacytx.StdSignDoc{
-		AccountNumber: accnum,
-		ChainID:       chainID,
-		Fee:           json.RawMessage(fee.Bytes()),
-		Memo:          memo,
-		Msgs:          msgsBytes,
-		Sequence:      sequence,
-		TimeoutHeight: timeout,
-		Tip:           stdTip,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return sdk.MustSortJSON(bz)
 }
 
 func (suite *AnteTestSuite) CreateTestEIP712SingleMessageTxBuilder(
@@ -613,7 +583,7 @@ func (suite *AnteTestSuite) createBaseTxBuilder(msg sdk.Msg, gas uint64) client.
 
 	txBuilder.SetGasLimit(gas)
 	txBuilder.SetFeeAmount(sdk.NewCoins(
-		sdk.NewCoin("maal", sdkmath.NewInt(10000)),
+		sdk.NewCoin("aphoton", sdk.NewInt(10000)),
 	))
 
 	err := txBuilder.SetMsgs(msg)

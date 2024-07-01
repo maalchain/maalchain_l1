@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package types
 
 import (
@@ -90,8 +90,8 @@ func NewParams(
 func DefaultParams() Params {
 	return Params{
 		NoBaseFee:                DefaultNoBaseFee,
-		BaseFeeChangeDenominator: params.BaseFeeChangeDenominator,
-		ElasticityMultiplier:     params.ElasticityMultiplier,
+		BaseFeeChangeDenominator: params.DefaultBaseFeeChangeDenominator,
+		ElasticityMultiplier:     params.DefaultElasticityMultiplier,
 		BaseFee:                  sdkmath.NewIntFromUint64(params.InitialBaseFee),
 		EnableHeight:             DefaultEnableHeight,
 		MinGasPrice:              DefaultMinGasPrice,
@@ -115,6 +115,10 @@ func (p Params) Validate() error {
 
 	if err := validateMinGasMultiplier(p.MinGasMultiplier); err != nil {
 		return err
+	}
+
+	if p.ElasticityMultiplier == 0 {
+		return fmt.Errorf("elasticity multiplier cannot be 0")
 	}
 
 	return validateMinGasPrice(p.MinGasPrice)
@@ -164,9 +168,12 @@ func validateBaseFeeChangeDenominator(i interface{}) error {
 }
 
 func validateElasticityMultiplier(i interface{}) error {
-	_, ok := i.(uint32)
+	value, ok := i.(uint32)
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	if value == 0 {
+		return fmt.Errorf("elasticity multiplier cannot be 0")
 	}
 	return nil
 }

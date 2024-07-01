@@ -5,21 +5,20 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rlp"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"google.golang.org/grpc/metadata"
 )
 
 func (suite *BackendTestSuite) TestResend() {
 	txNonce := (hexutil.Uint64)(1)
-	baseFee := sdkmath.NewInt(1)
+	baseFee := sdk.NewInt(1)
 	gasPrice := new(hexutil.Big)
 	toAddr := tests.GenerateAddress()
 	chainID := (*hexutil.Big)(suite.backend.chainID)
@@ -273,7 +272,7 @@ func (suite *BackendTestSuite) TestResend() {
 func (suite *BackendTestSuite) TestSendRawTransaction() {
 	ethTx, bz := suite.buildEthereumTx()
 	rlpEncodedBz, _ := rlp.EncodeToBytes(ethTx.AsTransaction())
-	cosmosTx, _ := ethTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "maal")
+	cosmosTx, _ := ethTx.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 	txBytes, _ := suite.backend.clientCtx.TxConfig.TxEncoder()(cosmosTx)
 
 	testCases := []struct {
@@ -301,6 +300,8 @@ func (suite *BackendTestSuite) TestSendRawTransaction() {
 			"fail - unprotected transactions",
 			func() {
 				suite.backend.allowUnprotectedTxs = false
+				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
+				RegisterParamsWithoutHeaderError(queryClient, 1)
 			},
 			rlpEncodedBz,
 			common.Hash{},
@@ -423,7 +424,7 @@ func (suite *BackendTestSuite) TestDoCall() {
 			suite.SetupTest() // reset test and queries
 			tc.registerMock()
 
-			msgEthTx, err := suite.backend.DoCall(tc.callArgs, tc.blockNum)
+			msgEthTx, err := suite.backend.DoCall(tc.callArgs, tc.blockNum, nil)
 
 			if tc.expPass {
 				suite.Require().Equal(tc.expEthTx, msgEthTx)
@@ -454,7 +455,7 @@ func (suite *BackendTestSuite) TestGasPrice() {
 				RegisterParams(queryClient, &header, 1)
 				RegisterBlock(client, 1, nil)
 				RegisterBlockResults(client, 1)
-				RegisterBaseFee(queryClient, sdkmath.NewInt(1))
+				RegisterBaseFee(queryClient, sdk.NewInt(1))
 			},
 			defaultGasPrice,
 			true,
@@ -470,7 +471,7 @@ func (suite *BackendTestSuite) TestGasPrice() {
 				RegisterParams(queryClient, &header, 1)
 				RegisterBlock(client, 1, nil)
 				RegisterBlockResults(client, 1)
-				RegisterBaseFee(queryClient, sdkmath.NewInt(1))
+				RegisterBaseFee(queryClient, sdk.NewInt(1))
 			},
 			defaultGasPrice,
 			false,

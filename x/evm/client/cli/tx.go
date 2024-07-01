@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package cli
 
 import (
@@ -27,8 +27,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/evm/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -51,22 +52,27 @@ func NewRawTxCmd() *cobra.Command {
 		Short: "Build cosmos transaction from raw ethereum transaction",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
 			data, err := hexutil.Decode(args[0])
 			if err != nil {
 				return errors.Wrap(err, "failed to decode ethereum tx hex bytes")
 			}
 
+			eip155ChainID, err := ethermint.ParseChainID(clientCtx.ChainID)
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgEthereumTx{}
-			if err := msg.UnmarshalBinary(data); err != nil {
+			if err := msg.UnmarshalBinary(data, eip155ChainID); err != nil {
 				return err
 			}
 
 			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
 				return err
 			}
 

@@ -12,38 +12,66 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	ethlog "github.com/ethereum/go-ethereum/log"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
-	"github.com/maalchain/maalchain_l1/rpc"
-
-	"github.com/maalchain/maalchain_l1/server/config"
-	ethermint "github.com/maalchain/maalchain_l1/types"
+	"github.com/evmos/ethermint/app/ante"
+	"github.com/evmos/ethermint/rpc"
+	"github.com/evmos/ethermint/rpc/stream"
+	"github.com/evmos/ethermint/server/config"
+	ethermint "github.com/evmos/ethermint/types"
 )
+
+const MaxRetry = 6
+
+type AppWithPendingTxStream interface {
+	RegisterPendingTxListener(listener ante.PendingTxListener)
+}
 
 // StartJSONRPC starts the JSON-RPC server
 func StartJSONRPC(ctx *server.Context,
 	clientCtx client.Context,
-	tmRPCAddr,
-	tmEndpoint string,
 	config *config.Config,
 	indexer ethermint.EVMTxIndexer,
+	app AppWithPendingTxStream,
 ) (*http.Server, chan struct{}, error) {
-	tmWsClient := ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
-
 	logger := ctx.Logger.With("module", "geth")
+
+	evtClient, ok := clientCtx.Client.(rpcclient.EventsClient)
+	if !ok {
+		return nil, nil, fmt.Errorf("client %T does not implement EventsClient", clientCtx.Client)
+	}
+
+	var rpcStream *stream.RPCStream
+	var err error
+	for i := 0; i < MaxRetry; i++ {
+		rpcStream, err = stream.NewRPCStreams(evtClient, logger, clientCtx.TxConfig.TxDecoder())
+		if err == nil {
+			break
+		}
+		time.Sleep(time.Second)
+	}
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create rpc streams: %w", err)
+	}
+
+	app.RegisterPendingTxListener(rpcStream.ListenPendingTx)
+
 	ethlog.Root().SetHandler(ethlog.FuncHandler(func(r *ethlog.Record) error {
 		switch r.Lvl {
 		case ethlog.LvlTrace, ethlog.LvlDebug:
@@ -61,7 +89,7 @@ func StartJSONRPC(ctx *server.Context,
 	allowUnprotectedTxs := config.JSONRPC.AllowUnprotectedTxs
 	rpcAPIArr := config.JSONRPC.API
 
-	apis := rpc.GetRPCAPIs(ctx, clientCtx, tmWsClient, allowUnprotectedTxs, indexer, rpcAPIArr)
+	apis := rpc.GetRPCAPIs(ctx, clientCtx, rpcStream, allowUnprotectedTxs, indexer, rpcAPIArr)
 
 	for _, api := range apis {
 		if err := rpcServer.RegisterName(api.Namespace, api.Service); err != nil {
@@ -120,9 +148,7 @@ func StartJSONRPC(ctx *server.Context,
 
 	ctx.Logger.Info("Starting JSON WebSocket server", "address", config.JSONRPC.WsAddress)
 
-	// allocate separate WS connection to Tendermint
-	tmWsClient = ConnectTmWS(tmRPCAddr, tmEndpoint, ctx.Logger)
-	wsSrv := rpc.NewWebsocketsServer(clientCtx, ctx.Logger, tmWsClient, config)
+	wsSrv := rpc.NewWebsocketsServer(clientCtx, ctx.Logger, rpcStream, config)
 	wsSrv.Start()
 	return httpSrv, httpSrvDone, nil
 }

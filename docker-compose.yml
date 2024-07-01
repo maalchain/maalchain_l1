@@ -1,9 +1,9 @@
 version: "3"
 
 services:
-  maalchaindnode0:
-    container_name: maalchaindnode0
-    image: "maalchaind/node"
+  ethermintdnode0:
+    container_name: ethermintdnode0
+    image: "ethermintd/node"
     ports:
       - "26657:26657"
       - "8545:8545"
@@ -11,16 +11,16 @@ services:
       - "8125:8125"
     environment:
       - ID=0
-      - LOG=${LOG:-maalchaind.log}
+      - LOG=${LOG:-ethermintd.log}
     volumes:
-      - ./localnet-setup/node0/maalchaind:/ethermint:Z
+      - ./localnet-setup/node0/ethermintd:/ethermint:Z
     networks:
       - localnet
     entrypoint: "bash start-docker.sh"
 
-  maalchaindnode1:
-    container_name: maalchaindnode1
-    image: "maalchaind/node"
+  ethermintdnode1:
+    container_name: ethermintdnode1
+    image: "ethermintd/node"
     ports:
       - "26658:26657"
       - "8555:8545"
@@ -28,43 +28,43 @@ services:
       - "8126:8125"
     environment:
       - ID=1
-      - LOG=${LOG:-maalchaind.log}
+      - LOG=${LOG:-ethermintd.log}
     volumes:
-      - ./localnet-setup/node1/maalchaind:/ethermint:Z
+      - ./localnet-setup/node1/ethermintd:/ethermint:Z
     networks:
       - localnet
     entrypoint: "bash start-docker.sh"
 
-  maalchaindnode2:
-    container_name: maalchaindnode2
-    image: "maalchaind/node"
+  ethermintdnode2:
+    container_name: ethermintdnode2
+    image: "ethermintd/node"
     environment:
       - ID=2
-      - LOG=${LOG:-maalchaind.log}
+      - LOG=${LOG:-ethermintd.log}
     ports:
       - "26659:26657"
       - "8565:8545"
       - "8566:8546"
       - "8127:8125"
     volumes:
-      - ./localnet-setup/node2/maalchaind:/ethermint:Z
+      - ./localnet-setup/node2/ethermintd:/ethermint:Z
     networks:
       - localnet
     entrypoint: "bash start-docker.sh"
 
-  maalchaindnode3:
-    container_name: maalchaindnode3
-    image: "maalchaind/node"
+  ethermintdnode3:
+    container_name: ethermintdnode3
+    image: "ethermintd/node"
     environment:
       - ID=3
-      - LOG=${LOG:-maalchaind.log}
+      - LOG=${LOG:-ethermintd.log}
     ports:
       - "26660:26657"
       - "8575:8545"
       - "8576:8546"
       - "8128:8125"
     volumes:
-      - ./localnet-setup/node3/maalchaind:/ethermint:Z
+      - ./localnet-setup/node3/ethermintd:/ethermint:Z
     networks:
       - localnet
     entrypoint: "bash start-docker.sh"

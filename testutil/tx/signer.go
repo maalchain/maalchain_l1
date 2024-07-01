@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package tx
 
 import (
@@ -21,39 +21,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 )
 
 var _ keyring.Signer = &Signer{}
-
-// NewAddrKey generates an Ethereum address and its corresponding private key.
-func NewAddrKey() (common.Address, *ethsecp256k1.PrivKey) {
-	privkey, _ := ethsecp256k1.GenerateKey()
-	key, err := privkey.ToECDSA()
-	if err != nil {
-		return common.Address{}, nil
-	}
-
-	addr := crypto.PubkeyToAddress(key.PublicKey)
-
-	return addr, privkey
-}
-
-// NewAccAddressAndKey generates a private key and its corresponding
-// Cosmos SDK address.
-func NewAccAddressAndKey() (sdk.AccAddress, *ethsecp256k1.PrivKey) {
-	addr, privKey := NewAddrKey()
-	return sdk.AccAddress(addr.Bytes()), privKey
-}
-
-// GenerateAddress generates an Ethereum address.
-func GenerateAddress() common.Address {
-	addr, _ := NewAddrKey()
-	return addr
-}
 
 // Signer defines a type that is used on testing for signing MsgEthereumTx
 type Signer struct {

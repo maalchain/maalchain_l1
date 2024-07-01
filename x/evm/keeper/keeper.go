@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package keeper
 
 import (
@@ -31,10 +31,13 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/params"
 
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	"github.com/maalchain/maalchain_l1/x/evm/statedb"
-	"github.com/maalchain/maalchain_l1/x/evm/types"
+	ethermint "github.com/evmos/ethermint/types"
+	"github.com/evmos/ethermint/x/evm/statedb"
+	"github.com/evmos/ethermint/x/evm/types"
 )
+
+// CustomContractFn defines a custom precompiled contract generator with ctx, rules and returns a precompiled contract.
+type CustomContractFn func(sdk.Context, params.Rules) vm.PrecompiledContract
 
 // Keeper grants access to the EVM module state and implements the go-ethereum StateDB interface.
 type Keeper struct {
@@ -43,8 +46,7 @@ type Keeper struct {
 	// Store key required for the EVM Prefix KVStore. It is required by:
 	// - storing account's Storage State
 	// - storing account's Code
-	// - storing transaction Logs
-	// - storing Bloom filters by block height. Needed for the Web3 API.
+	// - storing module parameters
 	storeKey storetypes.StoreKey
 
 	// key to access the transient store, which is reset on every block during Commit
@@ -71,7 +73,12 @@ type Keeper struct {
 	hooks types.EvmHooks
 
 	// Legacy subspace
-	ss paramstypes.Subspace
+	ss                paramstypes.Subspace
+	customContractFns []CustomContractFn
+
+	// a set of store keys that should cover all the precompile use cases,
+	// or ideally just pass the application's all stores.
+	keys map[string]storetypes.StoreKey
 }
 
 // NewKeeper generates new evm module keeper
@@ -85,6 +92,8 @@ func NewKeeper(
 	fmk types.FeeMarketKeeper,
 	tracer string,
 	ss paramstypes.Subspace,
+	customContractFns []CustomContractFn,
+	keys map[string]storetypes.StoreKey,
 ) *Keeper {
 	// ensure evm module account is set
 	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
@@ -98,17 +107,23 @@ func NewKeeper(
 
 	// NOTE: we pass in the parameter space to the CommitStateDB in order to use custom denominations for the EVM operations
 	return &Keeper{
-		cdc:             cdc,
-		authority:       authority,
-		accountKeeper:   ak,
-		bankKeeper:      bankKeeper,
-		stakingKeeper:   sk,
-		feeMarketKeeper: fmk,
-		storeKey:        storeKey,
-		transientKey:    transientKey,
-		tracer:          tracer,
-		ss:              ss,
+		cdc:               cdc,
+		authority:         authority,
+		accountKeeper:     ak,
+		bankKeeper:        bankKeeper,
+		stakingKeeper:     sk,
+		feeMarketKeeper:   fmk,
+		storeKey:          storeKey,
+		transientKey:      transientKey,
+		tracer:            tracer,
+		ss:                ss,
+		customContractFns: customContractFns,
+		keys:              keys,
 	}
+}
+
+func (k Keeper) StoreKeys() map[string]storetypes.StoreKey {
+	return k.keys
 }
 
 // Logger returns a module-specific logger.
@@ -249,13 +264,6 @@ func (k *Keeper) SetHooks(eh types.EvmHooks) *Keeper {
 	return k
 }
 
-// CleanHooks resets the hooks for the EVM module
-// NOTE: Should only be used for testing purposes
-func (k *Keeper) CleanHooks() *Keeper {
-	k.hooks = nil
-	return k
-}
-
 // PostTxProcessing delegate the call to the hooks. If no hook has been registered, this function returns with a `nil` error
 func (k *Keeper) PostTxProcessing(ctx sdk.Context, msg core.Message, receipt *ethtypes.Receipt) error {
 	if k.hooks == nil {
@@ -266,12 +274,12 @@ func (k *Keeper) PostTxProcessing(ctx sdk.Context, msg core.Message, receipt *et
 
 // Tracer return a default vm.Tracer based on current keeper state
 func (k Keeper) Tracer(ctx sdk.Context, msg core.Message, ethCfg *params.ChainConfig) vm.EVMLogger {
-	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight())
+	return types.NewTracer(k.tracer, msg, ethCfg, ctx.BlockHeight(), ctx.BlockHeader().Time.Unix())
 }
 
-// GetAccountWithoutBalance load nonce and codehash without balance,
+// GetAccount load nonce and codehash without balance,
 // more efficient in cases where balance is not needed.
-func (k *Keeper) GetAccountWithoutBalance(ctx sdk.Context, addr common.Address) *statedb.Account {
+func (k *Keeper) GetAccount(ctx sdk.Context, addr common.Address) *statedb.Account {
 	cosmosAddr := sdk.AccAddress(addr.Bytes())
 	acct := k.accountKeeper.GetAccount(ctx, cosmosAddr)
 	if acct == nil {
@@ -299,7 +307,6 @@ func (k *Keeper) GetAccountOrEmpty(ctx sdk.Context, addr common.Address) statedb
 
 	// empty account
 	return statedb.Account{
-		Balance:  new(big.Int),
 		CodeHash: types.EmptyCodeHash,
 	}
 }
@@ -315,21 +322,21 @@ func (k *Keeper) GetNonce(ctx sdk.Context, addr common.Address) uint64 {
 	return acct.GetSequence()
 }
 
-// GetBalance load account's balance of gas token
-func (k *Keeper) GetBalance(ctx sdk.Context, addr common.Address) *big.Int {
+// GetEVMDenomBalance returns the balance of evm denom
+func (k *Keeper) GetEVMDenomBalance(ctx sdk.Context, addr common.Address) *big.Int {
 	cosmosAddr := sdk.AccAddress(addr.Bytes())
-	acct := k.accountKeeper.GetAccount(ctx, cosmosAddr)
-	if acct == nil {
-		return big.NewInt(0)
-	}
 	evmParams := k.GetParams(ctx)
 	evmDenom := evmParams.GetEvmDenom()
 	// if node is pruned, params is empty. Return invalid value
 	if evmDenom == "" {
 		return big.NewInt(-1)
 	}
-	coin := k.bankKeeper.GetBalance(ctx, acct.GetAddress(), evmDenom)
-	return coin.Amount.BigInt()
+	return k.GetBalance(ctx, cosmosAddr, evmDenom)
+}
+
+// GetBalance load account's balance of specified denom
+func (k *Keeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) *big.Int {
+	return k.bankKeeper.GetBalance(ctx, addr, denom).Amount.BigInt()
 }
 
 // GetBaseFee returns current base fee, return values:

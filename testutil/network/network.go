@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package network
 
 import (
@@ -37,14 +37,12 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cometbft/cometbft/node"
-	tmclient "github.com/cometbft/cometbft/rpc/client"
+	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
-	"cosmossdk.io/simapp"
-	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -64,14 +62,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/maalchain/maalchain_l1/crypto/hd"
-	"github.com/maalchain/maalchain_l1/encoding"
-	"github.com/maalchain/maalchain_l1/server/config"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/crypto/hd"
+	"github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/server/config"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	"github.com/maalchain/maalchain_l1/app"
+	"github.com/evmos/ethermint/app"
 )
 
 // network lock to only allow one test network at a time
@@ -82,17 +80,13 @@ var lock = new(sync.Mutex)
 type AppConstructor = func(val Validator) servertypes.Application
 
 // NewAppConstructor returns a new simapp AppConstructor
-func NewAppConstructor(encodingCfg params.EncodingConfig, chainID string) AppConstructor {
+func NewAppConstructor(chainID string) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.NewEthermintApp(
 			val.Ctx.Logger,
 			dbm.NewMemDB(),
 			nil,
 			true,
-			make(map[int64]bool),
-			val.Ctx.Config.RootDir,
-			0,
-			encodingCfg,
 			simtestutil.NewAppOptionsWithFlagHome(val.Ctx.Config.RootDir),
 			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
@@ -110,25 +104,25 @@ type Config struct {
 	InterfaceRegistry codectypes.InterfaceRegistry
 	TxConfig          client.TxConfig
 	AccountRetriever  client.AccountRetriever
-	AppConstructor    AppConstructor      // the ABCI application constructor
-	GenesisState      simapp.GenesisState // custom gensis state to provide
-	TimeoutCommit     time.Duration       // the consensus commitment timeout
-	AccountTokens     sdkmath.Int         // the amount of unique validator tokens (e.g. 1000node0)
-	StakingTokens     sdkmath.Int         // the amount of tokens each validator has available to stake
-	BondedTokens      sdkmath.Int         // the amount of tokens each validator stakes
-	NumValidators     int                 // the total number of validators to create and bond
-	ChainID           string              // the network chain-id
-	BondDenom         string              // the staking bond denomination
-	MinGasPrices      string              // the minimum gas prices each validator will accept
-	PruningStrategy   string              // the pruning strategy each validator will have
-	SigningAlgo       string              // signing algorithm for keys
-	RPCAddress        string              // RPC listen address (including port)
-	JSONRPCAddress    string              // JSON-RPC listen address (including port)
-	APIAddress        string              // REST API listen address (including port)
-	GRPCAddress       string              // GRPC server listen address (including port)
-	EnableTMLogging   bool                // enable Tendermint logging to STDOUT
-	CleanupDir        bool                // remove base temporary directory during cleanup
-	PrintMnemonic     bool                // print the mnemonic of first validator as log output for testing
+	AppConstructor    AppConstructor   // the ABCI application constructor
+	GenesisState      app.GenesisState // custom gensis state to provide
+	TimeoutCommit     time.Duration    // the consensus commitment timeout
+	AccountTokens     sdkmath.Int      // the amount of unique validator tokens (e.g. 1000node0)
+	StakingTokens     sdkmath.Int      // the amount of tokens each validator has available to stake
+	BondedTokens      sdkmath.Int      // the amount of tokens each validator stakes
+	NumValidators     int              // the total number of validators to create and bond
+	ChainID           string           // the network chain-id
+	BondDenom         string           // the staking bond denomination
+	MinGasPrices      string           // the minimum gas prices each validator will accept
+	PruningStrategy   string           // the pruning strategy each validator will have
+	SigningAlgo       string           // signing algorithm for keys
+	RPCAddress        string           // RPC listen address (including port)
+	JSONRPCAddress    string           // JSON-RPC listen address (including port)
+	APIAddress        string           // REST API listen address (including port)
+	GRPCAddress       string           // GRPC server listen address (including port)
+	EnableTMLogging   bool             // enable Tendermint logging to STDOUT
+	CleanupDir        bool             // remove base temporary directory during cleanup
+	PrintMnemonic     bool             // print the mnemonic of first validator as log output for testing
 }
 
 // DefaultConfig returns a sane default configuration suitable for nearly all
@@ -136,14 +130,13 @@ type Config struct {
 func DefaultConfig() Config {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
 	chainID := fmt.Sprintf("ethermint_%d-1", tmrand.Int63n(9999999999999)+1)
-
 	return Config{
 		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(encCfg, chainID),
+		AppConstructor:    NewAppConstructor(chainID),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Codec),
 		TimeoutCommit:     2 * time.Second,
 		ChainID:           chainID,
@@ -196,7 +189,7 @@ type (
 		P2PAddress    string
 		Address       sdk.AccAddress
 		ValAddress    sdk.ValAddress
-		RPCClient     tmclient.Client
+		RPCClient     tmrpcclient.Client
 		JSONRPCClient *ethclient.Client
 
 		tmNode      *node.Node
@@ -356,8 +349,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		ctx.Logger = logger
 
 		nodeDirName := fmt.Sprintf("node%d", i)
-		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "maalchaind")
-		clientDir := filepath.Join(network.BaseDir, nodeDirName, "ethermintcli")
+		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "evmosd")
+		clientDir := filepath.Join(network.BaseDir, nodeDirName, "evmoscli")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o750)

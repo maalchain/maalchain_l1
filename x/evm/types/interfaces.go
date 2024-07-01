@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package types
 
 import (
@@ -26,7 +26,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 )
 
 // AccountKeeper defines the expected account keeper interface
@@ -49,6 +49,8 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
+	IsSendEnabledCoins(ctx sdk.Context, coins ...sdk.Coin) error
+	BlockedAddr(addr sdk.AccAddress) bool
 }
 
 // StakingKeeper returns the historical headers kept in store.

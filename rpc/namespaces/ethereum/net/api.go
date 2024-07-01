@@ -12,22 +12,22 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package net
 
 import (
 	"context"
 	"fmt"
 
-	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	"github.com/cosmos/cosmos-sdk/client"
-	ethermint "github.com/maalchain/maalchain_l1/types"
+	ethermint "github.com/evmos/ethermint/types"
 )
 
 // PublicAPI is the eth_ prefixed set of APIs in the Web3 JSON-RPC spec.
 type PublicAPI struct {
 	networkVersion uint64
-	tmClient       rpcclient.Client
+	tmRPCClient    tmrpcclient.Client
 }
 
 // NewPublicAPI creates an instance of the public Net Web3 API.
@@ -40,7 +40,7 @@ func NewPublicAPI(clientCtx client.Context) *PublicAPI {
 
 	return &PublicAPI{
 		networkVersion: chainIDEpoch.Uint64(),
-		tmClient:       clientCtx.Client.(rpcclient.Client),
+		tmRPCClient:    clientCtx.Client.(tmrpcclient.Client),
 	}
 }
 
@@ -52,7 +52,7 @@ func (s *PublicAPI) Version() string {
 // Listening returns if client is actively listening for network connections.
 func (s *PublicAPI) Listening() bool {
 	ctx := context.Background()
-	netInfo, err := s.tmClient.NetInfo(ctx)
+	netInfo, err := s.tmRPCClient.NetInfo(ctx)
 	if err != nil {
 		return false
 	}
@@ -62,7 +62,7 @@ func (s *PublicAPI) Listening() bool {
 // PeerCount returns the number of peers currently connected to the client.
 func (s *PublicAPI) PeerCount() int {
 	ctx := context.Background()
-	netInfo, err := s.tmClient.NetInfo(ctx)
+	netInfo, err := s.tmRPCClient.NetInfo(ctx)
 	if err != nil {
 		return 0
 	}

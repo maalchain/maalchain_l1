@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package ante
 
 import (
@@ -28,8 +28,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 )
 
 const (
@@ -52,6 +53,19 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 
 		defer Recover(ctx.Logger(), &err)
 
+		// disable vesting message types
+		for _, msg := range tx.GetMsgs() {
+			switch msg.(type) {
+			case *vestingtypes.MsgCreateVestingAccount,
+				*vestingtypes.MsgCreatePeriodicVestingAccount,
+				*vestingtypes.MsgCreatePermanentLockedAccount:
+				return ctx, errorsmod.Wrapf(
+					errortypes.ErrInvalidRequest,
+					"vesting messages are not supported",
+				)
+			}
+		}
+
 		txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx)
 		if ok {
 			opts := txWithExtensions.GetExtensionOptions()
@@ -59,13 +73,13 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 				switch typeURL := opts[0].GetTypeUrl(); typeURL {
 				case "/ethermint.evm.v1.ExtensionOptionsEthereumTx":
 					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = newEthAnteHandler(options)
+					anteHandler = newEthAnteHandler(ctx, options, options.ExtraDecorators...)
 				case "/ethermint.types.v1.ExtensionOptionsWeb3Tx":
 					// Deprecated: Handle as normal Cosmos SDK tx, except signature is checked for Legacy EIP712 representation
-					anteHandler = NewLegacyCosmosAnteHandlerEip712(options)
+					anteHandler = NewLegacyCosmosAnteHandlerEip712(ctx, options, options.ExtraDecorators...)
 				case "/ethermint.types.v1.ExtensionOptionDynamicFeeTx":
 					// cosmos-sdk tx with dynamic fee extension
-					anteHandler = newCosmosAnteHandler(options)
+					anteHandler = newCosmosAnteHandler(ctx, options, options.ExtraDecorators...)
 				default:
 					return ctx, errorsmod.Wrapf(
 						errortypes.ErrUnknownExtensionOptions,
@@ -80,7 +94,7 @@ func NewAnteHandler(options HandlerOptions) (sdk.AnteHandler, error) {
 		// handle as totally normal Cosmos SDK tx
 		switch tx.(type) {
 		case sdk.Tx:
-			anteHandler = newCosmosAnteHandler(options)
+			anteHandler = newCosmosAnteHandler(ctx, options, options.ExtraDecorators...)
 		default:
 			return ctx, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid transaction type: %T", tx)
 		}

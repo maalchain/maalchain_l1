@@ -12,12 +12,11 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package keeper
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -31,7 +30,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/x/evm/types"
 )
 
 var _ types.MsgServer = &Keeper{}
@@ -43,7 +42,6 @@ var _ types.MsgServer = &Keeper{}
 func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*types.MsgEthereumTxResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	sender := msg.From
 	tx := msg.AsTransaction()
 	txIndex := k.GetTxIndexTransient(ctx)
 
@@ -56,7 +54,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 		labels = append(labels, telemetry.NewLabel("execution", "call"))
 	}
 
-	response, err := k.ApplyTransaction(ctx, tx)
+	response, err := k.ApplyTransaction(ctx, msg)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "failed to apply transaction")
 	}
@@ -106,20 +104,11 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 	}
 
 	if to := tx.To(); to != nil {
-		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyRecipient, to.Hex()))
+		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyRecipient, types.HexAddress(to.Bytes())))
 	}
 
 	if response.Failed() {
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyEthereumTxFailed, response.VmError))
-	}
-
-	txLogAttrs := make([]sdk.Attribute, len(response.Logs))
-	for i, log := range response.Logs {
-		value, err := json.Marshal(log)
-		if err != nil {
-			return nil, errorsmod.Wrap(err, "failed to encode log")
-		}
-		txLogAttrs[i] = sdk.NewAttribute(types.AttributeKeyTxLog, string(value))
 	}
 
 	// emit events
@@ -129,14 +118,10 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 			attrs...,
 		),
 		sdk.NewEvent(
-			types.EventTypeTxLog,
-			txLogAttrs...,
-		),
-		sdk.NewEvent(
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, sender),
-			sdk.NewAttribute(types.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
+			sdk.NewAttribute(sdk.AttributeKeySender, types.HexAddress(msg.From)),
+			sdk.NewAttribute(types.AttributeKeyTxType, strconv.Itoa(int(tx.Type()))),
 		),
 	})
 

@@ -7,9 +7,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/maalchain/maalchain_l1/app/ante"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app/ante"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 var execTypes = []struct {
@@ -21,11 +21,11 @@ var execTypes = []struct {
 	{"deliverTxSimulate", false, true},
 }
 
-func (s AnteTestSuite) TestMinGasPriceDecorator() {
+func (s *AnteTestSuite) TestMinGasPriceDecorator() {
 	denom := evmtypes.DefaultEVMDenom
 	testMsg := banktypes.MsgSend{
-		FromAddress: "ethm1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0pjdfspt",
-		ToAddress:   "ethm1dx67l23hz9l0k9hcher8xz04uj7wf3yun4qxae",
+		FromAddress: "evmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
+		ToAddress:   "evmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
 		Amount:      sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
 	}
 
@@ -108,7 +108,7 @@ func (s AnteTestSuite) TestMinGasPriceDecorator() {
 				params.MinGasPrice = sdk.NewDec(10)
 				s.app.FeeMarketKeeper.SetParams(s.ctx, params)
 
-				txBuilder := s.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), "maal", &testMsg)
+				txBuilder := s.CreateTestCosmosTxBuilder(sdkmath.NewInt(10), "stake", &testMsg)
 				return txBuilder.GetTx()
 			},
 			false,
@@ -122,7 +122,7 @@ func (s AnteTestSuite) TestMinGasPriceDecorator() {
 			s.Run(et.name+"_"+tc.name, func() {
 				// s.SetupTest(et.isCheckTx)
 				ctx := s.ctx.WithIsReCheckTx(et.isCheckTx)
-				dec := ante.NewMinGasPriceDecorator(s.app.FeeMarketKeeper, s.app.EvmKeeper)
+				dec := ante.NewMinGasPriceDecorator(s.app.FeeMarketKeeper, evmtypes.DefaultEVMDenom)
 				_, err := dec.AnteHandle(ctx, tc.malleate(), et.simulate, NextFn)
 
 				if tc.expPass || (et.simulate && tc.allowPassOnSimulate) {
@@ -136,7 +136,7 @@ func (s AnteTestSuite) TestMinGasPriceDecorator() {
 	}
 }
 
-func (s AnteTestSuite) TestEthMinGasPriceDecorator() {
+func (s *AnteTestSuite) TestEthMinGasPriceDecorator() {
 	denom := evmtypes.DefaultEVMDenom
 	from, privKey := tests.NewAddrKey()
 	to := tests.GenerateAddress()
@@ -166,8 +166,8 @@ func (s AnteTestSuite) TestEthMinGasPriceDecorator() {
 				params.MinGasPrice = sdk.NewDec(10)
 				s.app.FeeMarketKeeper.SetParams(s.ctx, params)
 				testMsg := banktypes.MsgSend{
-					FromAddress: "ethm1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0pjdfspt",
-					ToAddress:   "ethm1dx67l23hz9l0k9hcher8xz04uj7wf3yun4qxae",
+					FromAddress: "evmos1x8fhpj9nmhqk8z9kpgjt95ck2xwyue0ptzkucp",
+					ToAddress:   "evmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
 					Amount:      sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
 				}
 				txBuilder := s.CreateTestCosmosTxBuilder(sdkmath.NewInt(0), denom, &testMsg)
@@ -332,8 +332,16 @@ func (s AnteTestSuite) TestEthMinGasPriceDecorator() {
 			s.Run(et.name+"_"+tc.name, func() {
 				// s.SetupTest(et.isCheckTx)
 				s.SetupTest()
-				dec := ante.NewEthMinGasPriceDecorator(s.app.FeeMarketKeeper, s.app.EvmKeeper)
-				_, err := dec.AnteHandle(s.ctx, tc.malleate(), et.simulate, NextFn)
+				tx := tc.malleate()
+
+				evmParams := s.app.EvmKeeper.GetParams(s.ctx)
+				chainID := s.app.EvmKeeper.ChainID()
+				chainCfg := evmParams.GetChainConfig()
+				ethCfg := chainCfg.EthereumConfig(chainID)
+				baseFee := s.app.EvmKeeper.GetBaseFee(s.ctx, ethCfg)
+
+				dec := ante.NewEthMinGasPriceDecorator(s.app.FeeMarketKeeper, baseFee)
+				_, err := dec.AnteHandle(s.ctx, tx, et.simulate, NextFn)
 
 				if tc.expPass {
 					s.Require().NoError(err, tc.name)
@@ -346,6 +354,6 @@ func (s AnteTestSuite) TestEthMinGasPriceDecorator() {
 	}
 }
 
-func (suite AnteTestSuite) TestEthMempoolFeeDecorator() {
+func (suite *AnteTestSuite) TestEthMempoolFeeDecorator() {
 	// TODO: add test
 }

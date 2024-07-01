@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/cometbft/cometbft/abci/types"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -16,10 +14,10 @@ import (
 	"github.com/ethereum/go-ethereum/trie"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	ethrpc "github.com/maalchain/maalchain_l1/rpc/types"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	ethrpc "github.com/evmos/ethermint/rpc/types"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 func (suite *BackendTestSuite) TestBlockNumber() {
@@ -95,7 +93,7 @@ func (suite *BackendTestSuite) TestGetBlockByNumber() {
 		validator    sdk.AccAddress
 		tx           *evmtypes.MsgEthereumTx
 		txBz         []byte
-		registerMock func(ethrpc.BlockNumber, sdkmath.Int, sdk.AccAddress, []byte)
+		registerMock func(ethrpc.BlockNumber, sdk.Int, sdk.AccAddress, []byte)
 		expNoop      bool
 		expPass      bool
 	}{
@@ -103,11 +101,11 @@ func (suite *BackendTestSuite) TestGetBlockByNumber() {
 			"pass - tendermint block not found",
 			ethrpc.BlockNumber(1),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(blockNum ethrpc.BlockNumber, _ sdkmath.Int, _ sdk.AccAddress, _ []byte) {
+			func(blockNum ethrpc.BlockNumber, _ sdk.Int, _ sdk.AccAddress, _ []byte) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockError(client, height)
@@ -119,11 +117,11 @@ func (suite *BackendTestSuite) TestGetBlockByNumber() {
 			"pass - block not found (e.g. request block height that is greater than current one)",
 			ethrpc.BlockNumber(1),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlockNotFound(client, height)
@@ -135,11 +133,11 @@ func (suite *BackendTestSuite) TestGetBlockByNumber() {
 			"pass - block results error",
 			ethrpc.BlockNumber(1),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlock(client, height, txBz)
@@ -152,11 +150,11 @@ func (suite *BackendTestSuite) TestGetBlockByNumber() {
 			"pass - without tx",
 			ethrpc.BlockNumber(1),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlock(client, height, txBz)
@@ -174,11 +172,11 @@ func (suite *BackendTestSuite) TestGetBlockByNumber() {
 			"pass - with tx",
 			ethrpc.BlockNumber(1),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			msgEthereumTx,
 			bz,
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlock(client, height, txBz)
@@ -240,7 +238,7 @@ func (suite *BackendTestSuite) TestGetBlockByHash() {
 		validator    sdk.AccAddress
 		tx           *evmtypes.MsgEthereumTx
 		txBz         []byte
-		registerMock func(common.Hash, sdkmath.Int, sdk.AccAddress, []byte)
+		registerMock func(common.Hash, sdk.Int, sdk.AccAddress, []byte)
 		expNoop      bool
 		expPass      bool
 	}{
@@ -248,11 +246,11 @@ func (suite *BackendTestSuite) TestGetBlockByHash() {
 			"fail - tendermint failed to get block",
 			common.BytesToHash(block.Hash()),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(hash common.Hash, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(hash common.Hash, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockByHashError(client, hash, txBz)
 			},
@@ -263,11 +261,11 @@ func (suite *BackendTestSuite) TestGetBlockByHash() {
 			"noop - tendermint blockres not found",
 			common.BytesToHash(block.Hash()),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(hash common.Hash, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(hash common.Hash, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockByHashNotFound(client, hash, txBz)
 			},
@@ -278,11 +276,11 @@ func (suite *BackendTestSuite) TestGetBlockByHash() {
 			"noop - tendermint failed to fetch block result",
 			common.BytesToHash(block.Hash()),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(hash common.Hash, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(hash common.Hash, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlockByHash(client, hash, txBz)
@@ -296,11 +294,11 @@ func (suite *BackendTestSuite) TestGetBlockByHash() {
 			"pass - without tx",
 			common.BytesToHash(block.Hash()),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			nil,
 			nil,
-			func(hash common.Hash, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(hash common.Hash, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlockByHash(client, hash, txBz)
@@ -319,11 +317,11 @@ func (suite *BackendTestSuite) TestGetBlockByHash() {
 			"pass - with tx",
 			common.BytesToHash(block.Hash()),
 			true,
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			msgEthereumTx,
 			bz,
-			func(hash common.Hash, baseFee sdkmath.Int, validator sdk.AccAddress, txBz []byte) {
+			func(hash common.Hash, baseFee sdk.Int, validator sdk.AccAddress, txBz []byte) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				resBlock, _ = RegisterBlockByHash(client, hash, txBz)
@@ -887,13 +885,13 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 		resBlock     *tmrpctypes.ResultBlock
 		blockRes     *tmrpctypes.ResultBlockResults
 		fullTx       bool
-		registerMock func(sdkmath.Int, sdk.AccAddress, int64)
+		registerMock func(sdk.Int, sdk.AccAddress, int64)
 		expTxs       bool
 		expPass      bool
 	}{
 		{
 			"pass - block without tx",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(common.Address{}.Bytes()),
 			int64(1),
 			&tmrpctypes.ResultBlock{Block: emptyBlock},
@@ -902,7 +900,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
 			false,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 				RegisterValidatorAccount(queryClient, validator)
@@ -926,7 +924,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
 			true,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFeeError(queryClient)
 				RegisterValidatorAccount(queryClient, validator)
@@ -939,7 +937,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 		},
 		{
 			"pass - block with tx - with ValidatorAccount error",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(common.Address{}.Bytes()),
 			int64(1),
 			&tmrpctypes.ResultBlock{
@@ -950,7 +948,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
 			true,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 				RegisterValidatorAccountError(queryClient)
@@ -963,7 +961,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 		},
 		{
 			"pass - block with tx - with ConsensusParams error - BlockMaxGas defaults to max uint32",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			int64(1),
 			&tmrpctypes.ResultBlock{
@@ -974,7 +972,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
 			true,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 				RegisterValidatorAccount(queryClient, validator)
@@ -987,7 +985,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 		},
 		{
 			"pass - block with tx - with ShouldIgnoreGasUsed - empty txs",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			int64(1),
 			&tmrpctypes.ResultBlock{
@@ -1004,7 +1002,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				},
 			},
 			true,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 				RegisterValidatorAccount(queryClient, validator)
@@ -1017,7 +1015,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 		},
 		{
 			"pass - block with tx - non fullTx",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			int64(1),
 			&tmrpctypes.ResultBlock{
@@ -1028,7 +1026,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
 			false,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 				RegisterValidatorAccount(queryClient, validator)
@@ -1041,7 +1039,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 		},
 		{
 			"pass - block with tx",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			sdk.AccAddress(tests.GenerateAddress().Bytes()),
 			int64(1),
 			&tmrpctypes.ResultBlock{
@@ -1052,7 +1050,7 @@ func (suite *BackendTestSuite) TestGetEthBlockFromTendermint() {
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
 			true,
-			func(baseFee sdkmath.Int, validator sdk.AccAddress, height int64) {
+			func(baseFee sdk.Int, validator sdk.AccAddress, height int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 				RegisterValidatorAccount(queryClient, validator)
@@ -1193,14 +1191,14 @@ func (suite *BackendTestSuite) TestHeaderByNumber() {
 		name         string
 		blockNumber  ethrpc.BlockNumber
 		baseFee      *big.Int
-		registerMock func(ethrpc.BlockNumber, sdkmath.Int)
+		registerMock func(ethrpc.BlockNumber, sdk.Int)
 		expPass      bool
 	}{
 		{
 			"fail - tendermint client failed to get block",
 			ethrpc.BlockNumber(1),
-			sdkmath.NewInt(1).BigInt(),
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockError(client, height)
@@ -1210,8 +1208,8 @@ func (suite *BackendTestSuite) TestHeaderByNumber() {
 		{
 			"fail - block not found for height",
 			ethrpc.BlockNumber(1),
-			sdkmath.NewInt(1).BigInt(),
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockNotFound(client, height)
@@ -1221,8 +1219,8 @@ func (suite *BackendTestSuite) TestHeaderByNumber() {
 		{
 			"fail - block not found for height",
 			ethrpc.BlockNumber(1),
-			sdkmath.NewInt(1).BigInt(),
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlock(client, height, nil)
@@ -1234,7 +1232,7 @@ func (suite *BackendTestSuite) TestHeaderByNumber() {
 			"pass - without Base Fee, failed to fetch from prunned block",
 			ethrpc.BlockNumber(1),
 			nil,
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int) {
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				expResultBlock, _ = RegisterBlock(client, height, nil)
@@ -1248,8 +1246,8 @@ func (suite *BackendTestSuite) TestHeaderByNumber() {
 		{
 			"pass - blockNum = 1, without tx",
 			ethrpc.BlockNumber(1),
-			sdkmath.NewInt(1).BigInt(),
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				expResultBlock, _ = RegisterBlock(client, height, nil)
@@ -1263,8 +1261,8 @@ func (suite *BackendTestSuite) TestHeaderByNumber() {
 		{
 			"pass - blockNum = 1, with tx",
 			ethrpc.BlockNumber(1),
-			sdkmath.NewInt(1).BigInt(),
-			func(blockNum ethrpc.BlockNumber, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(blockNum ethrpc.BlockNumber, baseFee sdk.Int) {
 				height := blockNum.Int64()
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				expResultBlock, _ = RegisterBlock(client, height, bz)
@@ -1305,14 +1303,14 @@ func (suite *BackendTestSuite) TestHeaderByHash() {
 		name         string
 		hash         common.Hash
 		baseFee      *big.Int
-		registerMock func(common.Hash, sdkmath.Int)
+		registerMock func(common.Hash, sdk.Int)
 		expPass      bool
 	}{
 		{
 			"fail - tendermint client failed to get block",
 			common.BytesToHash(block.Hash()),
-			sdkmath.NewInt(1).BigInt(),
-			func(hash common.Hash, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(hash common.Hash, baseFee sdk.Int) {
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockByHashError(client, hash, bz)
 			},
@@ -1321,8 +1319,8 @@ func (suite *BackendTestSuite) TestHeaderByHash() {
 		{
 			"fail - block not found for height",
 			common.BytesToHash(block.Hash()),
-			sdkmath.NewInt(1).BigInt(),
-			func(hash common.Hash, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(hash common.Hash, baseFee sdk.Int) {
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockByHashNotFound(client, hash, bz)
 			},
@@ -1331,8 +1329,8 @@ func (suite *BackendTestSuite) TestHeaderByHash() {
 		{
 			"fail - block not found for height",
 			common.BytesToHash(block.Hash()),
-			sdkmath.NewInt(1).BigInt(),
-			func(hash common.Hash, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(hash common.Hash, baseFee sdk.Int) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockByHash(client, hash, bz)
@@ -1344,7 +1342,7 @@ func (suite *BackendTestSuite) TestHeaderByHash() {
 			"pass - without Base Fee, failed to fetch from prunned block",
 			common.BytesToHash(block.Hash()),
 			nil,
-			func(hash common.Hash, baseFee sdkmath.Int) {
+			func(hash common.Hash, baseFee sdk.Int) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				expResultBlock, _ = RegisterBlockByHash(client, hash, bz)
@@ -1358,8 +1356,8 @@ func (suite *BackendTestSuite) TestHeaderByHash() {
 		{
 			"pass - blockNum = 1, without tx",
 			common.BytesToHash(emptyBlock.Hash()),
-			sdkmath.NewInt(1).BigInt(),
-			func(hash common.Hash, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(hash common.Hash, baseFee sdk.Int) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				expResultBlock, _ = RegisterBlockByHash(client, hash, nil)
@@ -1373,8 +1371,8 @@ func (suite *BackendTestSuite) TestHeaderByHash() {
 		{
 			"pass - with tx",
 			common.BytesToHash(block.Hash()),
-			sdkmath.NewInt(1).BigInt(),
-			func(hash common.Hash, baseFee sdkmath.Int) {
+			sdk.NewInt(1).BigInt(),
+			func(hash common.Hash, baseFee sdk.Int) {
 				height := int64(1)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				expResultBlock, _ = RegisterBlockByHash(client, hash, bz)
@@ -1448,14 +1446,14 @@ func (suite *BackendTestSuite) TestEthBlockByNumber() {
 
 				RegisterBlockResults(client, blockNum.Int64())
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				baseFee := sdkmath.NewInt(1)
+				baseFee := sdk.NewInt(1)
 				RegisterBaseFee(queryClient, baseFee)
 			},
 			ethtypes.NewBlock(
 				ethrpc.EthHeaderFromTendermint(
 					emptyBlock.Header,
 					ethtypes.Bloom{},
-					sdkmath.NewInt(1).BigInt(),
+					sdk.NewInt(1).BigInt(),
 				),
 				[]*ethtypes.Transaction{},
 				nil,
@@ -1474,14 +1472,14 @@ func (suite *BackendTestSuite) TestEthBlockByNumber() {
 
 				RegisterBlockResults(client, blockNum.Int64())
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
-				baseFee := sdkmath.NewInt(1)
+				baseFee := sdk.NewInt(1)
 				RegisterBaseFee(queryClient, baseFee)
 			},
 			ethtypes.NewBlock(
 				ethrpc.EthHeaderFromTendermint(
 					emptyBlock.Header,
 					ethtypes.Bloom{},
-					sdkmath.NewInt(1).BigInt(),
+					sdk.NewInt(1).BigInt(),
 				),
 				[]*ethtypes.Transaction{msgEthereumTx.AsTransaction()},
 				nil,
@@ -1523,13 +1521,13 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 		baseFee      *big.Int
 		resBlock     *tmrpctypes.ResultBlock
 		blockRes     *tmrpctypes.ResultBlockResults
-		registerMock func(sdkmath.Int, int64)
+		registerMock func(sdk.Int, int64)
 		expEthBlock  *ethtypes.Block
 		expPass      bool
 	}{
 		{
 			"pass - block without tx",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			&tmrpctypes.ResultBlock{
 				Block: emptyBlock,
 			},
@@ -1537,7 +1535,7 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 				Height:     1,
 				TxsResults: []*types.ResponseDeliverTx{{Code: 0, GasUsed: 0}},
 			},
-			func(baseFee sdkmath.Int, blockNum int64) {
+			func(baseFee sdk.Int, blockNum int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 			},
@@ -1545,7 +1543,7 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 				ethrpc.EthHeaderFromTendermint(
 					emptyBlock.Header,
 					ethtypes.Bloom{},
-					sdkmath.NewInt(1).BigInt(),
+					sdk.NewInt(1).BigInt(),
 				),
 				[]*ethtypes.Transaction{},
 				nil,
@@ -1556,7 +1554,7 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 		},
 		{
 			"pass - block with tx",
-			sdkmath.NewInt(1).BigInt(),
+			sdk.NewInt(1).BigInt(),
 			&tmrpctypes.ResultBlock{
 				Block: tmtypes.MakeBlock(1, []tmtypes.Tx{bz}, nil, nil),
 			},
@@ -1572,7 +1570,7 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 					},
 				},
 			},
-			func(baseFee sdkmath.Int, blockNum int64) {
+			func(baseFee sdk.Int, blockNum int64) {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBaseFee(queryClient, baseFee)
 			},
@@ -1580,7 +1578,7 @@ func (suite *BackendTestSuite) TestEthBlockFromTendermintBlock() {
 				ethrpc.EthHeaderFromTendermint(
 					emptyBlock.Header,
 					ethtypes.Bloom{},
-					sdkmath.NewInt(1).BigInt(),
+					sdk.NewInt(1).BigInt(),
 				),
 				[]*ethtypes.Transaction{msgEthereumTx.AsTransaction()},
 				nil,

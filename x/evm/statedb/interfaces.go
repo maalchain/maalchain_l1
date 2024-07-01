@@ -12,27 +12,29 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package statedb
 
 import (
+	"math/big"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
-
-// ExtStateDB defines an extension to the interface provided by the go-ethereum
-// codebase to support additional state transition functionalities. In particular
-// it supports appending a new entry to the state journal through
-// AppendJournalEntry so that the state can be reverted after running
-// stateful precompiled contracts.
-type ExtStateDB interface {
-	vm.StateDB
-	AppendJournalEntry(JournalEntry)
-}
 
 // Keeper provide underlying storage of StateDB
 type Keeper interface {
+	// for cache store wrapping
+	StoreKeys() map[string]storetypes.StoreKey
+	GetParams(sdk.Context) evmtypes.Params
+
+	AddBalance(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error
+	SubBalance(ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) error
+	SetBalance(ctx sdk.Context, addr common.Address, amount *big.Int) error
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) *big.Int
+
 	// Read methods
 	GetAccount(ctx sdk.Context, addr common.Address) *Account
 	GetState(ctx sdk.Context, addr common.Address, key common.Hash) common.Hash

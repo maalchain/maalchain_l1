@@ -3,7 +3,6 @@ package backend
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -11,10 +10,10 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	goethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/maalchain/maalchain_l1/crypto/ethsecp256k1"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -26,7 +25,7 @@ func (suite *BackendTestSuite) TestSendTransaction() {
 	priv, _ := ethsecp256k1.GenerateKey()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
 	nonce := hexutil.Uint64(1)
-	baseFee := sdkmath.NewInt(1)
+	baseFee := sdk.NewInt(1)
 	callArgsDefault := evmtypes.TransactionArgs{
 		From:     &from,
 		To:       &toAddr,
@@ -105,7 +104,7 @@ func (suite *BackendTestSuite) TestSendTransaction() {
 				ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
 				msg := callArgsDefault.ToTransaction()
 				msg.Sign(ethSigner, suite.backend.clientCtx.Keyring)
-				tx, _ := msg.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "maal")
+				tx, _ := msg.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 				txEncoder := suite.backend.clientCtx.TxConfig.TxEncoder()
 				txBytes, _ := txEncoder(tx)
 				RegisterBroadcastTxError(client, txBytes)
@@ -130,7 +129,7 @@ func (suite *BackendTestSuite) TestSendTransaction() {
 				ethSigner := ethtypes.LatestSigner(suite.backend.ChainConfig())
 				msg := callArgsDefault.ToTransaction()
 				msg.Sign(ethSigner, suite.backend.clientCtx.Keyring)
-				tx, _ := msg.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "maal")
+				tx, _ := msg.BuildTx(suite.backend.clientCtx.TxConfig.NewTxBuilder(), "aphoton")
 				txEncoder := suite.backend.clientCtx.TxConfig.TxEncoder()
 				txBytes, _ := txEncoder(tx)
 				RegisterBroadcastTx(client, txBytes)

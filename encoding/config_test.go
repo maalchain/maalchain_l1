@@ -8,27 +8,18 @@ import (
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/maalchain/maalchain_l1/app"
-	"github.com/maalchain/maalchain_l1/encoding"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app"
+	"github.com/evmos/ethermint/encoding"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
 func TestTxEncoding(t *testing.T) {
 	addr, key := tests.NewAddrKey()
 	signer := tests.NewSigner(key)
 
-	ethTxParams := evmtypes.EvmTxArgs{
-		ChainID:   big.NewInt(1),
-		Nonce:     1,
-		Amount:    big.NewInt(10),
-		GasLimit:  100000,
-		GasFeeCap: big.NewInt(1),
-		GasTipCap: big.NewInt(1),
-		Input:     []byte{},
-	}
-	msg := evmtypes.NewTx(&ethTxParams)
-	msg.From = addr.Hex()
+	msg := evmtypes.NewTxContract(big.NewInt(1), 1, big.NewInt(10), 100000, nil, big.NewInt(1), big.NewInt(1), []byte{}, nil)
+	msg.From = addr.Bytes()
 
 	ethSigner := ethtypes.LatestSignerForChainID(big.NewInt(1))
 	err := msg.Sign(ethSigner, signer)

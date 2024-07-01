@@ -5,71 +5,45 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/maalchain/maalchain_l1/app/ante"
-	"github.com/maalchain/maalchain_l1/tests"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/app/ante"
+	"github.com/evmos/ethermint/tests"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 )
 
-func (suite AnteTestSuite) TestEthSigVerificationDecorator() {
+func (suite *AnteTestSuite) TestEthSigVerificationDecorator() {
 	addr, privKey := tests.NewAddrKey()
 
-	ethContractCreationTxParams := &evmtypes.EvmTxArgs{
-		ChainID:  suite.app.EvmKeeper.ChainID(),
-		Nonce:    1,
-		Amount:   big.NewInt(10),
-		GasLimit: 1000,
-		GasPrice: big.NewInt(1),
-	}
-	signedTx := evmtypes.NewTx(ethContractCreationTxParams)
-	signedTx.From = addr.Hex()
+	signedTx := evmtypes.NewTxContract(suite.app.EvmKeeper.ChainID(), 1, big.NewInt(10), 1000, big.NewInt(1), nil, nil, nil, nil)
+	signedTx.From = addr.Bytes()
 	err := signedTx.Sign(suite.ethSigner, tests.NewSigner(privKey))
 	suite.Require().NoError(err)
 
-	uprotectedEthTxParams := &evmtypes.EvmTxArgs{
-		Nonce:    1,
-		Amount:   big.NewInt(10),
-		GasLimit: 1000,
-		GasPrice: big.NewInt(1),
-	}
-	unprotectedTx := evmtypes.NewTx(uprotectedEthTxParams)
-	unprotectedTx.From = addr.Hex()
+	unprotectedTx := evmtypes.NewTxContract(nil, 1, big.NewInt(10), 1000, big.NewInt(1), nil, nil, nil, nil)
+	unprotectedTx.From = addr.Bytes()
 	err = unprotectedTx.Sign(ethtypes.HomesteadSigner{}, tests.NewSigner(privKey))
 	suite.Require().NoError(err)
 
 	testCases := []struct {
-		name                string
-		tx                  sdk.Tx
-		allowUnprotectedTxs bool
-		reCheckTx           bool
-		expPass             bool
+		name      string
+		tx        sdk.Tx
+		reCheckTx bool
+		expPass   bool
 	}{
-		{"ReCheckTx", &invalidTx{}, false, true, false},
-		{"invalid transaction type", &invalidTx{}, false, false, false},
+		{"ReCheckTx", &invalidTx{}, true, false},
+		{"invalid transaction type", &invalidTx{}, false, false},
 		{
 			"invalid sender",
-			evmtypes.NewTx(&evmtypes.EvmTxArgs{
-				To:       &addr,
-				Nonce:    1,
-				Amount:   big.NewInt(10),
-				GasLimit: 1000,
-				GasPrice: big.NewInt(1),
-			}),
-			true,
+			evmtypes.NewTx(suite.app.EvmKeeper.ChainID(), 1, &addr, big.NewInt(10), 1000, big.NewInt(1), nil, nil, nil, nil),
 			false,
 			false,
 		},
-		{"successful signature verification", signedTx, false, false, true},
-		{"invalid, reject unprotected txs", unprotectedTx, false, false, false},
-		{"successful, allow unprotected txs", unprotectedTx, true, false, true},
+		{"successful signature verification", signedTx, false, true},
 	}
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			suite.evmParamsOption = func(params *evmtypes.Params) {
-				params.AllowUnprotectedTxs = tc.allowUnprotectedTxs
-			}
 			suite.SetupTest()
-			dec := ante.NewEthSigVerificationDecorator(suite.app.EvmKeeper)
+			dec := ante.NewEthSigVerificationDecorator(suite.app.EvmKeeper.ChainID())
 			_, err := dec.AnteHandle(suite.ctx.WithIsReCheckTx(tc.reCheckTx), tc.tx, false, NextFn)
 
 			if tc.expPass {

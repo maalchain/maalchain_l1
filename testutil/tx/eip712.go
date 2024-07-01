@@ -12,7 +12,7 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package tx
 
 import (
@@ -26,18 +26,18 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	cryptocodec "github.com/maalchain/maalchain_l1/crypto/codec"
+	cryptocodec "github.com/evmos/ethermint/crypto/codec"
 
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
-	"github.com/maalchain/maalchain_l1/ethereum/eip712"
+	"github.com/evmos/ethermint/ethereum/eip712"
 
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/maalchain/maalchain_l1/types"
+	"github.com/evmos/ethermint/types"
 
-	"github.com/maalchain/maalchain_l1/app"
+	"github.com/evmos/ethermint/app"
 )
 
 type EIP712TxArgs struct {
@@ -179,7 +179,7 @@ func createTypedData(args typedDataArgs, useLegacy bool) (apitypes.TypedData, er
 // the provided private key and the typed data
 func signCosmosEIP712Tx(
 	ctx sdk.Context,
-	appEthermint *app.EthermintApp,
+	appEvmos *app.EthermintApp,
 	args EIP712TxArgs,
 	builder authtx.ExtensionOptionsTxBuilder,
 	chainID uint64,
@@ -188,7 +188,7 @@ func signCosmosEIP712Tx(
 	priv := args.CosmosTxArgs.Priv
 
 	from := sdk.AccAddress(priv.PubKey().Address().Bytes())
-	nonce, err := appEthermint.AccountKeeper.GetSequence(ctx, from)
+	nonce, err := appEvmos.AccountKeeper.GetSequence(ctx, from)
 	if err != nil {
 		return nil, err
 	}

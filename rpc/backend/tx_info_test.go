@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
-
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmlog "github.com/cometbft/cometbft/libs/log"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cometbft/cometbft/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/maalchain/maalchain_l1/indexer"
-	"github.com/maalchain/maalchain_l1/rpc/backend/mocks"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
+	"github.com/evmos/ethermint/indexer"
+	"github.com/evmos/ethermint/rpc/backend/mocks"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -93,7 +92,7 @@ func (suite *BackendTestSuite) TestGetTransactionByHash() {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBlock(client, 1, txBz)
 				RegisterBlockResults(client, 1)
-				RegisterBaseFee(queryClient, sdkmath.NewInt(1))
+				RegisterBaseFee(queryClient, sdk.NewInt(1))
 			},
 			msgEthereumTx,
 			rpcTransaction,
@@ -347,7 +346,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockAndIndex() {
 				err := suite.backend.indexer.IndexBlock(block, defaultResponseDeliverTx)
 				suite.Require().NoError(err)
 				RegisterBlockResults(client, 1)
-				RegisterBaseFee(queryClient, sdkmath.NewInt(1))
+				RegisterBaseFee(queryClient, sdk.NewInt(1))
 			},
 			&tmrpctypes.ResultBlock{Block: defaultBlock},
 			0,
@@ -360,7 +359,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockAndIndex() {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				client := suite.backend.clientCtx.Client.(*mocks.Client)
 				RegisterBlockResults(client, 1)
-				RegisterBaseFee(queryClient, sdkmath.NewInt(1))
+				RegisterBaseFee(queryClient, sdk.NewInt(1))
 			},
 			&tmrpctypes.ResultBlock{Block: defaultBlock},
 			0,
@@ -423,7 +422,7 @@ func (suite *BackendTestSuite) TestGetTransactionByBlockNumberAndIndex() {
 				queryClient := suite.backend.queryClient.QueryClient.(*mocks.EVMQueryClient)
 				RegisterBlock(client, 1, bz)
 				RegisterBlockResults(client, 1)
-				RegisterBaseFee(queryClient, sdkmath.NewInt(1))
+				RegisterBaseFee(queryClient, sdk.NewInt(1))
 			},
 			0,
 			0,
@@ -606,7 +605,6 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 		name                     string
 		fixRevertGasRefundHeight int64
 		txResult                 *ethermint.TxResult
-		price                    *big.Int
 		gas                      uint64
 		exp                      uint64
 	}{
@@ -618,7 +616,6 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 				Failed:  false,
 				GasUsed: 53026,
 			},
-			new(big.Int).SetUint64(0),
 			0,
 			53026,
 		},
@@ -630,9 +627,8 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 				Failed:  true,
 				GasUsed: 53026,
 			},
-			new(big.Int).SetUint64(200000),
 			5000000000000,
-			1000000000000000000,
+			5000000000000,
 		},
 		{
 			"fail txResult after cap",
@@ -642,7 +638,6 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 				Failed:  true,
 				GasUsed: 53026,
 			},
-			new(big.Int).SetUint64(200000),
 			5000000000000,
 			53026,
 		},
@@ -650,7 +645,7 @@ func (suite *BackendTestSuite) TestGetGasUsed() {
 	for _, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
 			suite.backend.cfg.JSONRPC.FixRevertGasRefundHeight = tc.fixRevertGasRefundHeight
-			suite.Require().Equal(tc.exp, suite.backend.GetGasUsed(tc.txResult, tc.price, tc.gas))
+			suite.Require().Equal(tc.exp, suite.backend.GetGasUsed(tc.txResult, tc.gas))
 			suite.backend.cfg.JSONRPC.FixRevertGasRefundHeight = origin
 		})
 	}

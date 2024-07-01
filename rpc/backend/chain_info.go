@@ -12,26 +12,30 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with the Ethermint library. If not, see https://github.com/maalchain/maalchain_l1/blob/main/LICENSE
+// along with the Ethermint library. If not, see https://github.com/evmos/ethermint/blob/main/LICENSE
 package backend
 
 import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"sync"
 
+	errorsmod "cosmossdk.io/errors"
 	tmrpcclient "github.com/cometbft/cometbft/rpc/client"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
+	rpctypes "github.com/evmos/ethermint/rpc/types"
+	ethermint "github.com/evmos/ethermint/types"
+	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
 	"github.com/pkg/errors"
-	rpctypes "github.com/maalchain/maalchain_l1/rpc/types"
-	ethermint "github.com/maalchain/maalchain_l1/types"
-	evmtypes "github.com/maalchain/maalchain_l1/x/evm/types"
-	feemarkettypes "github.com/maalchain/maalchain_l1/x/feemarket/types"
 )
 
 // ChainID is the EIP-155 replay-protection chain id for the current ethereum chain config.
@@ -159,20 +163,34 @@ func (b *Backend) GetCoinbase() (sdk.AccAddress, error) {
 	return address, nil
 }
 
+var (
+	errInvalidPercentile = fmt.Errorf("invalid reward percentile")
+	errRequestBeyondHead = fmt.Errorf("request beyond head block")
+)
+
 // FeeHistory returns data relevant for fee estimation based on the specified range of blocks.
 func (b *Backend) FeeHistory(
-	userBlockCount rpc.DecimalOrHex, // number blocks to fetch, maximum is 100
+	userBlockCount math.HexOrDecimal64, // number blocks to fetch, maximum is 100
 	lastBlock rpc.BlockNumber, // the block to start search , to oldest
 	rewardPercentiles []float64, // percentiles to fetch reward
 ) (*rpctypes.FeeHistoryResult, error) {
-	blockEnd := int64(lastBlock)
-
-	if blockEnd < 0 {
-		blockNumber, err := b.BlockNumber()
-		if err != nil {
-			return nil, err
+	for i, p := range rewardPercentiles {
+		if p < 0 || p > 100 {
+			return nil, fmt.Errorf("%w: %f", errInvalidPercentile, p)
 		}
+		if i > 0 && p < rewardPercentiles[i-1] {
+			return nil, fmt.Errorf("%w: #%d:%f > #%d:%f", errInvalidPercentile, i-1, rewardPercentiles[i-1], i, p)
+		}
+	}
+	blockNumber, err := b.BlockNumber()
+	if err != nil {
+		return nil, err
+	}
+	blockEnd := int64(lastBlock)
+	if blockEnd < 0 {
 		blockEnd = int64(blockNumber)
+	} else if int64(blockNumber) < blockEnd {
+		return nil, fmt.Errorf("%w: requested %d, head %d", errRequestBeyondHead, blockEnd, int64(blockNumber))
 	}
 
 	blocks := int64(userBlockCount)
@@ -180,8 +198,7 @@ func (b *Backend) FeeHistory(
 	if blocks > maxBlockCount {
 		return nil, fmt.Errorf("FeeHistory user block count %d higher than %d", blocks, maxBlockCount)
 	}
-
-	if blockEnd+1 < blocks {
+	if blockEnd < math.MaxInt64 && blockEnd+1 < blocks {
 		blocks = blockEnd + 1
 	}
 	// Ensure not trying to retrieve before genesis.
@@ -200,46 +217,81 @@ func (b *Backend) FeeHistory(
 
 	// rewards should only be calculated if reward percentiles were included
 	calculateRewards := rewardCount != 0
-
-	// fetch block
-	for blockID := blockStart; blockID <= blockEnd; blockID++ {
-		index := int32(blockID - blockStart)
-		// tendermint block
-		tendermintblock, err := b.TendermintBlockByNumber(rpctypes.BlockNumber(blockID))
-		if tendermintblock == nil {
-			return nil, err
-		}
-
-		// eth block
-		ethBlock, err := b.GetBlockByNumber(rpctypes.BlockNumber(blockID), true)
-		if ethBlock == nil {
-			return nil, err
-		}
-
-		// tendermint block result
-		tendermintBlockResult, err := b.TendermintBlockResultByNumber(&tendermintblock.Block.Height)
-		if tendermintBlockResult == nil {
-			b.logger.Debug("block result not found", "height", tendermintblock.Block.Height, "error", err.Error())
-			return nil, err
-		}
-
-		oneFeeHistory := rpctypes.OneFeeHistory{}
-		err = b.processBlock(tendermintblock, &ethBlock, rewardPercentiles, tendermintBlockResult, &oneFeeHistory)
-		if err != nil {
-			return nil, err
-		}
-
-		// copy
-		thisBaseFee[index] = (*hexutil.Big)(oneFeeHistory.BaseFee)
-		thisBaseFee[index+1] = (*hexutil.Big)(oneFeeHistory.NextBaseFee)
-		thisGasUsedRatio[index] = oneFeeHistory.GasUsedRatio
-		if calculateRewards {
-			for j := 0; j < rewardCount; j++ {
-				reward[index][j] = (*hexutil.Big)(oneFeeHistory.Reward[j])
-				if reward[index][j] == nil {
-					reward[index][j] = (*hexutil.Big)(big.NewInt(0))
-				}
+	const maxBlockFetchers = 4
+	for blockID := blockStart; blockID <= blockEnd; blockID += maxBlockFetchers {
+		wg := sync.WaitGroup{}
+		wgDone := make(chan bool)
+		chanErr := make(chan error)
+		for i := 0; i < maxBlockFetchers; i++ {
+			if blockID+int64(i) >= blockEnd+1 {
+				break
 			}
+			wg.Add(1)
+			go func(index int32) {
+				defer func() {
+					if r := recover(); r != nil {
+						err = errorsmod.Wrapf(errortypes.ErrPanic, "%v", r)
+						b.logger.Error("FeeHistory panicked", "error", err)
+						chanErr <- err
+					}
+					wg.Done()
+				}()
+				// fetch block
+				// tendermint block
+				blockNum := rpctypes.BlockNumber(blockStart + int64(index))
+				tendermintblock, err := b.TendermintBlockByNumber(blockNum)
+				if tendermintblock == nil {
+					chanErr <- err
+					return
+				}
+
+				// eth block
+				ethBlock, err := b.GetBlockByNumber(blockNum, true)
+				if ethBlock == nil {
+					chanErr <- err
+					return
+				}
+
+				// tendermint block result
+				tendermintBlockResult, err := b.TendermintBlockResultByNumber(&tendermintblock.Block.Height)
+				if tendermintBlockResult == nil {
+					b.logger.Debug("block result not found", "height", tendermintblock.Block.Height, "error", err.Error())
+					chanErr <- err
+					return
+				}
+
+				oneFeeHistory := rpctypes.OneFeeHistory{}
+				err = b.processBlocker(tendermintblock, &ethBlock, rewardPercentiles, tendermintBlockResult, &oneFeeHistory)
+				if err != nil {
+					chanErr <- err
+					return
+				}
+
+				// copy
+				thisBaseFee[index] = (*hexutil.Big)(oneFeeHistory.BaseFee)
+				// only use NextBaseFee as last item to avoid concurrent write
+				if int(index) == len(thisBaseFee)-2 {
+					thisBaseFee[index+1] = (*hexutil.Big)(oneFeeHistory.NextBaseFee)
+				}
+				thisGasUsedRatio[index] = oneFeeHistory.GasUsedRatio
+				if calculateRewards {
+					for j := 0; j < rewardCount; j++ {
+						reward[index][j] = (*hexutil.Big)(oneFeeHistory.Reward[j])
+						if reward[index][j] == nil {
+							reward[index][j] = (*hexutil.Big)(big.NewInt(0))
+						}
+					}
+				}
+			}(int32(blockID - blockStart + int64(i)))
+		}
+		go func() {
+			wg.Wait()
+			close(wgDone)
+		}()
+		select {
+		case <-wgDone:
+		case err := <-chanErr:
+			return nil, err
 		}
 	}
 
