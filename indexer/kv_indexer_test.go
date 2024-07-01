@@ -39,7 +39,7 @@ func TestKVIndexer(t *testing.T) {
 	clientCtx := client.Context{}.WithTxConfig(encodingConfig.TxConfig).WithCodec(encodingConfig.Codec)
 
 	// build cosmos-sdk wrapper tx
-	tmTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), "aphoton")
+	tmTx, err := tx.BuildTx(clientCtx.TxConfig.NewTxBuilder(), "maal")
 	require.NoError(t, err)
 	txBz, err := clientCtx.TxConfig.TxEncoder()(tmTx)
 	require.NoError(t, err)

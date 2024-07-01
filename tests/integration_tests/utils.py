@@ -27,7 +27,7 @@ ACCOUNTS = {
 }
 KEYS = {name: account.key for name, account in ACCOUNTS.items()}
 ADDRS = {name: account.address for name, account in ACCOUNTS.items()}
-ETHERMINT_ADDRESS_PREFIX = "ethm"
+ETHERMINT_ADDRESS_PREFIX = "maal"
 TEST_CONTRACTS = {
     "TestERC20A": "TestERC20A.sol",
     "Greeter": "Greeter.sol",
@@ -305,7 +305,7 @@ def build_batch_tx(w3, cli, txs, key=KEYS["validator"]):
         "auth_info": {
             "signer_infos": [],
             "fee": {
-                "amount": [{"denom": "aphoton", "amount": str(fee)}],
+                "amount": [{"denom": "maal", "amount": str(fee)}],
                 "gas_limit": str(gas_limit),
                 "payer": "",
                 "granter": "",

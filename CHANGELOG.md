@@ -851,7 +851,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### API Breaking
 
-- (types) [tharsis#503](https://github.com/cosmos/ethermint/pull/503) The `types.DenomDefault` constant for `"aphoton"` has been renamed to `types.AttoPhoton`.
+- (types) [tharsis#503](https://github.com/cosmos/ethermint/pull/503) The `types.DenomDefault` constant for `"maal"` has been renamed to `types.AttoPhoton`.
 
 ### Improvements
 

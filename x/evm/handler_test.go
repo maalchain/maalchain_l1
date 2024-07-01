@@ -498,7 +498,7 @@ func (suite *HandlerTestSuite) TestERC20TransferReverted() {
 
 			txData, err := types.UnpackTxData(tx.Data)
 			suite.Require().NoError(err)
-			fees, err := keeper.VerifyFee(txData, "aphoton", baseFee, true, true, true, suite.Ctx.IsCheckTx())
+			fees, err := keeper.VerifyFee(txData, "maal", baseFee, true, true, true, suite.Ctx.IsCheckTx())
 			suite.Require().NoError(err)
 			err = k.DeductTxCostsFromUserBalance(suite.Ctx, fees, tx.GetSender())
 			suite.Require().NoError(err)

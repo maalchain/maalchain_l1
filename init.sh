@@ -215,10 +215,16 @@ fi
 # 	--home "$HOMEDIR" \
 # 	--chain-id "$CHAINID"
 
-# ./build/maalchaind start \
-# 	--metrics "" \
-# 	--log_level info \
-# 	--minimum-gas-prices=0.0001maal \
-# 	--json-rpc.api eth,txpool,personal,net,debug,web3 \
-# 	--home "./build/node" \
-# 	--chain-id maalchain_7862-1
+./build/maalchaind start \
+	--metrics "" \
+	--log_level info \
+	--minimum-gas-prices=0.0001maal \
+	--json-rpc.api eth,txpool,personal,net,debug,web3 \
+	--home "./build/node" \
+	--chain-id maalchain_7862-1
+
+
+# ./build/maalchaind query staking validators --home=./build/node
+# ./build/maalchaind tendermint show-validator --home=./build/node  
+# ./build/maalchaind query bank balances maal10jmp6sgh4cc6zt3e8gw05wavvejgr5pw0wrg97 --home=./build/node  
+# ./build/maalchaind query bank total --home=./build/node           

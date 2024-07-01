@@ -62,19 +62,19 @@ Running `maalchaind keys list --keyring-backend=test` should output:
   {
     "name": "localkey",
     "type": "local",
-    "address": "ethm18de995q8qk0leqk3d5pzmg7tlxvj6tmsku084d",
+    "address": "maal18de995q8qk0leqk3d5pzmg7tlxvj6tmsku084d",
     "pubkey": "ethpub1pfqnmk6pq3ycjs34vv4n6rkty89f6m02qcsal3ecdzn7a3uunx0e5ly0846pzg903hxf2zp5gq4grh8jcatcemfrscdfl797zhg5crkcsx43gujzppge3n"
   },
   {
     "name": "user1",
     "type": "local",
-    "address": "ethm1mhtyk3cj7ly0rt8rc9zuj5pnnmw67gsapygwyq",
+    "address": "maal1mhtyk3cj7ly0rt8rc9zuj5pnnmw67gsapygwyq",
     "pubkey": "ethpub1pfqnmk6pq3wrkx6lh7uug8ss0thggact3n49m5gkmpca4vylldpur5qrept57e0rrxfmeq5mp5xt3cyf4kys53qcv66qxttv970das69hlpkf8cnyd2a2x"
   },
   {
     "name": "user2",
     "type": "local",
-    "address": "ethm1pa20g7lehr330vs5ent20slr3wyne4lsy8qae3",
+    "address": "maal1pa20g7lehr330vs5ent20slr3wyne4lsy8qae3",
     "pubkey": "ethpub1pfqnmk6pq3art9y45zw5ntyktt2qrt0skmsl0ux9qwk8458ed3d8sgnrs99zlgvj3rt2vggvkh0x56hffugwsyddwqla48npx46pglgs6xhcqpall58tgn"
   }
 ]
