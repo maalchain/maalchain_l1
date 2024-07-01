@@ -24,7 +24,7 @@ RUN apk add --update ca-certificates jq
 WORKDIR /
 
 # Copy over binaries from the build-env
-COPY --from=build-env /go/src/github.com/evmos/ethermint/build/ethermintd /usr/bin/ethermintd
+COPY --from=build-env /go/src/github.com/evmos/ethermint/build/maalchaind /usr/bin/maalchaind
 
-# Run ethermintd by default
-CMD ["ethermintd"]
+# Run maalchaind by default
+CMD ["maalchaind"]

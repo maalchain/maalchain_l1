@@ -78,7 +78,7 @@ func NewRootCmd() (*cobra.Command, ethermint.EncodingConfig) {
 	eip712.SetEncodingConfig(encodingConfig)
 
 	rootCmd := &cobra.Command{
-		Use:   "ethermintd",
+		Use:   "maalchaind",
 		Short: "Ethermint Daemon",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
