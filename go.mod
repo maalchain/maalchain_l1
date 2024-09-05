@@ -39,8 +39,8 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/net v0.15.0
-	golang.org/x/sync v0.2.0
-	golang.org/x/text v0.13.0
+	golang.org/x/sync v0.8.0
+	golang.org/x/text v0.18.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529
 	google.golang.org/grpc v1.57.0
 	sigs.k8s.io/yaml v1.3.0
