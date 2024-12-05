@@ -98,7 +98,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-22.11
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-      - uses: cachix/cachix-action@v14
+      - uses: cachix/cachix-action@v15
         with:
           name: crypto-ethermint
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: cachix/install-nix-action@v20
-      - uses: cachix/cachix-action@v14
+      - uses: cachix/cachix-action@v15
         with:
           name: crypto-ethermint
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
